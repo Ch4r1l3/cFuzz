@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./fuzzer/common"
 	"fmt"
+	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common"
 	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"log"
@@ -12,8 +12,8 @@ import (
 
 var handshakeAFLConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  3,
-	MagicCookieKey:   "afl",
-	MagicCookieValue: "afl",
+	MagicCookieKey:   "fuzz",
+	MagicCookieValue: "fuzz",
 }
 
 func main() {
@@ -50,11 +50,24 @@ func main() {
 	}
 	afl := aflraw.(fuzzer.Fuzzer)
 
+	tFuzzArg := fuzzer.FuzzArg{
+		TargetPath: "aa",
+		MaxTime:    1,
+	}
+	tPrepareArg := fuzzer.PrepareArg{
+		CorpusDir:   "123",
+		TargetPath:  "aa",
+		Arguments:   map[string]string{},
+		Enviroments: map[string]string{},
+	}
 	for i := 1; i < 10; i += 1 {
-		err = afl.Fuzz()
+		err = afl.Fuzz(tFuzzArg)
+		if err != nil {
+			fmt.Println("Error:", err.Error())
+		}
+		err = afl.Prepare(tPrepareArg)
 		if err != nil {
 			fmt.Println("Error:", err.Error())
 		}
 	}
-	logger.Debug(err.Error())
 }

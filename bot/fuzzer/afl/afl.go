@@ -1,56 +1,30 @@
 package main
 
 import (
-	"../common"
-	"errors"
+	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common"
 	"github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"os"
 )
 
 type AFL struct {
 	logger hclog.Logger
 }
 
-func (a *AFL) Fuzz() error {
-	a.logger.Debug("fuzz in afl!")
-	return errors.New("afl!")
+func (a *AFL) Prepare(args fuzzer.PrepareArg) error {
+	a.logger.Debug("prepare in afl")
+	return nil
 }
 
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  3,
-	MagicCookieKey:   "afl",
-	MagicCookieValue: "afl",
+func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
+	a.logger.Debug("fuzz in afl")
+	return nil
 }
 
-func main() {
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Trace,
-		Output:     os.Stderr,
-		JSONFormat: true,
-	})
+func (a *AFL) Reproduce(args fuzzer.ReproduceArg) error {
+	a.logger.Debug("reproduce in afl")
+	return nil
+}
 
-	afl := &AFL{
-		logger: logger,
-	}
-
-	/*
-		var pluginMap = map[string]plugin.Plugin{
-			"afl": &fuzzer.FuzzerPlugin{Impl: afl},
-		}
-	*/
-
-	logger.Debug("message from plugin")
-	plugin.Serve(&plugin.ServeConfig{
-		HandshakeConfig: handshakeConfig,
-		VersionedPlugins: map[int]plugin.PluginSet{
-			2: {
-				"afl": &fuzzer.FuzzerPlugin{Impl: afl},
-			},
-			3: {
-				"afl": &fuzzer.FuzzerGRPCPlugin{Impl: afl},
-			},
-		},
-		GRPCServer: plugin.DefaultGRPCServer,
-	})
+func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) error {
+	a.logger.Debug("minimize corpus in afl")
+	return nil
 }

@@ -1,12 +1,45 @@
 syntax = "proto3";
 package proto;
  
-message FuzzResponse {
+message ErrorResponse {
     string error = 1;
+}
+
+message StringMap {
+	string key = 1;
+	string value = 2;
+}
+
+message PrepareArg {
+	string corpusDir = 1;
+	string targetPath = 2;
+	map<string, string> arguments = 3;
+	map<string, string> enviroments = 4;
+}
+
+message FuzzArg {
+	string targetPath = 1;
+	int32 maxTime = 2;
+}
+
+message ReproduceArg {
+	string targetPath = 1;
+	string inputPath = 2;
+	int32 maxTime = 3;
+}
+
+message MinimizeCorpusArg {
+	string targetPath = 1;
+	string inputDir = 2;
+	string outputDir = 3;
+	int32 maxTime = 4;
 }
  
 message Empty {}
  
 service Fuzzer {
-    rpc Fuzz(Empty) returns (FuzzResponse);
+    rpc Prepare(PrepareArg) returns (ErrorResponse);
+    rpc Fuzz(FuzzArg) returns (ErrorResponse);
+    rpc Reproduce(ReproduceArg) returns (ErrorResponse);
+    rpc MinimizeCorpus(MinimizeCorpusArg) returns (ErrorResponse);
 }

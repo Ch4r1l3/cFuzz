@@ -1,17 +1,43 @@
 package fuzzer
 
 import (
-	"./proto"
 	"context"
+	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common/proto"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc"
 	"net/rpc"
 )
 
+type PrepareArg struct {
+	CorpusDir   string
+	TargetPath  string
+	Arguments   map[string]string
+	Enviroments map[string]string
+}
+
+type FuzzArg struct {
+	TargetPath string
+	MaxTime    int
+}
+
+type ReproduceArg struct {
+	TargetPath string
+	InputPath  string
+	MaxTime    int
+}
+
+type MinimizeCorpusArg struct {
+	TargetPath string
+	InputDir   string
+	OutputDir  string
+	MaxTime    int
+}
+
 type Fuzzer interface {
-	Prepare(corpus_dir string, target_path string, arguments map[string]string, enviroments map[string]string) error
-	Fuzz(target_path string, max_time int) error
-	Reproduce(target_path string, input_path string, max_time int) error
+	Prepare(args PrepareArg) error
+	Fuzz(args FuzzArg) error
+	Reproduce(args ReproduceArg) error
+	MinimizeCorpus(args MinimizeCorpusArg) error
 }
 
 type FuzzerPlugin struct {
