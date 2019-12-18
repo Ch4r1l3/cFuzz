@@ -1,0 +1,12 @@
+syntax = "proto3";
+package proto;
+ 
+message FuzzResponse {
+    string error = 1;
+}
+ 
+message Empty {}
+ 
+service Fuzzer {
+    rpc Fuzz(Empty) returns (FuzzResponse);
+}
