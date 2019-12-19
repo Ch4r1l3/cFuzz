@@ -24,7 +24,6 @@ func main() {
 		logger: logger,
 	}
 
-	logger.Debug("message from plugin")
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		VersionedPlugins: map[int]plugin.PluginSet{

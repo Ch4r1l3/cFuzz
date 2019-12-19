@@ -51,23 +51,22 @@ func main() {
 	afl := aflraw.(fuzzer.Fuzzer)
 
 	tFuzzArg := fuzzer.FuzzArg{
-		TargetPath: "aa",
+		TargetPath: "/tmp/test/test",
 		MaxTime:    1,
 	}
 	tPrepareArg := fuzzer.PrepareArg{
-		CorpusDir:   "123",
-		TargetPath:  "aa",
+		CorpusDir:   "/tmp/test/corpus",
+		TargetPath:  "/tmp/test/test",
 		Arguments:   map[string]string{},
 		Enviroments: map[string]string{},
 	}
-	for i := 1; i < 10; i += 1 {
-		err = afl.Fuzz(tFuzzArg)
-		if err != nil {
-			fmt.Println("Error:", err.Error())
-		}
-		err = afl.Prepare(tPrepareArg)
-		if err != nil {
-			fmt.Println("Error:", err.Error())
-		}
+	err = afl.Prepare(tPrepareArg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = afl.Fuzz(tFuzzArg)
+	if err != nil {
+		log.Fatal(err)
 	}
 }

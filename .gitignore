@@ -1,1 +1,4 @@
 /bot/fuzzer/afl/afl
+*.swp
+*.swo
+*~
