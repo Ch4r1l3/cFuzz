@@ -14,7 +14,7 @@ message PrepareArg {
 	string corpusDir = 1;
 	string targetPath = 2;
 	map<string, string> arguments = 3;
-	map<string, string> enviroments = 4;
+	repeated string enviroments = 4;
 }
 
 message FuzzArg {
@@ -42,4 +42,5 @@ service Fuzzer {
     rpc Fuzz(FuzzArg) returns (ErrorResponse);
     rpc Reproduce(ReproduceArg) returns (ErrorResponse);
     rpc MinimizeCorpus(MinimizeCorpusArg) returns (ErrorResponse);
+    rpc Clean(Empty) returns (ErrorResponse);
 }

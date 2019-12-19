@@ -45,6 +45,15 @@ func (f *FuzzerRPCClient) MinimizeCorpus(args MinimizeCorpusArg) error {
 	return errors.New(resp)
 }
 
+func (f *FuzzerRPCClient) Clean() error {
+	var resp string
+	f.client.Call("Plugin.MinimizeCorpus", new(interface{}), &resp)
+	if resp == "" {
+		return nil
+	}
+	return errors.New(resp)
+}
+
 type FuzzerRPCServer struct {
 	Impl Fuzzer
 }
@@ -81,6 +90,16 @@ func (f *FuzzerRPCServer) Reproduce(args ReproduceArg, resp *string) error {
 
 func (f *FuzzerRPCServer) MinimizeCorpus(args MinimizeCorpusArg, resp *string) error {
 	err := f.Impl.MinimizeCorpus(args)
+	if err != nil {
+		*resp = err.Error()
+	} else {
+		*resp = ""
+	}
+	return err
+}
+
+func (f *FuzzerRPCServer) Clean(args interface{}, resp *string) error {
+	err := f.Impl.Clean()
 	if err != nil {
 		*resp = err.Error()
 	} else {

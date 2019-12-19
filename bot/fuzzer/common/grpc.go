@@ -71,6 +71,18 @@ func (f *FuzzerGRPCClient) MinimizeCorpus(args MinimizeCorpusArg) error {
 	return errors.New(resp.Error)
 }
 
+func (f *FuzzerGRPCClient) Clean() error {
+	resp, err := f.client.Clean(context.Background(), &proto.Empty{})
+	if err != nil {
+		return err
+	}
+	if resp.Error == "" {
+		return nil
+	}
+	return errors.New(resp.Error)
+
+}
+
 type FuzzerGRPCServer struct {
 	Impl Fuzzer
 }
@@ -118,6 +130,14 @@ func (f *FuzzerGRPCServer) MinimizeCorpus(ctx context.Context, args *proto.Minim
 		OutputDir:  args.OutputDir,
 		MaxTime:    int(args.MaxTime),
 	})
+	if err == nil {
+		return &proto.ErrorResponse{Error: ""}, nil
+	}
+	return &proto.ErrorResponse{Error: err.Error()}, nil
+}
+
+func (f *FuzzerGRPCServer) Clean(ctx context.Context, args *proto.Empty) (*proto.ErrorResponse, error) {
+	err := f.Impl.Clean()
 	if err == nil {
 		return &proto.ErrorResponse{Error: ""}, nil
 	}

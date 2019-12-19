@@ -12,7 +12,7 @@ type PrepareArg struct {
 	CorpusDir   string
 	TargetPath  string
 	Arguments   map[string]string
-	Enviroments map[string]string
+	Enviroments []string
 }
 
 type FuzzArg struct {
@@ -38,6 +38,7 @@ type Fuzzer interface {
 	Fuzz(args FuzzArg) error
 	Reproduce(args ReproduceArg) error
 	MinimizeCorpus(args MinimizeCorpusArg) error
+	Clean() error
 }
 
 type FuzzerPlugin struct {
