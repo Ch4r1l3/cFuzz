@@ -11,7 +11,7 @@ import (
 )
 
 var handshakeAFLConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  3,
+	ProtocolVersion:  2,
 	MagicCookieKey:   "fuzz",
 	MagicCookieValue: "fuzz",
 }
@@ -24,8 +24,11 @@ func main() {
 		Level:  hclog.Debug,
 	})
 	plugins := map[int]plugin.PluginSet{}
-	plugins[3] = plugin.PluginSet{
-		"afl": &fuzzer.FuzzerGRPCPlugin{},
+	//plugins[3] = plugin.PluginSet{
+	//	"afl": &fuzzer.FuzzerGRPCPlugin{},
+	//}
+	plugins[2] = plugin.PluginSet{
+		"afl": &fuzzer.FuzzerPlugin{},
 	}
 
 	aflclient := plugin.NewClient(&plugin.ClientConfig{
@@ -51,8 +54,7 @@ func main() {
 	afl := aflraw.(fuzzer.Fuzzer)
 
 	tFuzzArg := fuzzer.FuzzArg{
-		TargetPath: "/tmp/test/test",
-		MaxTime:    60,
+		MaxTime: 60,
 	}
 	tPrepareArg := fuzzer.PrepareArg{
 		CorpusDir:   "/tmp/test/corpus",
@@ -65,7 +67,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = afl.Fuzz(tFuzzArg)
+	v, err := afl.Fuzz(tFuzzArg)
+	fmt.Println(v)
 	if err != nil {
 		log.Fatal(err)
 	}

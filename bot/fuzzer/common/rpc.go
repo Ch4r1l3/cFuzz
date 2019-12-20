@@ -11,38 +11,29 @@ type FuzzerRPCClient struct {
 
 func (f *FuzzerRPCClient) Prepare(args PrepareArg) error {
 	var resp string
-	f.client.Call("Plugin.Fuzz", args, &resp)
+	f.client.Call("Plugin.Prepare", args, &resp)
 	if resp == "" {
 		return nil
 	}
 	return errors.New(resp)
 }
 
-func (f *FuzzerRPCClient) Fuzz(args FuzzArg) error {
-	var resp string
-	f.client.Call("Plugin.Fuzz", args, &resp)
-	if resp == "" {
-		return nil
-	}
-	return errors.New(resp)
+func (f *FuzzerRPCClient) Fuzz(args FuzzArg) (FuzzResult, error) {
+	var resp FuzzResult
+	err := f.client.Call("Plugin.Fuzz", args, &resp)
+	return resp, err
 }
 
-func (f *FuzzerRPCClient) Reproduce(args ReproduceArg) error {
-	var resp string
-	f.client.Call("Plugin.Reproduce", args, &resp)
-	if resp == "" {
-		return nil
-	}
-	return errors.New(resp)
+func (f *FuzzerRPCClient) Reproduce(args ReproduceArg) (ReproduceResult, error) {
+	var resp ReproduceResult
+	err := f.client.Call("Plugin.Reproduce", args, &resp)
+	return resp, err
 }
 
-func (f *FuzzerRPCClient) MinimizeCorpus(args MinimizeCorpusArg) error {
-	var resp string
-	f.client.Call("Plugin.MinimizeCorpus", args, &resp)
-	if resp == "" {
-		return nil
-	}
-	return errors.New(resp)
+func (f *FuzzerRPCClient) MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error) {
+	var resp MinimizeCorpusResult
+	err := f.client.Call("Plugin.MinimizeCorpus", args, &resp)
+	return resp, err
 }
 
 func (f *FuzzerRPCClient) Clean() error {
@@ -68,33 +59,21 @@ func (f *FuzzerRPCServer) Prepare(args PrepareArg, resp *string) error {
 	return err
 }
 
-func (f *FuzzerRPCServer) Fuzz(args FuzzArg, resp *string) error {
-	err := f.Impl.Fuzz(args)
-	if err != nil {
-		*resp = err.Error()
-	} else {
-		*resp = ""
-	}
-	return nil
-}
-
-func (f *FuzzerRPCServer) Reproduce(args ReproduceArg, resp *string) error {
-	err := f.Impl.Reproduce(args)
-	if err != nil {
-		*resp = err.Error()
-	} else {
-		*resp = ""
-	}
+func (f *FuzzerRPCServer) Fuzz(args FuzzArg, resp *FuzzResult) error {
+	v, err := f.Impl.Fuzz(args)
+	*resp = v
 	return err
 }
 
-func (f *FuzzerRPCServer) MinimizeCorpus(args MinimizeCorpusArg, resp *string) error {
-	err := f.Impl.MinimizeCorpus(args)
-	if err != nil {
-		*resp = err.Error()
-	} else {
-		*resp = ""
-	}
+func (f *FuzzerRPCServer) Reproduce(args ReproduceArg, resp *ReproduceResult) error {
+	v, err := f.Impl.Reproduce(args)
+	*resp = v
+	return err
+}
+
+func (f *FuzzerRPCServer) MinimizeCorpus(args MinimizeCorpusArg, resp *MinimizeCorpusResult) error {
+	v, err := f.Impl.MinimizeCorpus(args)
+	*resp = v
 	return err
 }
 

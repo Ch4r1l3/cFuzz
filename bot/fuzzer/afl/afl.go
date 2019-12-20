@@ -30,6 +30,17 @@ func (a *AFL) getArgument(key string) (string, error) {
 	return "", errors.New("key not in arguments")
 }
 
+func checkAFLOutput(out []string) error {
+	for _, v := range out {
+		for _, r := range AFL_CHECK_REGEX {
+			if r.MatchString(v) {
+				return errors.New(COLOR_REGEX.ReplaceAllString(r.FindString(v), ""))
+			}
+		}
+	}
+	return nil
+}
+
 func (a *AFL) Prepare(args fuzzer.PrepareArg) error {
 	a.logger.Debug("prepare in afl")
 
@@ -71,11 +82,8 @@ func (a *AFL) Prepare(args fuzzer.PrepareArg) error {
 	return nil
 }
 
-func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
+func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	a.logger.Debug("fuzz in afl")
-	if a.targetPath != "" && a.targetPath != args.TargetPath {
-		return errors.New("AFL Fuzz TargetPath not equal to the TargetPath in Prepare")
-	}
 
 	arguments := []string{}
 	arguments = append(arguments, INPUT_DIR_FLAG)
@@ -84,7 +92,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
 
 	dir, err := ioutil.TempDir(TEMP_DIR, "afl_fuzz")
 	if err != nil {
-		return errors.New("AFL Fuzz create temp directory error: " + err.Error())
+		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz create temp directory error: " + err.Error())
 	}
 	arguments = append(arguments, dir)
 
@@ -100,7 +108,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
 		arguments = append(arguments, v)
 	}
 
-	arguments = append(arguments, args.TargetPath)
+	arguments = append(arguments, a.targetPath)
 
 	//if PROGRAM_ARG exists in arguments, append it to arguments
 	if v, err := a.getArgument(PROGRAM_ARG); err == nil {
@@ -114,6 +122,17 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
 	}
 
 	statusChan := runner.Start()
+	//cancelChan := make(chan struct{})
+
+	go func() {
+		ticker := time.NewTicker(time.Duration(AFL_CHECK_TICK_TIME) * time.Second)
+		for range ticker.C {
+			status := runner.Status()
+			for _, v := range status.Stdout {
+				a.logger.Debug(v)
+			}
+		}
+	}()
 
 	go func() {
 		<-time.After(time.Duration(args.MaxTime) * time.Second)
@@ -121,19 +140,23 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) error {
 	}()
 
 	//finish fuzz
-	<-statusChan
+	status := <-statusChan
+	err = checkAFLOutput(status.Stdout)
+	if err != nil {
+		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz error: " + err.Error())
+	}
 
-	return nil
+	return fuzzer.FuzzResult{}, nil
 }
 
-func (a *AFL) Reproduce(args fuzzer.ReproduceArg) error {
+func (a *AFL) Reproduce(args fuzzer.ReproduceArg) (fuzzer.ReproduceResult, error) {
 	a.logger.Debug("reproduce in afl")
-	return nil
+	return fuzzer.ReproduceResult{}, nil
 }
 
-func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) error {
+func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) (fuzzer.MinimizeCorpusResult, error) {
 	a.logger.Debug("minimize corpus in afl")
-	return nil
+	return fuzzer.MinimizeCorpusResult{}, nil
 }
 
 func (a *AFL) Clean() error {

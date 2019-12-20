@@ -174,8 +174,7 @@ func (m *PrepareArg) GetEnviroments() []string {
 }
 
 type FuzzArg struct {
-	TargetPath           string   `protobuf:"bytes,1,opt,name=targetPath,proto3" json:"targetPath,omitempty"`
-	MaxTime              int32    `protobuf:"varint,2,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
+	MaxTime              int32    `protobuf:"varint,1,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -206,13 +205,6 @@ func (m *FuzzArg) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FuzzArg proto.InternalMessageInfo
 
-func (m *FuzzArg) GetTargetPath() string {
-	if m != nil {
-		return m.TargetPath
-	}
-	return ""
-}
-
 func (m *FuzzArg) GetMaxTime() int32 {
 	if m != nil {
 		return m.MaxTime
@@ -220,10 +212,135 @@ func (m *FuzzArg) GetMaxTime() int32 {
 	return 0
 }
 
+type Crash struct {
+	InputPath            string   `protobuf:"bytes,1,opt,name=inputPath,proto3" json:"inputPath,omitempty"`
+	ReproduceArg         []string `protobuf:"bytes,2,rep,name=reproduceArg,proto3" json:"reproduceArg,omitempty"`
+	Enviroments          []string `protobuf:"bytes,3,rep,name=enviroments,proto3" json:"enviroments,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Crash) Reset()         { *m = Crash{} }
+func (m *Crash) String() string { return proto.CompactTextString(m) }
+func (*Crash) ProtoMessage()    {}
+func (*Crash) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41ff9b483743270f, []int{4}
+}
+
+func (m *Crash) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Crash.Unmarshal(m, b)
+}
+func (m *Crash) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Crash.Marshal(b, m, deterministic)
+}
+func (m *Crash) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Crash.Merge(m, src)
+}
+func (m *Crash) XXX_Size() int {
+	return xxx_messageInfo_Crash.Size(m)
+}
+func (m *Crash) XXX_DiscardUnknown() {
+	xxx_messageInfo_Crash.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Crash proto.InternalMessageInfo
+
+func (m *Crash) GetInputPath() string {
+	if m != nil {
+		return m.InputPath
+	}
+	return ""
+}
+
+func (m *Crash) GetReproduceArg() []string {
+	if m != nil {
+		return m.ReproduceArg
+	}
+	return nil
+}
+
+func (m *Crash) GetEnviroments() []string {
+	if m != nil {
+		return m.Enviroments
+	}
+	return nil
+}
+
+type FuzzResult struct {
+	Command              []string          `protobuf:"bytes,1,rep,name=command,proto3" json:"command,omitempty"`
+	Crashes              []*Crash          `protobuf:"bytes,2,rep,name=crashes,proto3" json:"crashes,omitempty"`
+	Stats                map[string]string `protobuf:"bytes,3,rep,name=stats,proto3" json:"stats,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	TimeExecuted         int32             `protobuf:"varint,4,opt,name=timeExecuted,proto3" json:"timeExecuted,omitempty"`
+	Error                string            `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *FuzzResult) Reset()         { *m = FuzzResult{} }
+func (m *FuzzResult) String() string { return proto.CompactTextString(m) }
+func (*FuzzResult) ProtoMessage()    {}
+func (*FuzzResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41ff9b483743270f, []int{5}
+}
+
+func (m *FuzzResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_FuzzResult.Unmarshal(m, b)
+}
+func (m *FuzzResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_FuzzResult.Marshal(b, m, deterministic)
+}
+func (m *FuzzResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FuzzResult.Merge(m, src)
+}
+func (m *FuzzResult) XXX_Size() int {
+	return xxx_messageInfo_FuzzResult.Size(m)
+}
+func (m *FuzzResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_FuzzResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FuzzResult proto.InternalMessageInfo
+
+func (m *FuzzResult) GetCommand() []string {
+	if m != nil {
+		return m.Command
+	}
+	return nil
+}
+
+func (m *FuzzResult) GetCrashes() []*Crash {
+	if m != nil {
+		return m.Crashes
+	}
+	return nil
+}
+
+func (m *FuzzResult) GetStats() map[string]string {
+	if m != nil {
+		return m.Stats
+	}
+	return nil
+}
+
+func (m *FuzzResult) GetTimeExecuted() int32 {
+	if m != nil {
+		return m.TimeExecuted
+	}
+	return 0
+}
+
+func (m *FuzzResult) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
 type ReproduceArg struct {
-	TargetPath           string   `protobuf:"bytes,1,opt,name=targetPath,proto3" json:"targetPath,omitempty"`
-	InputPath            string   `protobuf:"bytes,2,opt,name=inputPath,proto3" json:"inputPath,omitempty"`
-	MaxTime              int32    `protobuf:"varint,3,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
+	InputPath            string   `protobuf:"bytes,1,opt,name=inputPath,proto3" json:"inputPath,omitempty"`
+	MaxTime              int32    `protobuf:"varint,2,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -233,7 +350,7 @@ func (m *ReproduceArg) Reset()         { *m = ReproduceArg{} }
 func (m *ReproduceArg) String() string { return proto.CompactTextString(m) }
 func (*ReproduceArg) ProtoMessage()    {}
 func (*ReproduceArg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_41ff9b483743270f, []int{4}
+	return fileDescriptor_41ff9b483743270f, []int{6}
 }
 
 func (m *ReproduceArg) XXX_Unmarshal(b []byte) error {
@@ -254,13 +371,6 @@ func (m *ReproduceArg) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ReproduceArg proto.InternalMessageInfo
 
-func (m *ReproduceArg) GetTargetPath() string {
-	if m != nil {
-		return m.TargetPath
-	}
-	return ""
-}
-
 func (m *ReproduceArg) GetInputPath() string {
 	if m != nil {
 		return m.InputPath
@@ -275,11 +385,81 @@ func (m *ReproduceArg) GetMaxTime() int32 {
 	return 0
 }
 
+type ReproduceResult struct {
+	Command              []string `protobuf:"bytes,1,rep,name=command,proto3" json:"command,omitempty"`
+	ReturnCode           int32    `protobuf:"varint,2,opt,name=returnCode,proto3" json:"returnCode,omitempty"`
+	TimeExecuted         int32    `protobuf:"varint,3,opt,name=timeExecuted,proto3" json:"timeExecuted,omitempty"`
+	Output               []string `protobuf:"bytes,4,rep,name=output,proto3" json:"output,omitempty"`
+	Error                string   `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ReproduceResult) Reset()         { *m = ReproduceResult{} }
+func (m *ReproduceResult) String() string { return proto.CompactTextString(m) }
+func (*ReproduceResult) ProtoMessage()    {}
+func (*ReproduceResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41ff9b483743270f, []int{7}
+}
+
+func (m *ReproduceResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReproduceResult.Unmarshal(m, b)
+}
+func (m *ReproduceResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReproduceResult.Marshal(b, m, deterministic)
+}
+func (m *ReproduceResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReproduceResult.Merge(m, src)
+}
+func (m *ReproduceResult) XXX_Size() int {
+	return xxx_messageInfo_ReproduceResult.Size(m)
+}
+func (m *ReproduceResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReproduceResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ReproduceResult proto.InternalMessageInfo
+
+func (m *ReproduceResult) GetCommand() []string {
+	if m != nil {
+		return m.Command
+	}
+	return nil
+}
+
+func (m *ReproduceResult) GetReturnCode() int32 {
+	if m != nil {
+		return m.ReturnCode
+	}
+	return 0
+}
+
+func (m *ReproduceResult) GetTimeExecuted() int32 {
+	if m != nil {
+		return m.TimeExecuted
+	}
+	return 0
+}
+
+func (m *ReproduceResult) GetOutput() []string {
+	if m != nil {
+		return m.Output
+	}
+	return nil
+}
+
+func (m *ReproduceResult) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
 type MinimizeCorpusArg struct {
-	TargetPath           string   `protobuf:"bytes,1,opt,name=targetPath,proto3" json:"targetPath,omitempty"`
-	InputDir             string   `protobuf:"bytes,2,opt,name=inputDir,proto3" json:"inputDir,omitempty"`
-	OutputDir            string   `protobuf:"bytes,3,opt,name=outputDir,proto3" json:"outputDir,omitempty"`
-	MaxTime              int32    `protobuf:"varint,4,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
+	InputDir             string   `protobuf:"bytes,1,opt,name=inputDir,proto3" json:"inputDir,omitempty"`
+	OutputDir            string   `protobuf:"bytes,2,opt,name=outputDir,proto3" json:"outputDir,omitempty"`
+	MaxTime              int32    `protobuf:"varint,3,opt,name=maxTime,proto3" json:"maxTime,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -289,7 +469,7 @@ func (m *MinimizeCorpusArg) Reset()         { *m = MinimizeCorpusArg{} }
 func (m *MinimizeCorpusArg) String() string { return proto.CompactTextString(m) }
 func (*MinimizeCorpusArg) ProtoMessage()    {}
 func (*MinimizeCorpusArg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_41ff9b483743270f, []int{5}
+	return fileDescriptor_41ff9b483743270f, []int{8}
 }
 
 func (m *MinimizeCorpusArg) XXX_Unmarshal(b []byte) error {
@@ -309,13 +489,6 @@ func (m *MinimizeCorpusArg) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MinimizeCorpusArg proto.InternalMessageInfo
-
-func (m *MinimizeCorpusArg) GetTargetPath() string {
-	if m != nil {
-		return m.TargetPath
-	}
-	return ""
-}
 
 func (m *MinimizeCorpusArg) GetInputDir() string {
 	if m != nil {
@@ -338,6 +511,69 @@ func (m *MinimizeCorpusArg) GetMaxTime() int32 {
 	return 0
 }
 
+type MinimizeCorpusResult struct {
+	Command              []string          `protobuf:"bytes,1,rep,name=command,proto3" json:"command,omitempty"`
+	Stats                map[string]string `protobuf:"bytes,2,rep,name=stats,proto3" json:"stats,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	TimeExecuted         int32             `protobuf:"varint,3,opt,name=timeExecuted,proto3" json:"timeExecuted,omitempty"`
+	Error                string            `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *MinimizeCorpusResult) Reset()         { *m = MinimizeCorpusResult{} }
+func (m *MinimizeCorpusResult) String() string { return proto.CompactTextString(m) }
+func (*MinimizeCorpusResult) ProtoMessage()    {}
+func (*MinimizeCorpusResult) Descriptor() ([]byte, []int) {
+	return fileDescriptor_41ff9b483743270f, []int{9}
+}
+
+func (m *MinimizeCorpusResult) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MinimizeCorpusResult.Unmarshal(m, b)
+}
+func (m *MinimizeCorpusResult) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MinimizeCorpusResult.Marshal(b, m, deterministic)
+}
+func (m *MinimizeCorpusResult) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MinimizeCorpusResult.Merge(m, src)
+}
+func (m *MinimizeCorpusResult) XXX_Size() int {
+	return xxx_messageInfo_MinimizeCorpusResult.Size(m)
+}
+func (m *MinimizeCorpusResult) XXX_DiscardUnknown() {
+	xxx_messageInfo_MinimizeCorpusResult.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MinimizeCorpusResult proto.InternalMessageInfo
+
+func (m *MinimizeCorpusResult) GetCommand() []string {
+	if m != nil {
+		return m.Command
+	}
+	return nil
+}
+
+func (m *MinimizeCorpusResult) GetStats() map[string]string {
+	if m != nil {
+		return m.Stats
+	}
+	return nil
+}
+
+func (m *MinimizeCorpusResult) GetTimeExecuted() int32 {
+	if m != nil {
+		return m.TimeExecuted
+	}
+	return 0
+}
+
+func (m *MinimizeCorpusResult) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
 type Empty struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -348,7 +584,7 @@ func (m *Empty) Reset()         { *m = Empty{} }
 func (m *Empty) String() string { return proto.CompactTextString(m) }
 func (*Empty) ProtoMessage()    {}
 func (*Empty) Descriptor() ([]byte, []int) {
-	return fileDescriptor_41ff9b483743270f, []int{6}
+	return fileDescriptor_41ff9b483743270f, []int{10}
 }
 
 func (m *Empty) XXX_Unmarshal(b []byte) error {
@@ -375,42 +611,60 @@ func init() {
 	proto.RegisterType((*PrepareArg)(nil), "proto.PrepareArg")
 	proto.RegisterMapType((map[string]string)(nil), "proto.PrepareArg.ArgumentsEntry")
 	proto.RegisterType((*FuzzArg)(nil), "proto.FuzzArg")
+	proto.RegisterType((*Crash)(nil), "proto.Crash")
+	proto.RegisterType((*FuzzResult)(nil), "proto.FuzzResult")
+	proto.RegisterMapType((map[string]string)(nil), "proto.FuzzResult.StatsEntry")
 	proto.RegisterType((*ReproduceArg)(nil), "proto.ReproduceArg")
+	proto.RegisterType((*ReproduceResult)(nil), "proto.ReproduceResult")
 	proto.RegisterType((*MinimizeCorpusArg)(nil), "proto.MinimizeCorpusArg")
+	proto.RegisterType((*MinimizeCorpusResult)(nil), "proto.MinimizeCorpusResult")
+	proto.RegisterMapType((map[string]string)(nil), "proto.MinimizeCorpusResult.StatsEntry")
 	proto.RegisterType((*Empty)(nil), "proto.Empty")
 }
 
 func init() { proto.RegisterFile("fuzzer_interface.proto", fileDescriptor_41ff9b483743270f) }
 
 var fileDescriptor_41ff9b483743270f = []byte{
-	// 424 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x51, 0x8b, 0xd3, 0x40,
-	0x10, 0x26, 0x4d, 0x73, 0x35, 0x73, 0x67, 0xf1, 0xd6, 0x43, 0x42, 0x39, 0x24, 0x04, 0x84, 0x82,
-	0xd2, 0x87, 0x1e, 0x88, 0x88, 0x88, 0x47, 0xed, 0xbd, 0x1d, 0x1c, 0xd1, 0x77, 0x59, 0xeb, 0xb4,
-	0x2e, 0x5e, 0x76, 0x97, 0xe9, 0xee, 0x61, 0xf3, 0x07, 0x7c, 0xf6, 0x6f, 0xfa, 0x2b, 0x64, 0x93,
-	0x6d, 0x93, 0xd0, 0x2b, 0xf4, 0x29, 0x99, 0x6f, 0xe6, 0xfb, 0x66, 0xbe, 0x99, 0x85, 0x17, 0x4b,
-	0x5b, 0x96, 0x48, 0xdf, 0x84, 0x34, 0x48, 0x4b, 0xbe, 0xc0, 0x89, 0x26, 0x65, 0x14, 0x8b, 0xaa,
-	0x4f, 0xf6, 0x0a, 0x9e, 0xce, 0x89, 0x14, 0xe5, 0xb8, 0xd6, 0x4a, 0xae, 0x91, 0x5d, 0x40, 0x84,
-	0x0e, 0x48, 0x82, 0x34, 0x18, 0xc7, 0x79, 0x1d, 0x64, 0x57, 0x10, 0x7f, 0x31, 0x24, 0xe4, 0xea,
-	0x96, 0x6b, 0xf6, 0x0c, 0xc2, 0x5f, 0xb8, 0xf1, 0x05, 0xee, 0xd7, 0x91, 0x1e, 0xf8, 0xbd, 0xc5,
-	0xa4, 0x57, 0x93, 0xaa, 0x20, 0xfb, 0x17, 0x00, 0xdc, 0x11, 0x6a, 0x4e, 0x78, 0x4d, 0x2b, 0x76,
-	0x09, 0xf1, 0x42, 0x91, 0xb6, 0xeb, 0xcf, 0x62, 0xab, 0xde, 0x00, 0xec, 0x25, 0x80, 0xe1, 0xb4,
-	0x42, 0x73, 0xc7, 0xcd, 0x4f, 0xaf, 0xd3, 0x42, 0xd8, 0x47, 0x88, 0x39, 0xad, 0x6c, 0x81, 0xd2,
-	0xac, 0x93, 0x30, 0x0d, 0xc7, 0xa7, 0xd3, 0xb4, 0xb6, 0x32, 0x69, 0x7a, 0x4c, 0xae, 0xb7, 0x25,
-	0x73, 0x69, 0x68, 0x93, 0x37, 0x14, 0x96, 0xc2, 0x29, 0xca, 0x07, 0x41, 0xaa, 0x56, 0xe8, 0xa7,
-	0xe1, 0x38, 0xce, 0xdb, 0xd0, 0xe8, 0x03, 0x0c, 0xbb, 0xf4, 0x63, 0x8d, 0xbe, 0xef, 0xbd, 0x0b,
-	0xb2, 0x19, 0x0c, 0x6e, 0x6c, 0x59, 0x3a, 0xa3, 0x5d, 0x2b, 0xc1, 0x9e, 0x95, 0x04, 0x06, 0x05,
-	0xff, 0xfd, 0x55, 0x14, 0xb5, 0x4c, 0x94, 0x6f, 0xc3, 0x6c, 0x09, 0x67, 0x39, 0x6a, 0x52, 0x3f,
-	0xec, 0x02, 0x8f, 0x51, 0xba, 0x84, 0x58, 0x48, 0x6d, 0xdb, 0x3b, 0x6b, 0x80, 0x76, 0x9f, 0xb0,
-	0xdb, 0xe7, 0x4f, 0x00, 0xe7, 0xb7, 0x42, 0x8a, 0x42, 0x94, 0x38, 0xab, 0x4e, 0x70, 0x4c, 0xb7,
-	0x11, 0x3c, 0xa9, 0xc4, 0xdd, 0xfd, 0xea, 0x66, 0xbb, 0xd8, 0x4d, 0xa2, 0xac, 0xf1, 0xc9, 0xb0,
-	0x9e, 0x64, 0x07, 0xb4, 0x27, 0xe9, 0x77, 0x27, 0x19, 0x40, 0x34, 0x2f, 0xb4, 0xd9, 0x4c, 0xff,
-	0xf6, 0xe0, 0xe4, 0xa6, 0x7a, 0xaa, 0x6c, 0x0a, 0x03, 0x7f, 0x52, 0x76, 0xbe, 0x77, 0xe2, 0xd1,
-	0x85, 0x87, 0xba, 0xcf, 0xf6, 0x0d, 0xf4, 0x1d, 0x9b, 0x0d, 0x7d, 0xd6, 0xdf, 0xe2, 0x40, 0xf5,
-	0x5b, 0x88, 0x77, 0x7b, 0x66, 0xcf, 0x7d, 0x49, 0x7b, 0xf3, 0x07, 0x78, 0x9f, 0x60, 0xd8, 0x5d,
-	0x1b, 0x4b, 0x7c, 0xdd, 0xde, 0x36, 0x0f, 0x28, 0xbc, 0x86, 0x68, 0x76, 0x8f, 0x5c, 0xb2, 0xb3,
-	0x6d, 0xda, 0xb9, 0x7f, 0xbc, 0xf8, 0xfb, 0x49, 0x05, 0x5e, 0xfd, 0x0f, 0x00, 0x00, 0xff, 0xff,
-	0x39, 0x6b, 0xc2, 0xbd, 0xc4, 0x03, 0x00, 0x00,
+	// 614 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x94, 0x4f, 0x6f, 0xda, 0x4c,
+	0x10, 0xc6, 0x65, 0x8c, 0xc3, 0xeb, 0x81, 0x97, 0x96, 0x2d, 0x42, 0x16, 0x8d, 0x22, 0xe4, 0xaa,
+	0x11, 0x55, 0x25, 0x0e, 0xe4, 0x82, 0xaa, 0xa8, 0x52, 0x44, 0xa1, 0xa7, 0x48, 0x91, 0xd3, 0x7b,
+	0xb5, 0x35, 0x13, 0x62, 0x05, 0xff, 0xd1, 0x7a, 0x37, 0x0a, 0x7c, 0x91, 0x9e, 0xfa, 0xe5, 0x7a,
+	0xec, 0x07, 0xe8, 0xb9, 0xda, 0xf5, 0x1a, 0xdb, 0x01, 0x91, 0x54, 0xea, 0x09, 0xe6, 0xd9, 0x99,
+	0xd9, 0x9d, 0x9f, 0x9f, 0x5d, 0xe8, 0xdd, 0x88, 0xcd, 0x06, 0xd9, 0xd7, 0x20, 0xe2, 0xc8, 0x6e,
+	0xa8, 0x8f, 0xa3, 0x84, 0xc5, 0x3c, 0x26, 0x96, 0xfa, 0x71, 0xdf, 0xc2, 0xff, 0x33, 0xc6, 0x62,
+	0xe6, 0x61, 0x9a, 0xc4, 0x51, 0x8a, 0xa4, 0x0b, 0x16, 0x4a, 0xc1, 0x31, 0x06, 0xc6, 0xd0, 0xf6,
+	0xb2, 0xc0, 0x3d, 0x03, 0xfb, 0x9a, 0xb3, 0x20, 0x5a, 0x5e, 0xd2, 0x84, 0xbc, 0x04, 0xf3, 0x0e,
+	0xd7, 0x3a, 0x41, 0xfe, 0x95, 0x45, 0xf7, 0x74, 0x25, 0xd0, 0xa9, 0x65, 0x45, 0x2a, 0x70, 0x7f,
+	0x19, 0x00, 0x57, 0x0c, 0x13, 0xca, 0xf0, 0x82, 0x2d, 0xc9, 0x31, 0xd8, 0x7e, 0xcc, 0x12, 0x91,
+	0x7e, 0x0a, 0xf2, 0xee, 0x85, 0x40, 0x4e, 0x00, 0x38, 0x65, 0x4b, 0xe4, 0x57, 0x94, 0xdf, 0xea,
+	0x3e, 0x25, 0x85, 0x7c, 0x04, 0x9b, 0xb2, 0xa5, 0x08, 0x31, 0xe2, 0xa9, 0x63, 0x0e, 0xcc, 0x61,
+	0x73, 0x3c, 0xc8, 0x46, 0x19, 0x15, 0x7b, 0x8c, 0x2e, 0xf2, 0x94, 0x59, 0xc4, 0xd9, 0xda, 0x2b,
+	0x4a, 0xc8, 0x00, 0x9a, 0x18, 0xdd, 0x07, 0x2c, 0xce, 0x3a, 0xd4, 0x07, 0xe6, 0xd0, 0xf6, 0xca,
+	0x52, 0xff, 0x1c, 0xda, 0xd5, 0xf2, 0xe7, 0x0e, 0xfa, 0xa1, 0x36, 0x31, 0xdc, 0x37, 0xd0, 0x98,
+	0x8b, 0xcd, 0x46, 0x0e, 0xea, 0x40, 0x23, 0xa4, 0x0f, 0x5f, 0x82, 0x10, 0x55, 0xa9, 0xe5, 0xe5,
+	0xa1, 0x7b, 0x07, 0xd6, 0x94, 0xd1, 0xf4, 0x56, 0xb2, 0x08, 0xa2, 0x44, 0x64, 0xc3, 0x6a, 0x16,
+	0x5b, 0x81, 0xb8, 0xd0, 0x62, 0x98, 0xb0, 0x78, 0x21, 0x7c, 0x39, 0x95, 0x53, 0x53, 0x87, 0xad,
+	0x68, 0x8f, 0xe7, 0x31, 0x77, 0xe6, 0x71, 0x7f, 0x1b, 0x00, 0xf2, 0x48, 0x1e, 0xa6, 0x62, 0xc5,
+	0xe5, 0xa9, 0xfc, 0x38, 0x0c, 0x69, 0xb4, 0x70, 0x0c, 0x95, 0x9c, 0x87, 0xe4, 0x14, 0x1a, 0xbe,
+	0x3c, 0x15, 0xa6, 0x6a, 0xa7, 0xe6, 0xb8, 0xa5, 0xc1, 0xaa, 0xb3, 0x7a, 0xf9, 0x22, 0x19, 0x83,
+	0x95, 0x72, 0xba, 0xc5, 0x7f, 0xac, 0xb3, 0x8a, 0x3d, 0x46, 0xd7, 0x72, 0x39, 0x43, 0x9f, 0xa5,
+	0xca, 0x51, 0x78, 0x10, 0xe2, 0xec, 0x01, 0x7d, 0xc1, 0x71, 0xe1, 0xd4, 0x15, 0x90, 0x8a, 0x56,
+	0x58, 0xce, 0x2a, 0x59, 0xae, 0x3f, 0x01, 0x28, 0xda, 0xfd, 0xd5, 0xa7, 0x98, 0x43, 0xcb, 0x2b,
+	0xa3, 0x3a, 0x0c, 0xbb, 0xf4, 0xb5, 0x6a, 0xd5, 0xaf, 0xf5, 0xc3, 0x80, 0x17, 0xdb, 0x46, 0x4f,
+	0x52, 0x3c, 0x01, 0x60, 0xc8, 0x05, 0x8b, 0xa6, 0xf1, 0x22, 0x6f, 0x55, 0x52, 0x76, 0x48, 0x98,
+	0x7b, 0x48, 0xf4, 0xe0, 0x28, 0x16, 0x3c, 0x11, 0x5c, 0xfb, 0x53, 0x47, 0xfb, 0x09, 0xb9, 0x4b,
+	0xe8, 0x5c, 0x06, 0x51, 0x10, 0x06, 0x1b, 0x9c, 0xaa, 0x7b, 0x24, 0x87, 0xed, 0xc3, 0x7f, 0x6a,
+	0xb6, 0xe2, 0x92, 0x6d, 0x63, 0x09, 0x22, 0x6b, 0x28, 0x17, 0x33, 0x6c, 0x85, 0x50, 0x06, 0x61,
+	0x56, 0x41, 0xfc, 0x34, 0xa0, 0x5b, 0xdd, 0xe9, 0x49, 0x1a, 0xe7, 0xb9, 0x57, 0x32, 0x47, 0x9d,
+	0x6a, 0xaf, 0xec, 0xeb, 0xf2, 0x0c, 0xd7, 0x98, 0x87, 0x5c, 0x53, 0xff, 0x37, 0xae, 0x69, 0x80,
+	0x35, 0x0b, 0x13, 0xbe, 0x1e, 0x7f, 0xaf, 0xc1, 0xd1, 0x5c, 0x3d, 0x9a, 0x64, 0x0c, 0x0d, 0xfd,
+	0xb8, 0x90, 0xce, 0xce, 0x63, 0xd3, 0xef, 0x6a, 0xa9, 0xfa, 0x80, 0xbe, 0x83, 0xba, 0xac, 0x26,
+	0xed, 0xd2, 0xf5, 0x90, 0xd9, 0x9d, 0x9d, 0xeb, 0x42, 0x26, 0x60, 0x6f, 0xfd, 0x45, 0x5e, 0xe9,
+	0xf5, 0xb2, 0x75, 0xfb, 0xbd, 0xc7, 0xa2, 0xae, 0xfc, 0x0c, 0xed, 0x2a, 0x4a, 0xe2, 0xec, 0x25,
+	0x2c, 0x7b, 0xbc, 0x3e, 0xc0, 0x9e, 0xbc, 0x07, 0x6b, 0xba, 0x42, 0x1a, 0x91, 0xfc, 0xce, 0x2b,
+	0x06, 0xfb, 0x47, 0xfb, 0x76, 0xa4, 0xc4, 0xb3, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x80, 0x42,
+	0xe4, 0x18, 0x54, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -426,9 +680,9 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type FuzzerClient interface {
 	Prepare(ctx context.Context, in *PrepareArg, opts ...grpc.CallOption) (*ErrorResponse, error)
-	Fuzz(ctx context.Context, in *FuzzArg, opts ...grpc.CallOption) (*ErrorResponse, error)
-	Reproduce(ctx context.Context, in *ReproduceArg, opts ...grpc.CallOption) (*ErrorResponse, error)
-	MinimizeCorpus(ctx context.Context, in *MinimizeCorpusArg, opts ...grpc.CallOption) (*ErrorResponse, error)
+	Fuzz(ctx context.Context, in *FuzzArg, opts ...grpc.CallOption) (*FuzzResult, error)
+	Reproduce(ctx context.Context, in *ReproduceArg, opts ...grpc.CallOption) (*ReproduceResult, error)
+	MinimizeCorpus(ctx context.Context, in *MinimizeCorpusArg, opts ...grpc.CallOption) (*MinimizeCorpusResult, error)
 	Clean(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ErrorResponse, error)
 }
 
@@ -449,8 +703,8 @@ func (c *fuzzerClient) Prepare(ctx context.Context, in *PrepareArg, opts ...grpc
 	return out, nil
 }
 
-func (c *fuzzerClient) Fuzz(ctx context.Context, in *FuzzArg, opts ...grpc.CallOption) (*ErrorResponse, error) {
-	out := new(ErrorResponse)
+func (c *fuzzerClient) Fuzz(ctx context.Context, in *FuzzArg, opts ...grpc.CallOption) (*FuzzResult, error) {
+	out := new(FuzzResult)
 	err := c.cc.Invoke(ctx, "/proto.Fuzzer/Fuzz", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -458,8 +712,8 @@ func (c *fuzzerClient) Fuzz(ctx context.Context, in *FuzzArg, opts ...grpc.CallO
 	return out, nil
 }
 
-func (c *fuzzerClient) Reproduce(ctx context.Context, in *ReproduceArg, opts ...grpc.CallOption) (*ErrorResponse, error) {
-	out := new(ErrorResponse)
+func (c *fuzzerClient) Reproduce(ctx context.Context, in *ReproduceArg, opts ...grpc.CallOption) (*ReproduceResult, error) {
+	out := new(ReproduceResult)
 	err := c.cc.Invoke(ctx, "/proto.Fuzzer/Reproduce", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -467,8 +721,8 @@ func (c *fuzzerClient) Reproduce(ctx context.Context, in *ReproduceArg, opts ...
 	return out, nil
 }
 
-func (c *fuzzerClient) MinimizeCorpus(ctx context.Context, in *MinimizeCorpusArg, opts ...grpc.CallOption) (*ErrorResponse, error) {
-	out := new(ErrorResponse)
+func (c *fuzzerClient) MinimizeCorpus(ctx context.Context, in *MinimizeCorpusArg, opts ...grpc.CallOption) (*MinimizeCorpusResult, error) {
+	out := new(MinimizeCorpusResult)
 	err := c.cc.Invoke(ctx, "/proto.Fuzzer/MinimizeCorpus", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -488,9 +742,9 @@ func (c *fuzzerClient) Clean(ctx context.Context, in *Empty, opts ...grpc.CallOp
 // FuzzerServer is the server API for Fuzzer service.
 type FuzzerServer interface {
 	Prepare(context.Context, *PrepareArg) (*ErrorResponse, error)
-	Fuzz(context.Context, *FuzzArg) (*ErrorResponse, error)
-	Reproduce(context.Context, *ReproduceArg) (*ErrorResponse, error)
-	MinimizeCorpus(context.Context, *MinimizeCorpusArg) (*ErrorResponse, error)
+	Fuzz(context.Context, *FuzzArg) (*FuzzResult, error)
+	Reproduce(context.Context, *ReproduceArg) (*ReproduceResult, error)
+	MinimizeCorpus(context.Context, *MinimizeCorpusArg) (*MinimizeCorpusResult, error)
 	Clean(context.Context, *Empty) (*ErrorResponse, error)
 }
 
@@ -501,13 +755,13 @@ type UnimplementedFuzzerServer struct {
 func (*UnimplementedFuzzerServer) Prepare(ctx context.Context, req *PrepareArg) (*ErrorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Prepare not implemented")
 }
-func (*UnimplementedFuzzerServer) Fuzz(ctx context.Context, req *FuzzArg) (*ErrorResponse, error) {
+func (*UnimplementedFuzzerServer) Fuzz(ctx context.Context, req *FuzzArg) (*FuzzResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Fuzz not implemented")
 }
-func (*UnimplementedFuzzerServer) Reproduce(ctx context.Context, req *ReproduceArg) (*ErrorResponse, error) {
+func (*UnimplementedFuzzerServer) Reproduce(ctx context.Context, req *ReproduceArg) (*ReproduceResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reproduce not implemented")
 }
-func (*UnimplementedFuzzerServer) MinimizeCorpus(ctx context.Context, req *MinimizeCorpusArg) (*ErrorResponse, error) {
+func (*UnimplementedFuzzerServer) MinimizeCorpus(ctx context.Context, req *MinimizeCorpusArg) (*MinimizeCorpusResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MinimizeCorpus not implemented")
 }
 func (*UnimplementedFuzzerServer) Clean(ctx context.Context, req *Empty) (*ErrorResponse, error) {

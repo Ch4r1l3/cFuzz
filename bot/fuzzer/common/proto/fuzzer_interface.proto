@@ -18,29 +18,55 @@ message PrepareArg {
 }
 
 message FuzzArg {
-	string targetPath = 1;
-	int32 maxTime = 2;
+	int32 maxTime = 1;
+}
+
+message Crash {
+	string inputPath = 1;
+	repeated string reproduceArg = 2;
+	repeated string enviroments = 3;
+}
+
+message FuzzResult {
+	repeated string command = 1;
+	repeated Crash crashes = 2;
+	map<string, string> stats = 3;
+	int32 timeExecuted = 4;
+	string error = 5;
 }
 
 message ReproduceArg {
-	string targetPath = 1;
-	string inputPath = 2;
-	int32 maxTime = 3;
+	string inputPath = 1;
+	int32 maxTime = 2;
+}
+
+message ReproduceResult {
+    	repeated string command = 1;
+	int32 returnCode = 2;
+	int32 timeExecuted = 3;
+	repeated string output = 4;
+	string error = 5;
 }
 
 message MinimizeCorpusArg {
-	string targetPath = 1;
-	string inputDir = 2;
-	string outputDir = 3;
-	int32 maxTime = 4;
+	string inputDir = 1;
+	string outputDir = 2;
+	int32 maxTime = 3;
+}
+
+message MinimizeCorpusResult {
+	repeated string command = 1;
+	map<string, string> stats = 2;
+	int32 timeExecuted = 3;
+	string error = 4;
 }
  
 message Empty {}
  
 service Fuzzer {
     rpc Prepare(PrepareArg) returns (ErrorResponse);
-    rpc Fuzz(FuzzArg) returns (ErrorResponse);
-    rpc Reproduce(ReproduceArg) returns (ErrorResponse);
-    rpc MinimizeCorpus(MinimizeCorpusArg) returns (ErrorResponse);
+    rpc Fuzz(FuzzArg) returns (FuzzResult);
+    rpc Reproduce(ReproduceArg) returns (ReproduceResult);
+    rpc MinimizeCorpus(MinimizeCorpusArg) returns (MinimizeCorpusResult);
     rpc Clean(Empty) returns (ErrorResponse);
 }

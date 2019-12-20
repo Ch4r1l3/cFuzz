@@ -26,49 +26,72 @@ func (f *FuzzerGRPCClient) Prepare(args PrepareArg) error {
 	return errors.New(resp.Error)
 }
 
-func (f *FuzzerGRPCClient) Fuzz(args FuzzArg) error {
+func (f *FuzzerGRPCClient) Fuzz(args FuzzArg) (FuzzResult, error) {
 	resp, err := f.client.Fuzz(context.Background(), &proto.FuzzArg{
-		TargetPath: args.TargetPath,
-		MaxTime:    int32(args.MaxTime),
+		MaxTime: int32(args.MaxTime),
 	})
 	if err != nil {
-		return err
+		return FuzzResult{}, err
+	}
+
+	crashes := []Crash{}
+	for _, v := range resp.Crashes {
+		crashes = append(crashes, Crash{
+			InputPath:    v.InputPath,
+			ReproduceArg: v.ReproduceArg,
+			Enviroments:  v.Enviroments,
+		})
+	}
+	result := FuzzResult{
+		Command:      resp.Command,
+		Crashes:      crashes,
+		Stats:        resp.Stats,
+		TimeExecuted: int(resp.TimeExecuted),
 	}
 	if resp.Error == "" {
-		return nil
+		return result, nil
 	}
-	return errors.New(resp.Error)
+	return result, errors.New(resp.Error)
 }
 
-func (f *FuzzerGRPCClient) Reproduce(args ReproduceArg) error {
+func (f *FuzzerGRPCClient) Reproduce(args ReproduceArg) (ReproduceResult, error) {
 	resp, err := f.client.Reproduce(context.Background(), &proto.ReproduceArg{
-		TargetPath: args.TargetPath,
-		InputPath:  args.InputPath,
-		MaxTime:    int32(args.MaxTime),
+		InputPath: args.InputPath,
+		MaxTime:   int32(args.MaxTime),
 	})
 	if err != nil {
-		return err
+		return ReproduceResult{}, err
+	}
+	result := ReproduceResult{
+		Command:      resp.Command,
+		ReturnCode:   int(resp.ReturnCode),
+		TimeExecuted: int(resp.TimeExecuted),
+		Output:       resp.Output,
 	}
 	if resp.Error == "" {
-		return nil
+		return result, nil
 	}
-	return errors.New(resp.Error)
+	return result, errors.New(resp.Error)
 }
 
-func (f *FuzzerGRPCClient) MinimizeCorpus(args MinimizeCorpusArg) error {
+func (f *FuzzerGRPCClient) MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error) {
 	resp, err := f.client.MinimizeCorpus(context.Background(), &proto.MinimizeCorpusArg{
-		TargetPath: args.TargetPath,
-		InputDir:   args.InputDir,
-		OutputDir:  args.OutputDir,
-		MaxTime:    int32(args.MaxTime),
+		InputDir:  args.InputDir,
+		OutputDir: args.OutputDir,
+		MaxTime:   int32(args.MaxTime),
 	})
 	if err != nil {
-		return err
+		return MinimizeCorpusResult{}, err
+	}
+	result := MinimizeCorpusResult{
+		Command:      resp.Command,
+		Stats:        resp.Stats,
+		TimeExecuted: int(resp.TimeExecuted),
 	}
 	if resp.Error == "" {
-		return nil
+		return result, nil
 	}
-	return errors.New(resp.Error)
+	return result, errors.New(resp.Error)
 }
 
 func (f *FuzzerGRPCClient) Clean() error {
@@ -100,40 +123,65 @@ func (f *FuzzerGRPCServer) Prepare(ctx context.Context, args *proto.PrepareArg) 
 	return &proto.ErrorResponse{Error: err.Error()}, nil
 }
 
-func (f *FuzzerGRPCServer) Fuzz(ctx context.Context, args *proto.FuzzArg) (*proto.ErrorResponse, error) {
-	err := f.Impl.Fuzz(FuzzArg{
-		TargetPath: args.TargetPath,
-		MaxTime:    int(args.MaxTime),
+func (f *FuzzerGRPCServer) Fuzz(ctx context.Context, args *proto.FuzzArg) (*proto.FuzzResult, error) {
+	resp, err := f.Impl.Fuzz(FuzzArg{
+		MaxTime: int(args.MaxTime),
 	})
-	if err == nil {
-		return &proto.ErrorResponse{Error: ""}, nil
+	crashes := []*proto.Crash{}
+	for _, v := range resp.Crashes {
+		crashes = append(crashes, &proto.Crash{
+			InputPath:    v.InputPath,
+			ReproduceArg: v.ReproduceArg,
+			Enviroments:  v.Enviroments,
+		})
 	}
-	return &proto.ErrorResponse{Error: err.Error()}, nil
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
+	}
+	return &proto.FuzzResult{
+		Command:      resp.Command,
+		Crashes:      crashes,
+		Stats:        resp.Stats,
+		TimeExecuted: int32(resp.TimeExecuted),
+		Error:        errMsg,
+	}, nil
 }
 
-func (f *FuzzerGRPCServer) Reproduce(ctx context.Context, args *proto.ReproduceArg) (*proto.ErrorResponse, error) {
-	err := f.Impl.Reproduce(ReproduceArg{
-		TargetPath: args.TargetPath,
-		InputPath:  args.InputPath,
-		MaxTime:    int(args.MaxTime),
+func (f *FuzzerGRPCServer) Reproduce(ctx context.Context, args *proto.ReproduceArg) (*proto.ReproduceResult, error) {
+	resp, err := f.Impl.Reproduce(ReproduceArg{
+		InputPath: args.InputPath,
+		MaxTime:   int(args.MaxTime),
 	})
-	if err == nil {
-		return &proto.ErrorResponse{Error: ""}, nil
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
 	}
-	return &proto.ErrorResponse{Error: err.Error()}, nil
+	return &proto.ReproduceResult{
+		Command:      resp.Command,
+		ReturnCode:   int32(resp.ReturnCode),
+		TimeExecuted: int32(resp.TimeExecuted),
+		Output:       resp.Output,
+		Error:        errMsg,
+	}, nil
 }
 
-func (f *FuzzerGRPCServer) MinimizeCorpus(ctx context.Context, args *proto.MinimizeCorpusArg) (*proto.ErrorResponse, error) {
-	err := f.Impl.MinimizeCorpus(MinimizeCorpusArg{
-		TargetPath: args.TargetPath,
-		InputDir:   args.InputDir,
-		OutputDir:  args.OutputDir,
-		MaxTime:    int(args.MaxTime),
+func (f *FuzzerGRPCServer) MinimizeCorpus(ctx context.Context, args *proto.MinimizeCorpusArg) (*proto.MinimizeCorpusResult, error) {
+	resp, err := f.Impl.MinimizeCorpus(MinimizeCorpusArg{
+		InputDir:  args.InputDir,
+		OutputDir: args.OutputDir,
+		MaxTime:   int(args.MaxTime),
 	})
-	if err == nil {
-		return &proto.ErrorResponse{Error: ""}, nil
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
 	}
-	return &proto.ErrorResponse{Error: err.Error()}, nil
+	return &proto.MinimizeCorpusResult{
+		Command:      resp.Command,
+		Stats:        resp.Stats,
+		TimeExecuted: int32(resp.TimeExecuted),
+		Error:        errMsg,
+	}, nil
 }
 
 func (f *FuzzerGRPCServer) Clean(ctx context.Context, args *proto.Empty) (*proto.ErrorResponse, error) {

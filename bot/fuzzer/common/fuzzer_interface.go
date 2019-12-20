@@ -16,28 +16,51 @@ type PrepareArg struct {
 }
 
 type FuzzArg struct {
-	TargetPath string
-	MaxTime    int
+	MaxTime int
+}
+
+type Crash struct {
+	InputPath    string
+	ReproduceArg []string
+	Enviroments  []string
+}
+
+type FuzzResult struct {
+	Command      []string
+	Crashes      []Crash
+	Stats        map[string]string
+	TimeExecuted int
 }
 
 type ReproduceArg struct {
-	TargetPath string
-	InputPath  string
-	MaxTime    int
+	InputPath string
+	MaxTime   int
+}
+
+type ReproduceResult struct {
+	Command      []string
+	ReturnCode   int
+	TimeExecuted int
+	Output       []string
 }
 
 type MinimizeCorpusArg struct {
-	TargetPath string
-	InputDir   string
-	OutputDir  string
-	MaxTime    int
+	InputDir  string
+	OutputDir string
+	MaxTime   int
+}
+
+type MinimizeCorpusResult struct {
+	Command      []string
+	Stats        map[string]string
+	TimeExecuted int
 }
 
 type Fuzzer interface {
 	Prepare(args PrepareArg) error
-	Fuzz(args FuzzArg) error
-	Reproduce(args ReproduceArg) error
-	MinimizeCorpus(args MinimizeCorpusArg) error
+	Fuzz(args FuzzArg) (FuzzResult, error)
+	Reproduce(args ReproduceArg) (ReproduceResult, error)
+	MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error)
 	Clean() error
 }
 

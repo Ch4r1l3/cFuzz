@@ -8,7 +8,7 @@ import (
 )
 
 var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  3,
+	ProtocolVersion:  2,
 	MagicCookieKey:   "fuzz",
 	MagicCookieValue: "fuzz",
 }
