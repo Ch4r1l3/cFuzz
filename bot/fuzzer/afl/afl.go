@@ -16,6 +16,7 @@ type AFL struct {
 	logger      hclog.Logger
 	corpusDir   string
 	targetPath  string
+	outputDir   string
 	arguments   map[string]string
 	enviroments []string
 }
@@ -79,6 +80,11 @@ func (a *AFL) Prepare(args fuzzer.PrepareArg) error {
 		return errors.New("AFL Prepare TargetPath not exist")
 	}
 
+	outdir, err := ioutil.TempDir(TEMP_DIR, "afl_fuzz")
+	if err != nil {
+		return errors.New("AFL Prepare create temp directory error: " + err.Error())
+	}
+	a.outputDir = outdir
 	return nil
 }
 
@@ -90,11 +96,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	arguments = append(arguments, a.corpusDir)
 	arguments = append(arguments, OUTPUT_DIR_FLAG)
 
-	dir, err := ioutil.TempDir(TEMP_DIR, "afl_fuzz")
-	if err != nil {
-		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz create temp directory error: " + err.Error())
-	}
-	arguments = append(arguments, dir)
+	arguments = append(arguments, a.outputDir)
 
 	//if MEMORY_LIMIT exists in arguments, append it to arguments
 	if v, err := a.getArgument(MEMORY_LIMIT); err == nil {
@@ -112,7 +114,8 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 
 	//if PROGRAM_ARG exists in arguments, append it to arguments
 	if v, err := a.getArgument(PROGRAM_ARG); err == nil {
-		arguments = append(arguments, v)
+		programArgs := strings.Fields(v)
+		arguments = append(arguments, programArgs...)
 	}
 
 	//run afl
@@ -124,15 +127,17 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	statusChan := runner.Start()
 	//cancelChan := make(chan struct{})
 
-	go func() {
-		ticker := time.NewTicker(time.Duration(AFL_CHECK_TICK_TIME) * time.Second)
-		for range ticker.C {
-			status := runner.Status()
-			for _, v := range status.Stdout {
-				a.logger.Debug(v)
+	/*
+		go func() {
+			ticker := time.NewTicker(time.Duration(AFL_CHECK_TICK_TIME) * time.Second)
+			for range ticker.C {
+				status := runner.Status()
+				for _, v := range status.Stdout {
+					a.logger.Debug(v)
+				}
 			}
-		}
-	}()
+		}()
+	*/
 
 	go func() {
 		<-time.After(time.Duration(args.MaxTime) * time.Second)
@@ -141,12 +146,27 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 
 	//finish fuzz
 	status := <-statusChan
-	err = checkAFLOutput(status.Stdout)
+	err := checkAFLOutput(status.Stdout)
 	if err != nil {
 		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz error: " + err.Error())
 	}
 
-	return fuzzer.FuzzResult{}, nil
+	stats, err := ParseFuzzerStatsFile(a.outputDir)
+	if err != nil {
+		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz parse stats file error: " + err.Error())
+	}
+
+	crashes, err := GetAllCrashes(a.outputDir)
+	if err != nil {
+		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz get crashes error: " + err.Error())
+	}
+
+	return fuzzer.FuzzResult{
+		Command:      arguments,
+		Crashes:      crashes,
+		Stats:        stats,
+		TimeExecuted: int(status.Runtime),
+	}, nil
 }
 
 func (a *AFL) Reproduce(args fuzzer.ReproduceArg) (fuzzer.ReproduceResult, error) {

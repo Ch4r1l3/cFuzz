@@ -3,6 +3,7 @@ module github.com/Ch4r1l3/cFuzz
 go 1.13
 
 require (
+	github.com/go-cmd/cmd v1.1.0
 	github.com/golang/protobuf v1.3.2
 	github.com/hashicorp/go-hclog v0.10.0
 	github.com/hashicorp/go-plugin v1.0.1

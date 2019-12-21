@@ -68,8 +68,12 @@ func main() {
 	}
 
 	v, err := afl.Fuzz(tFuzzArg)
-	fmt.Println(v)
 	if err != nil {
 		log.Fatal(err)
+	}
+	fmt.Println(v)
+	fmt.Println("Stats !")
+	for k, v := range v.Stats {
+		fmt.Println(k + ": " + v)
 	}
 }

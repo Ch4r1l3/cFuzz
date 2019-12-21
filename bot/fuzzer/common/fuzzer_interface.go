@@ -20,7 +20,7 @@ type FuzzArg struct {
 }
 
 type Crash struct {
-	InputPath    string
+	InputPath    string //Path of the crash file
 	ReproduceArg []string
 	Enviroments  []string
 }
@@ -33,7 +33,7 @@ type FuzzResult struct {
 }
 
 type ReproduceArg struct {
-	InputPath string
+	InputPath string //Path of the input file to be reproduced
 	MaxTime   int
 }
 
@@ -45,7 +45,7 @@ type ReproduceResult struct {
 }
 
 type MinimizeCorpusArg struct {
-	InputDir  string
+	InputDir  string //Path of the corpus to be minimized
 	OutputDir string
 	MaxTime   int
 }
