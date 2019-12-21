@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common"
-	"github.com/go-cmd/cmd"
+	//"github.com/go-cmd/cmd"
+	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/hashicorp/go-hclog"
 	"io/ioutil"
 	"os"
@@ -38,6 +39,14 @@ func checkAFLOutput(out []string) error {
 				return errors.New(COLOR_REGEX.ReplaceAllString(r.FindString(v), ""))
 			}
 		}
+	}
+	return nil
+}
+
+func (a *AFL) getProgramArg() []string {
+	if v, err := a.getArgument(PROGRAM_ARG); err == nil {
+		programArgs := strings.Fields(v)
+		return programArgs
 	}
 	return nil
 }
@@ -111,15 +120,17 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	}
 
 	arguments = append(arguments, a.targetPath)
+	reproduceArg := []string{a.targetPath}
 
 	//if PROGRAM_ARG exists in arguments, append it to arguments
-	if v, err := a.getArgument(PROGRAM_ARG); err == nil {
-		programArgs := strings.Fields(v)
+	programArgs := a.getProgramArg()
+	if programArgs != nil {
 		arguments = append(arguments, programArgs...)
+		reproduceArg = append(reproduceArg, reproduceArg...)
 	}
 
 	//run afl
-	runner := cmd.NewCmd(AFL_PATH, arguments...)
+	runner := utils.NewCmd(AFL_PATH, arguments...)
 	if len(a.enviroments) != 0 {
 		runner.Env = a.enviroments
 	}
@@ -160,6 +171,10 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	if err != nil {
 		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz get crashes error: " + err.Error())
 	}
+	for i, _ := range crashes {
+		crashes[i].ReproduceArg = reproduceArg
+		crashes[i].Enviroments = a.enviroments
+	}
 
 	return fuzzer.FuzzResult{
 		Command:      arguments,
@@ -171,7 +186,54 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 
 func (a *AFL) Reproduce(args fuzzer.ReproduceArg) (fuzzer.ReproduceResult, error) {
 	a.logger.Debug("reproduce in afl")
-	return fuzzer.ReproduceResult{}, nil
+
+	if _, err := os.Stat(args.InputPath); os.IsNotExist(err) {
+		return fuzzer.ReproduceResult{}, errors.New("AFL Reproduce InputPath not exist")
+	}
+
+	arguments := []string{}
+	programArgs := a.getProgramArg()
+	isStdinInput := true
+	if programArgs != nil {
+		for i, v := range programArgs {
+			if v == "@@" {
+				programArgs[i] = args.InputPath
+				isStdinInput = false
+			}
+		}
+		arguments = append(arguments, programArgs...)
+	}
+	runner := utils.NewCmd(a.targetPath, arguments...)
+	if len(a.enviroments) != 0 {
+		runner.Env = a.enviroments
+	}
+
+	if isStdinInput {
+		file, err := os.Open(args.InputPath)
+		if err != nil {
+			return fuzzer.ReproduceResult{}, errors.New("AFL Reproduce cannot open input file: " + err.Error())
+		}
+		runner.Stdin = file
+		defer file.Close()
+	}
+
+	statusChan := runner.Start()
+	go func() {
+		<-time.After(time.Duration(args.MaxTime) * time.Second)
+		runner.Stop()
+	}()
+
+	//finish reproduce
+	status := <-statusChan
+	cmd := []string{a.targetPath}
+	cmd = append(cmd, programArgs...)
+
+	return fuzzer.ReproduceResult{
+		Command:      cmd,
+		ReturnCode:   status.Exit,
+		TimeExecuted: int(status.Runtime),
+		Output:       status.Stdout,
+	}, nil
 }
 
 func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) (fuzzer.MinimizeCorpusResult, error) {
@@ -181,5 +243,12 @@ func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) (fuzzer.MinimizeCorp
 
 func (a *AFL) Clean() error {
 	a.logger.Debug("clean in afl")
+	if _, err := os.Stat(a.outputDir); !os.IsNotExist(err) {
+		err = os.RemoveAll(a.outputDir)
+		if err != nil {
+			return errors.New("AFL Clean error :" + err.Error())
+		}
+	}
+
 	return nil
 }

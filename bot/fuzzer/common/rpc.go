@@ -38,7 +38,7 @@ func (f *FuzzerRPCClient) MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpus
 
 func (f *FuzzerRPCClient) Clean() error {
 	var resp string
-	f.client.Call("Plugin.MinimizeCorpus", new(interface{}), &resp)
+	f.client.Call("Plugin.Clean", new(interface{}), &resp)
 	if resp == "" {
 		return nil
 	}

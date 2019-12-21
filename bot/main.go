@@ -76,4 +76,28 @@ func main() {
 	for k, v := range v.Stats {
 		fmt.Println(k + ": " + v)
 	}
+	fmt.Println("Crashes !")
+
+	if len(v.Crashes) > 0 {
+		for _, v := range v.Crashes {
+			tReproduceArg := fuzzer.ReproduceArg{
+				InputPath: v.InputPath,
+				MaxTime:   60,
+			}
+			result, err := afl.Reproduce(tReproduceArg)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fmt.Println("Return Code:")
+			fmt.Println(result.ReturnCode)
+			fmt.Println("TimeExecuted:")
+
+			fmt.Println(result.TimeExecuted)
+		}
+	}
+
+	err = afl.Clean()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
