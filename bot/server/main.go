@@ -11,6 +11,7 @@ func main() {
 
 	config.Setup()
 	models.Setup()
+	defer models.DB.Close()
 
 	router := router.InitRouter()
 

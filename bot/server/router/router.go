@@ -12,11 +12,12 @@ func InitRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	gin.SetMode(config.ServerConf.RunMode)
+	r.MaxMultipartMemory = config.ServerConf.UploadFileLimit << 20
 
 	fuzzerController := new(controller.FuzzerController)
 	r.GET("/fuzzer", fuzzerController.List)
 	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer", fuzzerController.Destroy)
+	r.DELETE("/fuzzer/:name", fuzzerController.Destroy)
 
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.Retrieve)

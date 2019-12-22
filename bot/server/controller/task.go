@@ -14,6 +14,10 @@ func (tc *TaskController) Create(c *gin.Context) {
 
 }
 
+func (tc *TaskController) Update(c *gin.Context) {
+
+}
+
 func (tc *TaskController) Destroy(c *gin.Context) {
 
 }

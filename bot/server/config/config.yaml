@@ -3,3 +3,5 @@ server:
         port: 9999
         readTimeout: 60
         writeTimeout: 60
+        fuzzerStorePath: /tmp
+        uploadFileLimit: 80
