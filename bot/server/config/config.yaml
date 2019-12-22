@@ -5,3 +5,4 @@ server:
         writeTimeout: 60
         fuzzerStorePath: /tmp
         uploadFileLimit: 80
+        defaultFuzzerName: fuzzer
