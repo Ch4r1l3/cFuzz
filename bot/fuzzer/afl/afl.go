@@ -238,7 +238,7 @@ func (a *AFL) Reproduce(args fuzzer.ReproduceArg) (fuzzer.ReproduceResult, error
 
 func (a *AFL) MinimizeCorpus(args fuzzer.MinimizeCorpusArg) (fuzzer.MinimizeCorpusResult, error) {
 	a.logger.Debug("minimize corpus in afl")
-	return fuzzer.MinimizeCorpusResult{}, nil
+	return fuzzer.MinimizeCorpusResult{}, errors.New("AFL MinimizeCorpus Not Implemented")
 }
 
 func (a *AFL) Clean() error {
