@@ -9,12 +9,13 @@ import (
 
 type server struct {
 	RunMode           string `mapstructure:"runMode"`
-	Port              string `mapstructure:"port"`
+	Port              int    `mapstructure:"port"`
 	ReadTimeout       string `mapstructure:"readTimeout"`
 	WriteTimeout      string `mapstructure:"writeTimeout"`
-	FuzzerStorePath   string `mapstructure:"fuzzerStorePath"`
+	TempPath          string `mapstructure:"tempPath"`
 	UploadFileLimit   int64  `mapstructure:"uploadFileLimit"`
 	DefaultFuzzerName string `mapstructure:"defaultFuzzerName"`
+	DefaultFuzzTime   int    `mapstructure:"defaultFuzzTime"`
 }
 
 var ServerConf = &server{}

@@ -1,8 +1,9 @@
 server: 
         runMode: debug
-        port: 9999
+        port: 8888
         readTimeout: 60
         writeTimeout: 60
-        fuzzerStorePath: /tmp
+        tempPath: /tmp
         uploadFileLimit: 80
         defaultFuzzerName: fuzzer
+        defaultFuzzTime: 86400
