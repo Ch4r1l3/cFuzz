@@ -29,9 +29,13 @@ type TaskUpdateReq struct {
 
 func (tc *TaskController) Retrieve(c *gin.Context) {
 	task, err1 := models.GetTask()
+	if err1 != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "create task first"})
+		return
+	}
 	arguments, err2 := models.GetArguments()
 	enviroments, err3 := models.GetEnviroments()
-	if err1 != nil || err2 != nil || err3 != nil {
+	if err2 != nil || err3 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 		return
 	}
@@ -68,6 +72,11 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 
+	if req.MaxTime <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "fuzz run time should longger than 0s"})
+		return
+	}
+
 	//remove corpus dir and target path
 	if _, err = os.Stat(task.CorpusDir); task.CorpusDir != "" && !os.IsNotExist(err) {
 		os.RemoveAll(task.CorpusDir)
@@ -94,12 +103,14 @@ func (tc *TaskController) Create(c *gin.Context) {
 	err = models.InsertArguments(req.Arguments)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		return
 	}
 
 	//create enviroments
 	err = models.InsertEnviroments(req.Enviroments)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		return
 	}
 	c.JSON(http.StatusOK, req)
 }
@@ -118,7 +129,6 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 	if task.Status == config.TASK_RUNNING && req.Status == config.TASK_STOPPED {
 		service.StopFuzz()
-		c.JSON(http.StatusOK, "")
 	} else if task.Status == config.TASK_CREATED && req.Status == config.TASK_RUNNING {
 		//check plugin and target
 		if _, err = os.Stat(task.CorpusDir); task.CorpusDir == "" || os.IsNotExist(err) {
@@ -223,6 +233,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 	}
 
@@ -303,6 +314,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		targetPath = filepath.Join(tmpDir, targetRelPath)
 		targetPath = filepath.Clean(targetPath)

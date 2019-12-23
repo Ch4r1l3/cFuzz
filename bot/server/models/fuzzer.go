@@ -9,7 +9,7 @@ type Fuzzer struct {
 func GetFuzzerByName(name string) (*Fuzzer, error) {
 	var fuzzer Fuzzer
 	if err := DB.Where("name = ?", name).First(&fuzzer).Error; err != nil {
-		return nil, err
+		return &Fuzzer{}, err
 	}
 	return &fuzzer, nil
 }

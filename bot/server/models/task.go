@@ -12,7 +12,7 @@ type Task struct {
 func GetTask() (*Task, error) {
 	var task Task
 	if err := DB.First(&task).Error; err != nil {
-		return nil, err
+		return &Task{}, err
 	}
 	return &task, nil
 }

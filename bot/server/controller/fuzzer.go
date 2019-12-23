@@ -78,6 +78,7 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		fuzzer.Path = filepath.Join(tmpDir, config.ServerConf.DefaultFuzzerName)
 		if _, err = os.Stat(fuzzer.Path); os.IsNotExist(err) {
@@ -88,11 +89,12 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 	err = os.Chmod(fuzzer.Path, 0755)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error change mode of fuzzer plugin"})
+		return
 	}
 
 	models.DB.Save(&fuzzer)
 
-	c.JSON(200, fuzzer)
+	c.JSON(http.StatusOK, fuzzer)
 }
 
 func (fc *FuzzerController) Destroy(c *gin.Context) {
