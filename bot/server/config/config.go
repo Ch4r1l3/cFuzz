@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-type server struct {
+type Server struct {
 	RunMode           string `mapstructure:"runMode"`
 	Port              int    `mapstructure:"port"`
 	ReadTimeout       string `mapstructure:"readTimeout"`
@@ -18,7 +18,7 @@ type server struct {
 	DefaultFuzzTime   int    `mapstructure:"defaultFuzzTime"`
 }
 
-var ServerConf = &server{}
+var ServerConf = &Server{}
 
 func Setup() {
 	viper.SetConfigType("YAML")
