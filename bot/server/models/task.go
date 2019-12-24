@@ -48,13 +48,13 @@ func GetArguments() (map[string]string, error) {
 	return arguments, nil
 }
 
-type TaskEnviroment struct {
+type TaskEnvironment struct {
 	Value string `json:"value"`
 }
 
-func InsertEnviroments(enviroments []string) error {
-	for _, v := range enviroments {
-		te := TaskEnviroment{
+func InsertEnvironments(environments []string) error {
+	for _, v := range environments {
+		te := TaskEnvironment{
 			Value: v,
 		}
 		result := DB.Create(&te)
@@ -65,16 +65,16 @@ func InsertEnviroments(enviroments []string) error {
 	return nil
 }
 
-func GetEnviroments() ([]string, error) {
-	enviroments := []string{}
-	taskEnviroments := []TaskEnviroment{}
-	if err := DB.Find(&taskEnviroments).Error; err != nil {
-		return enviroments, err
+func GetEnvironments() ([]string, error) {
+	environments := []string{}
+	taskEnvironments := []TaskEnvironment{}
+	if err := DB.Find(&taskEnvironments).Error; err != nil {
+		return environments, err
 	}
-	for _, v := range taskEnviroments {
-		enviroments = append(enviroments, v.Value)
+	for _, v := range taskEnvironments {
+		environments = append(environments, v.Value)
 	}
-	return enviroments, nil
+	return environments, nil
 }
 
 type TaskCrash struct {

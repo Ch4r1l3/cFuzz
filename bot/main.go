@@ -57,10 +57,10 @@ func main() {
 		MaxTime: 60,
 	}
 	tPrepareArg := fuzzer.PrepareArg{
-		CorpusDir:   "/tmp/test/corpus",
-		TargetPath:  "/tmp/test/test",
-		Arguments:   map[string]string{},
-		Enviroments: []string{},
+		CorpusDir:    "/tmp/test/corpus",
+		TargetPath:   "/tmp/test/test",
+		Arguments:    map[string]string{},
+		Environments: []string{},
 	}
 	err = afl.Prepare(tPrepareArg)
 	if err != nil {

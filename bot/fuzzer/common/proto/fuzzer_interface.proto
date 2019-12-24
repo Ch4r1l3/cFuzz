@@ -14,7 +14,7 @@ message PrepareArg {
 	string corpusDir = 1;
 	string targetPath = 2;
 	map<string, string> arguments = 3;
-	repeated string enviroments = 4;
+	repeated string environments = 4;
 }
 
 message FuzzArg {
@@ -24,7 +24,7 @@ message FuzzArg {
 message Crash {
 	string inputPath = 1;
 	repeated string reproduceArg = 2;
-	repeated string enviroments = 3;
+	repeated string environments = 3;
 }
 
 message FuzzResult {

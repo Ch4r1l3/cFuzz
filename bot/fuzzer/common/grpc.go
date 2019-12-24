@@ -12,10 +12,10 @@ type FuzzerGRPCClient struct {
 
 func (f *FuzzerGRPCClient) Prepare(args PrepareArg) error {
 	resp, err := f.client.Prepare(context.Background(), &proto.PrepareArg{
-		CorpusDir:   args.CorpusDir,
-		TargetPath:  args.TargetPath,
-		Arguments:   args.Arguments,
-		Enviroments: args.Enviroments,
+		CorpusDir:    args.CorpusDir,
+		TargetPath:   args.TargetPath,
+		Arguments:    args.Arguments,
+		Environments: args.Environments,
 	})
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (f *FuzzerGRPCClient) Fuzz(args FuzzArg) (FuzzResult, error) {
 		crashes = append(crashes, Crash{
 			InputPath:    v.InputPath,
 			ReproduceArg: v.ReproduceArg,
-			Enviroments:  v.Enviroments,
+			Environments: v.Environments,
 		})
 	}
 	result := FuzzResult{
@@ -112,10 +112,10 @@ type FuzzerGRPCServer struct {
 
 func (f *FuzzerGRPCServer) Prepare(ctx context.Context, args *proto.PrepareArg) (*proto.ErrorResponse, error) {
 	err := f.Impl.Prepare(PrepareArg{
-		CorpusDir:   args.CorpusDir,
-		TargetPath:  args.TargetPath,
-		Arguments:   args.Arguments,
-		Enviroments: args.Enviroments,
+		CorpusDir:    args.CorpusDir,
+		TargetPath:   args.TargetPath,
+		Arguments:    args.Arguments,
+		Environments: args.Environments,
 	})
 	if err == nil {
 		return &proto.ErrorResponse{Error: ""}, nil
@@ -132,7 +132,7 @@ func (f *FuzzerGRPCServer) Fuzz(ctx context.Context, args *proto.FuzzArg) (*prot
 		crashes = append(crashes, &proto.Crash{
 			InputPath:    v.InputPath,
 			ReproduceArg: v.ReproduceArg,
-			Enviroments:  v.Enviroments,
+			Environments: v.Environments,
 		})
 	}
 	var errMsg string

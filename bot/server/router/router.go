@@ -31,5 +31,9 @@ func InitRouter() *gin.Engine {
 	r.POST("/task/corpus", taskCorpusController.Create)
 	r.DELETE("/task/corpus", taskCorpusController.Destroy)
 
+	taskTargetController := new(controller.TaskTargetController)
+	r.POST("/task/target", taskTargetController.Create)
+	r.DELETE("/task/target", taskTargetController.Destroy)
+
 	return r
 }

@@ -17,10 +17,10 @@ import (
 type TaskController struct{}
 
 type TaskCreateReq struct {
-	FuzzerName  string            `json:"fuzzerName"`
-	MaxTime     int               `json:"maxTime"`
-	Arguments   map[string]string `json:"arguments"`
-	Enviroments []string          `json:"enviroments"`
+	FuzzerName   string            `json:"fuzzerName"`
+	MaxTime      int               `json:"maxTime"`
+	Arguments    map[string]string `json:"arguments"`
+	Environments []string          `json:"environments"`
 }
 
 type TaskUpdateReq struct {
@@ -34,21 +34,21 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 		return
 	}
 	arguments, err2 := models.GetArguments()
-	enviroments, err3 := models.GetEnviroments()
+	environments, err3 := models.GetEnvironments()
 	if err2 != nil || err3 != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"corpusDir":   task.CorpusDir,
-		"targetDir":   task.TargetDir,
-		"targetPath":  task.TargetPath,
-		"fuzzerName":  task.FuzzerName,
-		"maxTime":     task.MaxTime,
-		"status":      task.Status,
-		"arguments":   arguments,
-		"enviroments": enviroments,
+		"corpusDir":    task.CorpusDir,
+		"targetDir":    task.TargetDir,
+		"targetPath":   task.TargetPath,
+		"fuzzerName":   task.FuzzerName,
+		"maxTime":      task.MaxTime,
+		"status":       task.Status,
+		"arguments":    arguments,
+		"environments": environments,
 	})
 
 }
@@ -88,7 +88,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	//clear tasks and others
 	models.DB.Delete(&task)
 	models.DB.Delete(&models.TaskArgument{})
-	models.DB.Delete(&models.TaskEnviroment{})
+	models.DB.Delete(&models.TaskEnvironment{})
 
 	//create task
 	task.CorpusDir = ""
@@ -106,8 +106,8 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 
-	//create enviroments
-	err = models.InsertEnviroments(req.Enviroments)
+	//create environments
+	err = models.InsertEnvironments(req.Environments)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 		return
@@ -149,12 +149,12 @@ func (tc *TaskController) Update(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 			return
 		}
-		enviroments, err := models.GetEnviroments()
+		environments, err := models.GetEnvironments()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
 			return
 		}
-		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, enviroments)
+		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, environments)
 
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong status"})
@@ -169,7 +169,7 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	service.StopFuzz()
 	models.DB.Delete(&models.Task{})
 	models.DB.Delete(&models.TaskArgument{})
-	models.DB.Delete(&models.TaskEnviroment{})
+	models.DB.Delete(&models.TaskEnvironment{})
 	c.JSON(http.StatusNoContent, "")
 }
 

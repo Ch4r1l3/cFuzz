@@ -15,7 +15,7 @@ func IsRunning() bool {
 	return tmpRunning
 }
 
-func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, fuzzMaxTime int, arguments map[string]string, enviroments []string) {
+func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, fuzzMaxTime int, arguments map[string]string, environments []string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if !running {
@@ -56,10 +56,10 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 			fuzzerPlugin := fuzzerRaw.(fuzzer.Fuzzer)
 
 			prepareArg := fuzzer.PrepareArg{
-				CorpusDir:   corpusDir,
-				TargetPath:  targetPath,
-				Arguments:   arguments,
-				Enviroments: enviroments,
+				CorpusDir:    corpusDir,
+				TargetPath:   targetPath,
+				Arguments:    arguments,
+				Environments: environments,
 			}
 
 			err = fuzzerPlugin.Prepare(prepareArg)

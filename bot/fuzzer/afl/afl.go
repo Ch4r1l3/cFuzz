@@ -14,12 +14,12 @@ import (
 )
 
 type AFL struct {
-	logger      hclog.Logger
-	corpusDir   string
-	targetPath  string
-	outputDir   string
-	arguments   map[string]string
-	enviroments []string
+	logger       hclog.Logger
+	corpusDir    string
+	targetPath   string
+	outputDir    string
+	arguments    map[string]string
+	environments []string
 }
 
 func (a *AFL) getArgument(key string) (string, error) {
@@ -76,7 +76,7 @@ func (a *AFL) Prepare(args fuzzer.PrepareArg) error {
 
 	//save args
 	a.arguments = args.Arguments
-	a.enviroments = args.Enviroments
+	a.environments = args.Environments
 	a.corpusDir = args.CorpusDir
 	a.targetPath = args.TargetPath
 
@@ -131,8 +131,8 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 
 	//run afl
 	runner := utils.NewCmd(AFL_PATH, arguments...)
-	if len(a.enviroments) != 0 {
-		runner.Env = a.enviroments
+	if len(a.environments) != 0 {
+		runner.Env = a.environments
 	}
 
 	statusChan := runner.Start()
@@ -173,7 +173,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	}
 	for i, _ := range crashes {
 		crashes[i].ReproduceArg = reproduceArg
-		crashes[i].Enviroments = a.enviroments
+		crashes[i].Environments = a.environments
 	}
 
 	return fuzzer.FuzzResult{
@@ -204,8 +204,8 @@ func (a *AFL) Reproduce(args fuzzer.ReproduceArg) (fuzzer.ReproduceResult, error
 		arguments = append(arguments, programArgs...)
 	}
 	runner := utils.NewCmd(a.targetPath, arguments...)
-	if len(a.enviroments) != 0 {
-		runner.Env = a.enviroments
+	if len(a.environments) != 0 {
+		runner.Env = a.environments
 	}
 
 	if isStdinInput {

@@ -9,10 +9,10 @@ import (
 )
 
 type PrepareArg struct {
-	CorpusDir   string
-	TargetPath  string
-	Arguments   map[string]string
-	Enviroments []string
+	CorpusDir    string
+	TargetPath   string
+	Arguments    map[string]string
+	Environments []string
 }
 
 type FuzzArg struct {
@@ -22,7 +22,7 @@ type FuzzArg struct {
 type Crash struct {
 	InputPath    string //Path of the crash file
 	ReproduceArg []string
-	Enviroments  []string
+	Environments []string
 }
 
 type FuzzResult struct {
