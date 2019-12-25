@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"errors"
+	//"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/bot/server/service"
@@ -129,14 +131,16 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 	if task.Status == config.TASK_RUNNING && req.Status == config.TASK_STOPPED {
 		service.StopFuzz()
+		models.DB.Model(task).Update("Status", config.TASK_STOPPED)
+
 	} else if task.Status == config.TASK_CREATED && req.Status == config.TASK_RUNNING {
 		//check plugin and target
 		if _, err = os.Stat(task.CorpusDir); task.CorpusDir == "" || os.IsNotExist(err) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "you should upload corpus"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "you should upload corpus"})
 			return
 		}
 		if _, err = os.Stat(task.TargetPath); task.TargetPath == "" || os.IsNotExist(err) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "you should upload target"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "you should upload target"})
 			return
 		}
 		fuzzer, err := models.GetFuzzerByName(task.FuzzerName)
@@ -156,6 +160,8 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, environments)
 
+		models.DB.Model(task).Update("Status", config.TASK_RUNNING)
+
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong status"})
 		return
@@ -167,6 +173,21 @@ func (tc *TaskController) Update(c *gin.Context) {
 
 func (tc *TaskController) Destroy(c *gin.Context) {
 	service.StopFuzz()
+	task, err := models.GetTask()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		return
+	}
+	if task.CorpusDir != "" {
+		if _, err = os.Stat(task.CorpusDir); !os.IsNotExist(err) {
+			os.RemoveAll(task.CorpusDir)
+		}
+	}
+	if task.TargetDir != "" {
+		if _, err = os.Stat(task.TargetDir); !os.IsNotExist(err) {
+			os.RemoveAll(task.TargetDir)
+		}
+	}
 	models.DB.Delete(&models.Task{})
 	models.DB.Delete(&models.TaskArgument{})
 	models.DB.Delete(&models.TaskEnvironment{})
@@ -261,14 +282,15 @@ func (t *TaskCorpusController) Destroy(c *gin.Context) {
 type TaskTargetController struct{}
 
 func (ttc *TaskTargetController) Create(c *gin.Context) {
+	var err error
 	task, err := models.GetTask()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
 		return
 	}
-	if task.TargetPath != "" {
-		if _, err = os.Stat(task.TargetPath); !os.IsNotExist(err) {
-			os.RemoveAll(filepath.Dir(task.TargetPath))
+	if task.TargetDir != "" {
+		if _, err = os.Stat(task.TargetDir); !os.IsNotExist(err) {
+			os.RemoveAll(filepath.Dir(task.TargetDir))
 		}
 	}
 
@@ -324,6 +346,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 			return
 		}
 		if filepath.Join(tmpDir, relPath) != targetPath {
+			err = errors.New("relPath wrong")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "path can only under this temp directory"})
 			return
 		}
@@ -346,10 +369,12 @@ func (ttc *TaskTargetController) Destroy(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
 		return
 	}
+
 	if task.TargetDir != "" {
 		if _, err = os.Stat(task.TargetDir); !os.IsNotExist(err) {
 			os.RemoveAll(task.TargetDir)
 		}
+
 		models.DB.Model(task).Update("TargetPath", "")
 		models.DB.Model(task).Update("TargetDir", "")
 	}

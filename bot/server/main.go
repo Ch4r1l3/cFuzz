@@ -12,8 +12,9 @@ func main() {
 
 	config.Setup()
 	models.Setup()
-	service.Setup()
 	defer models.DB.Close()
+	service.Setup()
+	defer service.StopFuzz()
 
 	router := router.InitRouter()
 

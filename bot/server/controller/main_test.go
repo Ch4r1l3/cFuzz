@@ -48,6 +48,7 @@ func prepareRouter() {
 	taskController := new(TaskController)
 	r.GET("/task", taskController.Retrieve)
 	r.POST("/task", taskController.Create)
+	r.PUT("/task", taskController.Update)
 	r.DELETE("/task", taskController.Destroy)
 
 	taskCrashController := new(TaskCrashController)
