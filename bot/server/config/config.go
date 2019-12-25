@@ -8,14 +8,15 @@ import (
 )
 
 type Server struct {
-	RunMode           string `mapstructure:"runMode"`
-	Port              int    `mapstructure:"port"`
-	ReadTimeout       string `mapstructure:"readTimeout"`
-	WriteTimeout      string `mapstructure:"writeTimeout"`
-	TempPath          string `mapstructure:"tempPath"`
-	UploadFileLimit   int64  `mapstructure:"uploadFileLimit"`
-	DefaultFuzzerName string `mapstructure:"defaultFuzzerName"`
-	DefaultFuzzTime   int    `mapstructure:"defaultFuzzTime"`
+	RunMode              string `mapstructure:"runMode"`
+	Port                 int    `mapstructure:"port"`
+	ReadTimeout          string `mapstructure:"readTimeout"`
+	WriteTimeout         string `mapstructure:"writeTimeout"`
+	TempPath             string `mapstructure:"tempPath"`
+	UploadFileLimit      int64  `mapstructure:"uploadFileLimit"`
+	DefaultFuzzerName    string `mapstructure:"defaultFuzzerName"`
+	DefaultFuzzTime      int    `mapstructure:"defaultFuzzTime"`
+	DefaultReproduceTime int    `mapstructure:"defaultReproduceTime"`
 }
 
 var ServerConf = &Server{}

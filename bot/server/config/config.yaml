@@ -7,3 +7,4 @@ server:
         uploadFileLimit: 80
         defaultFuzzerName: fuzzer
         defaultFuzzTime: 86400
+        defaultReproduceTime: 10

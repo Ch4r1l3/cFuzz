@@ -8,6 +8,7 @@ import (
 var running bool
 var controlChan chan struct{}
 var mutex sync.Mutex
+var crashCheckMap map[string]bool
 
 var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
@@ -18,4 +19,5 @@ var handshakeConfig = plugin.HandshakeConfig{
 func Setup() {
 	running = false
 	controlChan = make(chan struct{})
+	crashCheckMap = make(map[string]bool)
 }

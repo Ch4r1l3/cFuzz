@@ -78,9 +78,10 @@ func GetEnvironments() ([]string, error) {
 }
 
 type TaskCrash struct {
-	ID   uint64 `gorm:"primary_key";json:"id"`
-	Url  string `json:"url"`
-	Path string `json:"-"`
+	ID            uint64 `gorm:"primary_key";json:"id"`
+	Url           string `json:"url"`
+	Path          string `json:"-"`
+	ReproduceAble bool   `json:"reproduceAble"`
 }
 
 func GetCrashes() ([]TaskCrash, error) {
@@ -89,4 +90,48 @@ func GetCrashes() ([]TaskCrash, error) {
 		return nil, err
 	}
 	return taskCrashes, nil
+}
+
+func CreateCrash(path string, reproduceAble bool) error {
+	taskCrash := TaskCrash{
+		Path:          path,
+		ReproduceAble: reproduceAble,
+	}
+	return DB.Save(&taskCrash).Error
+}
+
+type TaskFuzzResult struct {
+	Command      string `json:"command"`
+	TimeExecuted int    `json:"timeExecuted"`
+}
+
+type TaskFuzzResultStat struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func CreateFuzzResult(command []string, stats map[string]string, timeExecuted int) error {
+	DB.Delete(&TaskFuzzResult{})
+	DB.Delete(&TaskFuzzResultStat{})
+	tcommand := ""
+	for _, v := range command {
+		tcommand += v + " "
+	}
+	fuzzResult := TaskFuzzResult{
+		Command:      tcommand,
+		TimeExecuted: timeExecuted,
+	}
+	if err := DB.Save(&fuzzResult).Error; err != nil {
+		return err
+	}
+	for k, v := range stats {
+		stat := TaskFuzzResultStat{
+			Key:   k,
+			Value: v,
+		}
+		if err := DB.Save(&stat).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"errors"
-	//"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/bot/server/service"
@@ -208,7 +207,7 @@ func (tcc *TaskCrashController) List(c *gin.Context) {
 type TaskCorpusController struct{}
 
 func (t *TaskCorpusController) Create(c *gin.Context) {
-	var err error
+	var Err error
 	task, err := models.GetTask()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
@@ -234,7 +233,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 		return
 	}
 	defer func() {
-		if err != nil {
+		if Err != nil {
 			os.RemoveAll(tmpDir)
 			models.DB.Model(task).Update("CorpusDir", "")
 		}
@@ -247,15 +246,18 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	}
 	_, err = io.Copy(tempFile, file)
 	if err != nil {
+		Err = err
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
 		return
 	}
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
+			Err = err
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		os.RemoveAll(tempFile.Name())
 	}
 
 	models.DB.Model(task).Update("CorpusDir", tmpDir)
@@ -282,7 +284,7 @@ func (t *TaskCorpusController) Destroy(c *gin.Context) {
 type TaskTargetController struct{}
 
 func (ttc *TaskTargetController) Create(c *gin.Context) {
-	var err error
+	var Err error
 	task, err := models.GetTask()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
@@ -290,7 +292,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	}
 	if task.TargetDir != "" {
 		if _, err = os.Stat(task.TargetDir); !os.IsNotExist(err) {
-			os.RemoveAll(filepath.Dir(task.TargetDir))
+			os.RemoveAll(task.TargetDir)
 		}
 	}
 
@@ -314,12 +316,13 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		return
 	}
 	defer func() {
-		if err != nil {
+		if Err != nil {
 			os.RemoveAll(tmpDir)
 			models.DB.Model(task).Update("TargetDir", "")
 			models.DB.Model(task).Update("TargetPath", "")
 		}
 	}()
+
 	var tempFile *os.File
 	if isZipFile {
 		tempFile, err = ioutil.TempFile(tmpDir, "target.*.zip")
@@ -328,6 +331,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	}
 	_, err = io.Copy(tempFile, file)
 	if err != nil {
+		Err = err
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
 		return
 	}
@@ -335,6 +339,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
+			Err = err
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -342,18 +347,23 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		targetPath = filepath.Clean(targetPath)
 		relPath, err := filepath.Rel(tmpDir, targetPath)
 		if err != nil {
+			Err = err
 			c.JSON(http.StatusBadRequest, gin.H{"error": "error get rel of targetRelPath"})
 			return
 		}
-		if filepath.Join(tmpDir, relPath) != targetPath {
-			err = errors.New("relPath wrong")
+		if strings.Contains(relPath, "..") {
+			Err = errors.New("relPath wrong")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "path can only under this temp directory"})
 			return
 		}
 		if _, err = os.Stat(targetPath); os.IsNotExist(err) {
+
+			Err = err
 			c.JSON(http.StatusBadRequest, gin.H{"error": "target not exists in zip file"})
+
 			return
 		}
+		os.RemoveAll(tempFile.Name())
 
 	}
 
