@@ -421,3 +421,18 @@ func (ttc *TaskTargetController) Destroy(c *gin.Context) {
 	c.JSON(http.StatusNoContent, "")
 
 }
+
+type TaskResultController struct{}
+
+func (trc *TaskResultController) Retrieve(c *gin.Context) {
+	result, stats, err := models.GetFuzzResult()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "db error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"command":      result.Command,
+		"timeExecuted": result.TimeExecuted,
+		"stats":        stats,
+	})
+}

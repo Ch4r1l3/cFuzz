@@ -323,9 +323,11 @@ func TestTask5(t *testing.T) {
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
 	obj.Value("status").Equal(config.TASK_RUNNING)
 
+	<-time.After(time.Duration(70) * time.Second)
 	e.PUT("/task").WithJSON(postdata2).Expect().Status(http.StatusOK)
 	<-time.After(time.Duration(70) * time.Second)
 	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(config.TASK_STOPPED)
+	e.GET("/task/result").Expect().Status(http.StatusOK).JSON().Object().Value("timeExecuted").Equal(60)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
 	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)

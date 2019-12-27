@@ -28,7 +28,7 @@ func prepareTestDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	models.DB.AutoMigrate(&models.Fuzzer{}, &models.Task{}, &models.TaskArgument{}, &models.TaskEnvironment{})
+	models.DB.AutoMigrate(&models.Fuzzer{}, &models.Task{}, &models.TaskCrash{}, &models.TaskArgument{}, &models.TaskEnvironment{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{})
 
 }
 
@@ -61,6 +61,9 @@ func prepareRouter() {
 	taskTargetController := new(TaskTargetController)
 	r.POST("/task/target", taskTargetController.Create)
 	r.DELETE("/task/target", taskTargetController.Destroy)
+
+	taskResultController := new(TaskResultController)
+	r.GET("/task/result", taskResultController.Retrieve)
 }
 
 func prepareConfig() {

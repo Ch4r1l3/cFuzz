@@ -135,3 +135,20 @@ func CreateFuzzResult(command []string, stats map[string]string, timeExecuted in
 	}
 	return nil
 }
+
+func GetFuzzResult() (*TaskFuzzResult, map[string]string, error) {
+	var result TaskFuzzResult
+	if err := DB.First(&result).Error; err != nil {
+		return nil, nil, err
+	}
+	resultStats := []TaskFuzzResultStat{}
+	if err := DB.Find(&resultStats).Error; err != nil {
+		return nil, nil, err
+	}
+	stats := make(map[string]string)
+	for _, v := range resultStats {
+		stats[v.Key] = v.Value
+	}
+	return &result, stats, nil
+
+}

@@ -20,23 +20,21 @@ func IsRunning() bool {
 func handleFuzzResult(fuzzResult fuzzer.FuzzResult, reproduceResult map[string]fuzzer.ReproduceResult) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	if running {
-		for _, c := range fuzzResult.Crashes {
-			if _, ok := crashCheckMap[c.InputPath]; !ok {
-				crashCheckMap[c.InputPath] = true
-				reproduceAble := false
-				if v, ok := reproduceResult[c.InputPath]; ok && v.ReturnCode != 0 {
-					reproduceAble = true
-
-				}
-				models.CreateCrash(c.InputPath, reproduceAble)
+	for _, c := range fuzzResult.Crashes {
+		if _, ok := crashCheckMap[c.InputPath]; !ok {
+			crashCheckMap[c.InputPath] = true
+			reproduceAble := false
+			if v, ok := reproduceResult[c.InputPath]; ok && v.ReturnCode != 0 {
+				reproduceAble = true
 
 			}
+			models.CreateCrash(c.InputPath, reproduceAble)
+
 		}
-		err := models.CreateFuzzResult(fuzzResult.Command, fuzzResult.Stats, fuzzResult.TimeExecuted)
-		if err != nil {
-			running = false
-		}
+	}
+	err := models.CreateFuzzResult(fuzzResult.Command, fuzzResult.Stats, fuzzResult.TimeExecuted)
+	if err != nil {
+		running = false
 	}
 }
 
