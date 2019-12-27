@@ -1,0 +1,6 @@
+server: 
+        runMode: debug
+        port: 8889
+        readTimeout: 60
+        writeTimeout: 60
+        tempPath: /tmp
