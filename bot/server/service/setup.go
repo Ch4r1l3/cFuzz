@@ -18,6 +18,6 @@ var handshakeConfig = plugin.HandshakeConfig{
 
 func Setup() {
 	running = false
-	controlChan = make(chan struct{})
+	controlChan = make(chan struct{}, 1)
 	crashCheckMap = make(map[string]bool)
 }

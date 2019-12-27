@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	//"os/exec"
+	"os/exec"
 	"testing"
 	"time"
 )
@@ -248,7 +248,6 @@ func TestTask4(t *testing.T) {
 	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
 }
 
-/*
 func TestTask5(t *testing.T) {
 	server := httptest.NewServer(r)
 	defer server.Close()
@@ -258,7 +257,8 @@ func TestTask5(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = exec.Command("gcc", "-o", "target", "./target.c").Output()
+	//_, err = exec.Command("gcc", "-o", "target", "./target.c").Output()
+	_, err = exec.Command("/afl/afl-2.52b/afl-gcc", "-o", "target", "./target.c").Output()
 	os.RemoveAll("./target.c")
 	if err != nil {
 		t.Fatal(err)
@@ -316,6 +316,7 @@ func TestTask5(t *testing.T) {
 		Expect().
 		Status(http.StatusOK)
 
+	<-time.After(time.Duration(10) * time.Second)
 	e.PUT("/task").WithJSON(postdata1).Expect().Status(http.StatusOK)
 	<-time.After(time.Duration(3) * time.Second)
 
@@ -323,7 +324,7 @@ func TestTask5(t *testing.T) {
 	obj.Value("status").Equal(config.TASK_RUNNING)
 
 	e.PUT("/task").WithJSON(postdata2).Expect().Status(http.StatusOK)
-	<-time.After(time.Duration(3) * time.Second)
+	<-time.After(time.Duration(70) * time.Second)
 	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(config.TASK_STOPPED)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
@@ -346,4 +347,3 @@ func TestTaskUpdate(t *testing.T) {
 	e.PUT("/task").WithJSON(postdata2).Expect().Status(http.StatusBadRequest)
 
 }
-*/

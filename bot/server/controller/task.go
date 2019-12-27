@@ -241,15 +241,27 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	var tempFile *os.File
 	if isZipFile {
 		tempFile, err = ioutil.TempFile(tmpDir, "corpus.*.zip")
+		if err != nil {
+			Err = err
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			return
+		}
 	} else {
 		tempFile, err = ioutil.TempFile(tmpDir, "corpus")
+		if err != nil {
+			Err = err
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			return
+		}
 	}
 	_, err = io.Copy(tempFile, file)
 	if err != nil {
 		Err = err
+		tempFile.Close()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
 		return
 	}
+	tempFile.Close()
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
@@ -326,15 +338,27 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	var tempFile *os.File
 	if isZipFile {
 		tempFile, err = ioutil.TempFile(tmpDir, "target.*.zip")
+		if err != nil {
+			Err = err
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			return
+		}
 	} else {
 		tempFile, err = ioutil.TempFile(tmpDir, "target")
+		if err != nil {
+			Err = err
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			return
+		}
 	}
 	_, err = io.Copy(tempFile, file)
 	if err != nil {
 		Err = err
+		tempFile.Close()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
 		return
 	}
+	tempFile.Close()
 	targetPath := tempFile.Name()
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
@@ -365,6 +389,12 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		}
 		os.RemoveAll(tempFile.Name())
 
+	}
+	err = os.Chmod(targetPath, 0755)
+	if err != nil {
+		Err = err
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "error change mode of fuzzer plugin"})
+		return
 	}
 
 	models.DB.Model(task).Update("TargetPath", targetPath)

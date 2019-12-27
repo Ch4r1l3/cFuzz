@@ -138,18 +138,19 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	statusChan := runner.Start()
 	//cancelChan := make(chan struct{})
 
-	/*
-		go func() {
-			ticker := time.NewTicker(time.Duration(AFL_CHECK_TICK_TIME) * time.Second)
-			for range ticker.C {
-				status := runner.Status()
-				for _, v := range status.Stdout {
-					a.logger.Debug(v)
-				}
-			}
-		}()
-	*/
-
+	//a.logger.Debug(AFL_PATH)
+	//for _, v := range arguments {
+	//	a.logger.Debug(v)
+	//}
+	//go func() {
+	//	ticker := time.NewTicker(time.Duration(AFL_CHECK_TICK_TIME) * time.Second)
+	//	for range ticker.C {
+	//		status := runner.Status()
+	//		for _, v := range status.Stdout {
+	//			a.logger.Debug(v)
+	//		}
+	//	}
+	//}()
 	go func() {
 		<-time.After(time.Duration(args.MaxTime) * time.Second)
 		runner.Stop()

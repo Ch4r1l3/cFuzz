@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var handshakeAFLConfig = plugin.HandshakeConfig{
@@ -27,8 +28,8 @@ func main() {
 	//plugins[3] = plugin.PluginSet{
 	//	"afl": &fuzzer.FuzzerGRPCPlugin{},
 	//}
-	plugins[2] = plugin.PluginSet{
-		"afl": &fuzzer.FuzzerPlugin{},
+	plugins[1] = plugin.PluginSet{
+		"fuzzer": &fuzzer.FuzzerPlugin{},
 	}
 
 	aflclient := plugin.NewClient(&plugin.ClientConfig{
@@ -46,8 +47,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	aflraw, err := aflrpcClient.Dispense("afl")
-	fmt.Print("test!")
+	aflraw, err := aflrpcClient.Dispense("fuzzer")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  2,
+	ProtocolVersion:  1,
 	MagicCookieKey:   "fuzz",
 	MagicCookieValue: "fuzz",
 }
@@ -27,11 +27,11 @@ func main() {
 	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		VersionedPlugins: map[int]plugin.PluginSet{
-			2: {
-				"afl": &fuzzer.FuzzerPlugin{Impl: afl},
+			1: {
+				"fuzzer": &fuzzer.FuzzerPlugin{Impl: afl},
 			},
-			3: {
-				"afl": &fuzzer.FuzzerGRPCPlugin{Impl: afl},
+			2: {
+				"fuzzer": &fuzzer.FuzzerGRPCPlugin{Impl: afl},
 			},
 		},
 		GRPCServer: plugin.DefaultGRPCServer,

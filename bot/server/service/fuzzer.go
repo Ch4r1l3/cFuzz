@@ -46,7 +46,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 	if !running {
 		running = true
 		go func() {
-			var err error
+			var Err error
 			logger := hclog.New(&hclog.LoggerOptions{
 				Name:   "plugin",
 				Output: os.Stdout,
@@ -55,17 +55,26 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 			defer func() {
 				mutex.Lock()
 				running = false
-				if err != nil {
+				if Err != nil {
 					models.DB.Model(&models.Task{}).Update("Status", config.TASK_ERROR)
+					logger.Debug("error is !!!!!:" + Err.Error())
 				}
-				logger.Debug(err.Error())
 				mutex.Unlock()
 			}()
 
+			plugins := map[int]plugin.PluginSet{
+				1: {
+					"fuzzer": &fuzzer.FuzzerPlugin{},
+				},
+				2: {
+					"fuzzer": &fuzzer.FuzzerGRPCPlugin{},
+				},
+			}
 			fuzzerClient := plugin.NewClient(&plugin.ClientConfig{
-				HandshakeConfig: handshakeConfig,
-				Cmd:             exec.Command(pluginPath),
-				Logger:          logger,
+				HandshakeConfig:  handshakeConfig,
+				VersionedPlugins: plugins,
+				Cmd:              exec.Command(pluginPath),
+				Logger:           logger,
 				AllowedProtocols: []plugin.Protocol{
 					plugin.ProtocolNetRPC, plugin.ProtocolGRPC,
 				},
@@ -75,12 +84,14 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 			fuzzerRpcClient, err := fuzzerClient.Client()
 			if err != nil {
 				logger.Debug(err.Error())
+				Err = err
 				return
 			}
 
 			fuzzerRaw, err := fuzzerRpcClient.Dispense("fuzzer")
 			if err != nil {
 				logger.Debug(err.Error())
+				Err = err
 				return
 			}
 
@@ -96,6 +107,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 			err = fuzzerPlugin.Prepare(prepareArg)
 			if err != nil {
 				logger.Debug(err.Error())
+				Err = err
 				return
 			}
 
@@ -107,15 +119,15 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				select {
 
 				case <-time.After(time.Duration(maxTime) * time.Second):
-					break
+					return
 
 				case <-controlChan:
-					break
+					return
 
 				default:
 					fuzzResult, err := fuzzerPlugin.Fuzz(fuzzArg)
 					if err != nil {
-						logger.Debug(err.Error())
+						Err = err
 						return
 					}
 					reproduceResult := map[string]fuzzer.ReproduceResult{}
