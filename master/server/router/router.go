@@ -19,5 +19,26 @@ func InitRouter() *gin.Engine {
 	r.PUT("/dockerfile/:id", dockerfileController.Update)
 	r.DELETE("/dockerfile/:id", dockerfileController.Destroy)
 
+	taskController := new(controller.TaskController)
+	r.GET("/task", taskController.List)
+	r.POST("/task", taskController.Create)
+	r.PUT("/task/:id", taskController.Update)
+	r.DELETE("/task/:path1", controller.TaskDeleteHandler)
+
+	taskCorpusController := new(controller.TaskCorpusController)
+	r.GET("/task/:taskid/corpus", taskCorpusController.List)
+	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
+	r.DELETE("/task/:path1/:path2/:path3", controller.TaskDeleteHandler)
+
+	taskTargetController := new(controller.TaskTargetController)
+	r.GET("/task/:taskid/target", taskTargetController.Retrieve)
+	r.POST("/task/:taskid/target", taskTargetController.Create)
+	r.DELETE("/task/:path1/:path2", controller.TaskDeleteHandler)
+
+	fuzzerController := new(controller.FuzzerController)
+	r.GET("/fuzzer", fuzzerController.List)
+	r.POST("/fuzzer", fuzzerController.Create)
+	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+
 	return r
 }
