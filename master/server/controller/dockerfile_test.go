@@ -27,7 +27,7 @@ func TestDockefile1(t *testing.T) {
 		"content": "111",
 	}
 	e.POST("/dockerfile").WithJSON(postdata1).Expect().Status(http.StatusBadRequest)
-	e.POST("/dockerfile").WithJSON(postdata2).Expect().Status(http.StatusOK)
+	e.POST("/dockerfile").WithJSON(postdata2).Expect().Status(http.StatusOK).JSON().Object().Value("id").NotEqual(0)
 	obj := e.GET("/dockerfile").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	id := int(obj.Value("id").Number().Raw())
 	e.DELETE("/dockerfile/" + strconv.Itoa(id)).Expect().Status(http.StatusNoContent)

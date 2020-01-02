@@ -36,7 +36,7 @@ func TestFuzzer1(t *testing.T) {
 		WithFile("file", "fuzzer_test").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).JSON().Object().Value("id").NotEqual(0)
 	e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer_test").

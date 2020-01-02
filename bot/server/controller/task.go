@@ -31,13 +31,13 @@ type TaskUpdateReq struct {
 func (tc *TaskController) Retrieve(c *gin.Context) {
 	task, err1 := models.GetTask()
 	if err1 != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "create task first"})
+		utils.BadRequestWithMsg(c, "create task first")
 		return
 	}
 	arguments, err2 := models.GetArguments()
 	environments, err3 := models.GetEnvironments()
 	if err2 != nil || err3 != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 
@@ -59,22 +59,22 @@ func (tc *TaskController) Create(c *gin.Context) {
 	var req TaskCreateReq
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		utils.BadRequest(c)
 		return
 	}
 	task, err := models.GetTask()
 	if err == nil && task.Status == config.TASK_RUNNING {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task running"})
+		utils.BadRequestWithMsg(c, "task running")
 		return
 	}
 	_, err = models.GetFuzzerByName(req.FuzzerName)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "fuzzer not exists"})
+		utils.BadRequestWithMsg(c, "fuzzer not exists")
 		return
 	}
 
 	if req.MaxTime <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "fuzz run time should longger than 0s"})
+		utils.BadRequestWithMsg(c, "fuzz run time should longger than 0s")
 		return
 	}
 
@@ -103,14 +103,14 @@ func (tc *TaskController) Create(c *gin.Context) {
 	//create arguments
 	err = models.InsertArguments(req.Arguments)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 
 	//create environments
 	err = models.InsertEnvironments(req.Environments)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, req)
@@ -120,12 +120,12 @@ func (tc *TaskController) Update(c *gin.Context) {
 	var req TaskUpdateReq
 	err := c.BindJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
+		utils.BadRequest(c)
 		return
 	}
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exists"})
+		utils.BadRequestWithMsg(c, "task not exists")
 		return
 	}
 	if task.Status == config.TASK_RUNNING && req.Status == config.TASK_STOPPED {
@@ -135,26 +135,26 @@ func (tc *TaskController) Update(c *gin.Context) {
 	} else if task.Status == config.TASK_CREATED && req.Status == config.TASK_RUNNING {
 		//check plugin and target
 		if _, err = os.Stat(task.CorpusDir); task.CorpusDir == "" || os.IsNotExist(err) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "you should upload corpus"})
+			utils.BadRequestWithMsg(c, "you should upload corpus")
 			return
 		}
 		if _, err = os.Stat(task.TargetPath); task.TargetPath == "" || os.IsNotExist(err) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "you should upload target"})
+			utils.BadRequestWithMsg(c, "you should upload target")
 			return
 		}
 		fuzzer, err := models.GetFuzzerByName(task.FuzzerName)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "fuzzer not exists"})
+			utils.BadRequestWithMsg(c, "fuzzer not exists")
 			return
 		}
 		arguments, err := models.GetArguments()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			utils.DBError(c)
 			return
 		}
 		environments, err := models.GetEnvironments()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+			utils.DBError(c)
 			return
 		}
 		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, environments)
@@ -162,7 +162,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 		models.DB.Model(task).Update("Status", config.TASK_RUNNING)
 
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong status"})
+		utils.BadRequestWithMsg(c, "wrong status")
 		return
 	}
 
@@ -174,7 +174,7 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	service.StopFuzz()
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 	if task.CorpusDir != "" {
@@ -198,7 +198,7 @@ type TaskCrashController struct{}
 func (tcc *TaskCrashController) List(c *gin.Context) {
 	crashes, err := models.GetCrashes()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, crashes)
@@ -210,7 +210,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	var Err error
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
+		utils.BadRequestWithMsg(c, "task not exist, please create one")
 		return
 	}
 	if task.CorpusDir != "" {
@@ -220,7 +220,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	}
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "please upload file"})
+		utils.BadRequestWithMsg(c, "please upload file")
 		return
 	}
 	isZipFile := false
@@ -229,7 +229,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	}
 	tmpDir, err := ioutil.TempDir(config.ServerConf.TempPath, "corpus")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp directory"})
+		utils.InternalErrorWithMsg(c, "error create temp directory")
 		return
 	}
 	defer func() {
@@ -243,14 +243,14 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 		tempFile, err = ioutil.TempFile(tmpDir, "corpus.*.zip")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	} else {
 		tempFile, err = ioutil.TempFile(tmpDir, "corpus")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	}
@@ -258,7 +258,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 	if err != nil {
 		Err = err
 		tempFile.Close()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
+		utils.InternalErrorWithMsg(c, "error copy upload file")
 		return
 	}
 	tempFile.Close()
@@ -266,7 +266,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
 		os.RemoveAll(tempFile.Name())
@@ -280,7 +280,7 @@ func (t *TaskCorpusController) Create(c *gin.Context) {
 func (t *TaskCorpusController) Destroy(c *gin.Context) {
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
+		utils.BadRequestWithMsg(c, "task not exist, please create one")
 		return
 	}
 	if task.CorpusDir != "" {
@@ -299,7 +299,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	var Err error
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
+		utils.BadRequestWithMsg(c, "task not exist, please create one")
 		return
 	}
 	if task.TargetDir != "" {
@@ -310,7 +310,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "please upload file"})
+		utils.BadRequestWithMsg(c, "please upload file")
 		return
 	}
 	isZipFile := false
@@ -318,13 +318,13 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	if strings.HasSuffix(header.Filename, ".zip") {
 		isZipFile = true
 		if targetRelPath == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "lack of targetRelPath if you post zip file"})
+			utils.BadRequestWithMsg(c, "lack of targetRelPath if you post zip file")
 			return
 		}
 	}
 	tmpDir, err := ioutil.TempDir(config.ServerConf.TempPath, "target")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp directory"})
+		utils.InternalErrorWithMsg(c, "error create temp directory")
 		return
 	}
 	defer func() {
@@ -340,14 +340,14 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		tempFile, err = ioutil.TempFile(tmpDir, "target.*.zip")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	} else {
 		tempFile, err = ioutil.TempFile(tmpDir, "target")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	}
@@ -355,7 +355,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	if err != nil {
 		Err = err
 		tempFile.Close()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
+		utils.InternalErrorWithMsg(c, "error copy upload file")
 		return
 	}
 	tempFile.Close()
@@ -364,7 +364,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			utils.BadRequest(c)
 			return
 		}
 		targetPath = filepath.Join(tmpDir, targetRelPath)
@@ -372,18 +372,18 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 		relPath, err := filepath.Rel(tmpDir, targetPath)
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": "error get rel of targetRelPath"})
+			utils.BadRequestWithMsg(c, "error get rel of targetRelPath")
 			return
 		}
 		if strings.Contains(relPath, "..") {
 			Err = errors.New("relPath wrong")
-			c.JSON(http.StatusBadRequest, gin.H{"error": "path can only under this temp directory"})
+			utils.BadRequestWithMsg(c, "path can only under this temp directory")
 			return
 		}
 		if _, err = os.Stat(targetPath); os.IsNotExist(err) {
 
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": "target not exists in zip file"})
+			utils.BadRequestWithMsg(c, "target not exists in zip file")
 
 			return
 		}
@@ -393,7 +393,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	err = os.Chmod(targetPath, 0755)
 	if err != nil {
 		Err = err
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error change mode of fuzzer plugin"})
+		utils.InternalErrorWithMsg(c, "error change mode of fuzzer plugin")
 		return
 	}
 
@@ -406,7 +406,7 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 func (ttc *TaskTargetController) Destroy(c *gin.Context) {
 	task, err := models.GetTask()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "task not exist, please create one"})
+		utils.BadRequestWithMsg(c, "task not exist, please create one")
 		return
 	}
 
@@ -427,7 +427,7 @@ type TaskResultController struct{}
 func (trc *TaskResultController) Retrieve(c *gin.Context) {
 	result, stats, err := models.GetFuzzResult()
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "db error"})
+		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{

@@ -16,12 +16,16 @@ func GetObjects(objs interface{}) error {
 	return DB.Find(objs).Error
 }
 
-func GetObjectById(obj interface{}, id uint64) error {
+func GetObjectByID(obj interface{}, id uint64) error {
 	return DB.Where("id = ?", id).First(obj).Error
 }
 
-func DeleteObjectById(obj interface{}, id uint64) error {
+func DeleteObjectByID(obj interface{}, id uint64) error {
 	return DB.Where("id = ?", id).Delete(obj).Error
+}
+
+func IsObjectExistsByID(obj interface{}, id uint64) bool {
+	return !DB.Where("id = ?", id).First(obj).RecordNotFound()
 }
 
 func Setup() {
@@ -30,5 +34,7 @@ func Setup() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	DB.AutoMigrate(&Dockerfile{}, &Task{}, &TaskTarget{}, &TaskCorpus{}, &Fuzzer{})
+	DB.Exec("PRAGMA foreign_keys = ON")
+	DB.SingularTable(true)
+	DB.AutoMigrate(&Dockerfile{}, &Task{}, &TaskTarget{}, &TaskCorpus{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{}, &Fuzzer{})
 }

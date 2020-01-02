@@ -25,7 +25,10 @@ func prepareTestDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	models.DB.AutoMigrate(&models.Dockerfile{}, &models.Task{}, &models.TaskTarget{}, &models.TaskCorpus{}, &models.Fuzzer{})
+
+	models.DB.SingularTable(true)
+	models.DB.AutoMigrate(&models.Dockerfile{}, &models.Task{}, &models.TaskTarget{}, &models.TaskCorpus{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.Fuzzer{})
+
 }
 
 func prepareRouter() {
@@ -76,10 +79,10 @@ func prepareConfig() {
 }
 
 func TestMain(m *testing.M) {
+	os.RemoveAll("./test.db")
 	prepareConfig()
 	prepareTestDB()
 	prepareRouter()
 	m.Run()
 	models.DB.Close()
-	os.RemoveAll("./test.db")
 }

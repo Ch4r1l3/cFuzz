@@ -19,9 +19,7 @@ type FuzzerController struct{}
 func (fc *FuzzerController) List(c *gin.Context) {
 	var fuzzers []models.Fuzzer
 	if err := models.DB.Find(&fuzzers).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "db error",
-		})
+		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, fuzzers)
@@ -31,19 +29,19 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 	var Err error
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+		utils.BadRequest(c)
 		return
 	}
 	name := c.PostForm("name")
 	//check same name
 	fuzzer, err := models.GetFuzzerByName(name)
 	if err == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "fuzzer with same name exists"})
+		utils.BadRequestWithMsg(c, "fuzzer with same name exists")
 		return
 	}
 
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "fuzzer name cannot be empty"})
+		utils.BadRequestWithMsg(c, "fuzzer name cannot be empty")
 		return
 	}
 	isZipFile := false
@@ -52,7 +50,7 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 	}
 	tmpDir, err := ioutil.TempDir(config.ServerConf.TempPath, "fuzzer")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp directory"})
+		utils.InternalErrorWithMsg(c, "error create temp directory")
 		return
 	}
 	defer func() {
@@ -65,14 +63,14 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		tempFile, err = ioutil.TempFile(tmpDir, "fuzzer.*.zip")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	} else {
 		tempFile, err = ioutil.TempFile(tmpDir, "fuzzer")
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "error create temp file"})
+			utils.InternalErrorWithMsg(c, "error create temp file")
 			return
 		}
 	}
@@ -80,7 +78,7 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 	if err != nil {
 		Err = err
 		tempFile.Close()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error copy upload file"})
+		utils.InternalErrorWithMsg(c, "error copy upload file")
 		return
 	}
 	tempFile.Close()
@@ -91,13 +89,13 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
 		fuzzer.Path = filepath.Join(tmpDir, config.ServerConf.DefaultFuzzerName)
 		if _, err = os.Stat(fuzzer.Path); os.IsNotExist(err) {
 			Err = err
-			c.JSON(http.StatusBadRequest, gin.H{"error": "you should have fuzzer plugin in zip"})
+			utils.BadRequestWithMsg(c, "you should have fuzzer plugin in zip")
 			return
 		}
 		os.RemoveAll(tempFile.Name())
@@ -105,7 +103,7 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 	err = os.Chmod(fuzzer.Path, 0755)
 	if err != nil {
 		Err = err
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "error change mode of fuzzer plugin"})
+		utils.InternalErrorWithMsg(c, "error change mode of fuzzer plugin")
 		return
 	}
 
