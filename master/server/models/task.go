@@ -2,6 +2,7 @@ package models
 
 type Task struct {
 	ID           uint64 `gorm:"primary_key" json:"id"`
+	Name         string `json:"name"`
 	DockerfileID uint64 `json:"dockerfileid"`
 	Time         uint64 `json:"time"`
 	FuzzerID     uint64 `json:"fuzzerid"`
@@ -15,9 +16,10 @@ type TaskTarget struct {
 }
 
 type TaskCorpus struct {
-	ID     uint64 `gorm:"primary_key" json:"id"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
-	Path   string `json:"-"`
+	ID       uint64 `gorm:"primary_key" json:"id"`
+	TaskID   uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	Path     string `json:"-"`
+	FileName string `json:"filename"`
 }
 
 type TaskEnvironment struct {
@@ -53,6 +55,18 @@ func InsertEnvironments(taskid uint64, environments []string) error {
 	return nil
 }
 
+func GetEnvironments(taskid uint64) ([]string, error) {
+	var taskEnvironments []TaskEnvironment
+	if err := DB.Where("task_id = ?", taskid).Find(&taskEnvironments).Error; err != nil {
+		return nil, err
+	}
+	environments := []string{}
+	for _, v := range taskEnvironments {
+		environments = append(environments, v.Value)
+	}
+	return environments, nil
+}
+
 type TaskArgument struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
 	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
@@ -74,8 +88,24 @@ func InsertArguments(taskid uint64, arguments map[string]string) error {
 	return nil
 }
 
+func GetArguments(taskid uint64) (map[string]string, error) {
+	var taskArguments []TaskArgument
+	if err := DB.Where("task_id = ?", taskid).Find(&taskArguments).Error; err != nil {
+		return nil, err
+	}
+	arguments := make(map[string]string)
+	for _, v := range taskArguments {
+		arguments[v.Key] = v.Value
+	}
+	return arguments, nil
+}
+
 func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Delete(obj).Error
+}
+
+func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
+	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
 
 type TaskCrash struct {

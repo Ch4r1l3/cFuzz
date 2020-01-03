@@ -1,12 +1,9 @@
 package controller
 
 import (
-	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 )
@@ -28,11 +25,7 @@ func (fc *FuzzerController) List(c *gin.Context) {
 }
 
 func (fc *FuzzerController) Create(c *gin.Context) {
-	file, _, err := c.Request.FormFile("file")
-	if err != nil {
-		utils.BadRequest(c)
-		return
-	}
+	var err error
 	name := c.PostForm("name")
 	if name == "" {
 		utils.BadRequestWithMsg(c, "fuzzer name empty")
@@ -42,26 +35,17 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "fuzzer name exists")
 		return
 	}
-	tempFile, err := ioutil.TempFile(config.ServerConf.TempPath, "fuzzer")
-	if err != nil {
-		utils.InternalErrorWithMsg(c, "error create temp file")
+	var tempFile string
+	if tempFile, err = utils.SaveTempFile(c, "file", "fuzzer"); err != nil {
 		return
 	}
-	_, err = io.Copy(tempFile, file)
-	if err != nil {
-		tempFile.Close()
-		os.RemoveAll(tempFile.Name())
-		utils.InternalErrorWithMsg(c, "error copy upload file")
-		return
-	}
-	tempFile.Close()
 	fuzzer := models.Fuzzer{
 		Name: name,
-		Path: tempFile.Name(),
+		Path: tempFile,
 	}
 	err = models.InsertObject(&fuzzer)
 	if err != nil {
-		os.RemoveAll(tempFile.Name())
+		os.RemoveAll(tempFile)
 		utils.DBError(c)
 		return
 	}
@@ -75,6 +59,16 @@ func (fc *FuzzerController) Destroy(c *gin.Context) {
 		utils.BadRequest(c)
 		return
 	}
+	if !models.IsObjectExistsByID(&models.Fuzzer{}, req.ID) {
+		utils.NotFound(c)
+		return
+	}
+	var fuzzer models.Fuzzer
+	if err = models.GetObjectByID(&fuzzer, req.ID); err != nil {
+		utils.DBError(c)
+		return
+	}
+	os.RemoveAll(fuzzer.Path)
 	err = models.DeleteObjectByID(models.Fuzzer{}, req.ID)
 	if err != nil {
 		utils.DBError(c)

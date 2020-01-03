@@ -28,3 +28,9 @@ func InternalErrorWithMsg(c *gin.Context, msg string) {
 		"error": msg,
 	})
 }
+
+func NotFound(c *gin.Context) {
+	c.JSON(http.StatusNotFound, gin.H{
+		"error": "not found",
+	})
+}
