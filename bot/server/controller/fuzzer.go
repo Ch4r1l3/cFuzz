@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -33,13 +34,6 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		return
 	}
 	name := c.PostForm("name")
-	//check same name
-	fuzzer, err := models.GetFuzzerByName(name)
-	if err == nil {
-		utils.BadRequestWithMsg(c, "fuzzer with same name exists")
-		return
-	}
-
 	if name == "" {
 		utils.BadRequestWithMsg(c, "fuzzer name cannot be empty")
 		return
@@ -82,8 +76,10 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 		return
 	}
 	tempFile.Close()
-	fuzzer.Name = name
-	fuzzer.Path = tempFile.Name()
+	fuzzer := models.Fuzzer{
+		Name: name,
+		Path: tempFile.Name(),
+	}
 	//unzip all file
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
@@ -113,8 +109,13 @@ func (fc *FuzzerController) Create(c *gin.Context) {
 }
 
 func (fc *FuzzerController) Destroy(c *gin.Context) {
-	name := c.Param("name")
-	fuzzer, err := models.GetFuzzerByName(name)
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	fuzzer, err := models.GetFuzzerByID(uint64(id))
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatus(404)

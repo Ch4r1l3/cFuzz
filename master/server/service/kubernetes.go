@@ -204,24 +204,33 @@ func setupNewPod() {
 							return
 						}
 						var task models.Task
-						if err = models.GetObjectByID(&task, taskID); err != nil {
+						if err = models.GetObjectByID(&task, uint64(taskID)); err != nil {
+							fmt.Println(err.Error())
 							return
 						}
 						var fuzzer models.Fuzzer
 						if err = models.GetObjectByID(&fuzzer, task.FuzzerID); err != nil {
+							fmt.Println(err.Error())
 							return
 						}
 						result, err, statusCode := requestProxyGet(uint64(taskID), []string{"fuzzer"})
 						if err != nil {
+							fmt.Println(err.Error())
 							return
 						}
-						fmt.Println(result)
 						form := map[string]string{
-							"name", fuzzer.Name,
+							"name": fuzzer.Name,
 						}
-						result, err, statusCode = requestProxyPostWithFile(taskID, []string{"fuzzer"}, form, fuzzer.Path)
+						result, err, statusCode = requestProxyPostWithFile(uint64(taskID), []string{"fuzzer"}, form, fuzzer.Path)
 						if err != nil {
 							return
+						}
+						fmt.Println(statusCode)
+						if statusCode < 300 {
+							v, ok := result.(map[string]interface{})
+							if ok {
+								fmt.Println(v)
+							}
 						}
 
 					}

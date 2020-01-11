@@ -26,7 +26,7 @@ func InitRouter() *gin.Engine {
 	r.DELETE("/task/:path1", controller.TaskDeleteHandler)
 
 	taskCorpusController := new(controller.TaskCorpusController)
-	r.GET("/task/:taskid/corpus", taskCorpusController.List)
+	r.GET("/task/:taskid/corpus", taskCorpusController.Retrieve)
 	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
 	r.DELETE("/task/:path1/:path2/:path3", controller.TaskDeleteHandler)
 

@@ -38,6 +38,7 @@ func TestTask1(t *testing.T) {
 	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData := map[string]interface{}{
+		"name":         "test",
 		"deploymentid": deploymentID,
 		"time":         100,
 		"fuzzerid":     fuzzerID,
@@ -51,7 +52,7 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "running", "environments", "arguments", "image")
+	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "running", "environments", "arguments", "image", "name")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
 	obj.Value("time").NotEqual(0)
@@ -85,6 +86,7 @@ func TestTask2(t *testing.T) {
 	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
+		"name":         "test",
 		"deploymentid": deploymentID,
 		"time":         100,
 		"fuzzerid":     fuzzerID,
@@ -147,7 +149,8 @@ func TestTask3(t *testing.T) {
 	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
-		"image":        "nginx.1.7.9",
+		"name":         "test",
+		"image":        "registry.cn-hangzhou.aliyuncs.com/cfuzz/test:v1",
 		"time":         100,
 		"fuzzerid":     fuzzerID,
 		"environments": []string{"123", "2333"},
@@ -165,9 +168,9 @@ func TestTask3(t *testing.T) {
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusOK)
-	<-time.After(time.Duration(60) * time.Second)
+	<-time.After(time.Duration(15) * time.Second)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusOK)
-
+	<-time.After(time.Duration(6) * time.Second)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }

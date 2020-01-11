@@ -17,7 +17,7 @@ func InitRouter() *gin.Engine {
 	fuzzerController := new(controller.FuzzerController)
 	r.GET("/fuzzer", fuzzerController.List)
 	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:name", fuzzerController.Destroy)
+	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
 
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.Retrieve)

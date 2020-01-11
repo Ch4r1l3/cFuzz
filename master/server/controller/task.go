@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	//"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
@@ -14,6 +15,7 @@ import (
 )
 
 type TaskCreateReq struct {
+	Name         string            `json:"name" binding:"required"`
 	Image        string            `json:"image"`
 	DeploymentID uint64            `json:"deploymentid"`
 	Time         uint64            `json:"time" binding:"required"`
@@ -23,6 +25,7 @@ type TaskCreateReq struct {
 }
 
 type TaskUpdateReq struct {
+	Name         string            `json:"name"`
 	Image        string            `json:"image"`
 	DeploymentID uint64            `json:"deploymentid"`
 	Time         uint64            `json:"time"`
@@ -78,20 +81,6 @@ func TaskDeleteHandler(c *gin.Context) {
 			taskCorpus := new(TaskCorpusController)
 			taskCorpus.Destroy(c, n)
 		}
-	} else if p1 != "" && p2 == "corpus" && p3 != "" {
-		n1, err := strconv.ParseUint(p1, 10, 64)
-		if err != nil {
-			utils.BadRequest(c)
-			return
-		}
-
-		n2, err := strconv.ParseUint(p3, 10, 64)
-		if err != nil {
-			utils.BadRequest(c)
-			return
-		}
-		taskCorpus := new(TaskCorpusController)
-		taskCorpus.DestroyByID(c, n1, n2)
 	} else {
 		utils.BadRequest(c)
 	}
@@ -121,6 +110,7 @@ func (tc *TaskController) List(c *gin.Context) {
 		results = append(results, map[string]interface{}{
 			"id":           task.ID,
 			"deploymentid": task.DeploymentID,
+			"name":         task.Name,
 			"image":        task.Image,
 			"time":         task.Time,
 			"fuzzerid":     task.FuzzerID,
@@ -146,6 +136,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	task := models.Task{
 		FuzzerID: req.FuzzerID,
 		Time:     req.Time,
+		Name:     req.Name,
 	}
 	if req.Image != "" {
 		task.Image = req.Image
@@ -191,6 +182,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 }
 
 func (tc *TaskController) Update(c *gin.Context) {
+	var Err error
 	var uriReq TaskUpdateUriReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
@@ -213,21 +205,34 @@ func (tc *TaskController) Update(c *gin.Context) {
 		return
 	}
 	if !task.Running && req.Running {
+		err = service.CreateServiceByTaskID(task.ID)
+		if err != nil {
+			utils.InternalErrorWithMsg(c, "create service failed")
+			return
+		}
+		defer func() {
+			if Err != nil {
+				service.DeleteServiceByTaskID(task.ID)
+			}
+		}()
 		var deployment *appsv1.Deployment
 		if task.Image != "" {
 			deployment, err = service.GenerateDeployment(task.ID, task.Name, task.Image, 1)
 			if err != nil {
+				Err = err
 				utils.InternalErrorWithMsg(c, "generate deployment failed")
 				return
 			}
 		} else if task.DeploymentID != 0 {
 			var tempDeployment models.Deployment
 			if err = models.GetObjectByID(&tempDeployment, task.ID); err != nil {
+				Err = err
 				utils.BadRequestWithMsg(c, "deployment not exists")
 				return
 			}
 			deployment, err = service.GenerateDeploymentByYaml(tempDeployment.Content, task.ID)
 			if err != nil {
+				Err = err
 				utils.BadRequestWithMsg(c, err.Error())
 				return
 			}
@@ -237,15 +242,13 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 		err = service.CreateDeploy(deployment)
 		if err != nil {
+			//fmt.Println(err.Error())
+			Err = err
 			utils.InternalErrorWithMsg(c, "create deployment failed")
 			return
 		}
-		err = service.CreateServiceByTaskID(task.ID)
-		if err != nil {
-			utils.InternalErrorWithMsg(c, "create service failed")
-			return
-		}
 		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Running", req.Running).Error; err != nil {
+			service.DeleteDeployByTaskID(task.ID)
 			utils.DBError(c)
 			return
 		}
@@ -341,7 +344,7 @@ func (tc *TaskController) Destroy(c *gin.Context, id uint64) {
 
 type TaskCorpusController struct{}
 
-func (tcc *TaskCorpusController) List(c *gin.Context) {
+func (tcc *TaskCorpusController) Retrieve(c *gin.Context) {
 	var taskid uint64
 	var err error
 	if taskid, err = getTaskID(c); err != nil {
@@ -359,6 +362,15 @@ func (tcc *TaskCorpusController) Create(c *gin.Context) {
 	var taskid uint64
 	var err error
 	if taskid, err = getTaskID(c); err != nil {
+		return
+	}
+	var corpusArray []models.TaskCorpus
+	if err = models.GetObjectsByTaskID(corpusArray, taskid); err != nil {
+		utils.DBError(c)
+		return
+	}
+	if len(corpusArray) > 0 {
+		utils.BadRequestWithMsg(c, "you should delete corpus first")
 		return
 	}
 	var tempFile string
@@ -394,6 +406,7 @@ func (tcc *TaskCorpusController) Destroy(c *gin.Context, taskid uint64) {
 	c.JSON(http.StatusNoContent, "")
 }
 
+/*
 func (tcc *TaskCorpusController) DestroyByID(c *gin.Context, taskid uint64, corpusid uint64) {
 	if !models.IsObjectExistsByID(&models.Task{}, taskid) {
 		utils.NotFound(c)
@@ -409,6 +422,7 @@ func (tcc *TaskCorpusController) DestroyByID(c *gin.Context, taskid uint64, corp
 	}
 	c.JSON(http.StatusNoContent, "")
 }
+*/
 
 type TaskTargetController struct{}
 
@@ -432,21 +446,29 @@ func (ttc *TaskTargetController) Create(c *gin.Context) {
 	if taskid, err = getTaskID(c); err != nil {
 		return
 	}
+	var targets []models.TaskTarget
+	if err = models.GetObjectsByTaskID(targets, taskid); err != nil {
+		utils.DBError(c)
+		return
+	}
+	if len(targets) > 0 {
+		utils.BadRequestWithMsg(c, "you should delete target first")
+		return
+	}
 	var tempFile string
 	if tempFile, err = utils.SaveTempFile(c, "file", "target"); err != nil {
 		return
 	}
-	corpus := models.TaskTarget{
+	target := models.TaskTarget{
 		TaskID: taskid,
 		Path:   tempFile,
 	}
-	if err = models.InsertObject(&corpus); err != nil {
+	if err = models.InsertObject(&target); err != nil {
 		os.RemoveAll(tempFile)
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, corpus)
-
+	c.JSON(http.StatusOK, target)
 }
 
 func (ttc *TaskTargetController) Destroy(c *gin.Context, id uint64) {

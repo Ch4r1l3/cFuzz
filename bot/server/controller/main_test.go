@@ -43,7 +43,7 @@ func prepareRouter() {
 	fuzzerController := new(FuzzerController)
 	r.GET("/fuzzer", fuzzerController.List)
 	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:name", fuzzerController.Destroy)
+	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
 
 	taskController := new(TaskController)
 	r.GET("/task", taskController.Retrieve)

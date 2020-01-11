@@ -51,7 +51,7 @@ func prepareRouter() {
 	r.DELETE("/task/:path1", TaskDeleteHandler)
 
 	taskCorpusController := new(TaskCorpusController)
-	r.GET("/task/:taskid/corpus", taskCorpusController.List)
+	r.GET("/task/:taskid/corpus", taskCorpusController.Retrieve)
 	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
 	r.DELETE("/task/:path1/:path2/:path3", TaskDeleteHandler)
 
@@ -77,6 +77,7 @@ func prepareConfig() {
 
 	viper.ReadConfig(bytes.NewBuffer(data))
 	viper.UnmarshalKey("server", config.ServerConf)
+	viper.UnmarshalKey("kubernetes", config.KubernetesConf)
 }
 
 func TestMain(m *testing.M) {

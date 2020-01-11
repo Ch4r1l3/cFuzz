@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -28,17 +29,17 @@ func TestFuzzer(t *testing.T) {
 	defer func() {
 		os.RemoveAll("./fuzzer")
 	}()
-	e.POST("/fuzzer").
+	id := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	e.GET("/fuzzer").Expect().
 		Status(http.StatusOK).
 		JSON().
 		Array().First().Object().ValueEqual("name", "afl")
-	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(id)).Expect().Status(http.StatusNoContent)
 
 }
 
@@ -55,18 +56,23 @@ func TestFuzzerWithZipFile(t *testing.T) {
 		os.RemoveAll("fuzzer.zip")
 	}()
 
-	e.POST("/fuzzer").
+	id := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer.zip").
 		WithFormField("name", "aflzip").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("id").
+		Number().
+		Raw())
 
 	e.GET("/fuzzer").Expect().
 		Status(http.StatusOK).
 		JSON().
 		Array().First().Object().ValueEqual("name", "aflzip")
-	e.DELETE("/fuzzer/aflzip").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(id)).Expect().Status(http.StatusNoContent)
 
 }
 
@@ -94,7 +100,6 @@ func TestFuzzerWithWrongZipFile1(t *testing.T) {
 		Status(http.StatusOK).
 		JSON().
 		Array().Empty()
-
 }
 
 func TestFuzzerWithWrongZipFile2(t *testing.T) {

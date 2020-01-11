@@ -5,7 +5,7 @@ type Task struct {
 	TargetDir  string `json:"targetDir"`
 	TargetPath string `json:"targetPath"`
 	Status     string `json:"status"`
-	FuzzerName string `json:"fuzzerName"`
+	FuzzerID   uint64 `json:"fuzzerID"`
 	MaxTime    int    `json:"maxTime"`
 }
 

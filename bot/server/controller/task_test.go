@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"os/exec"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -24,8 +25,8 @@ func TestTask1(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 	postdata := map[string]interface{}{
-		"fuzzerName": "afl",
-		"maxTime":    100,
+		"fuzzerID": 1,
+		"maxTime":  100,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -53,16 +54,21 @@ func TestTask2(t *testing.T) {
 		os.RemoveAll("./fuzzer")
 	}()
 
-	e.POST("/fuzzer").
+	fuzzerID := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("id").
+		Number().
+		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerName": "afl",
-		"maxTime":    100,
+		"fuzzerID": fuzzerID,
+		"maxTime":  100,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -77,16 +83,16 @@ func TestTask2(t *testing.T) {
 		Expect().
 		Status(http.StatusOK)
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Keys().ContainsOnly("corpusDir", "targetDir", "targetPath", "fuzzerName", "maxTime", "status", "arguments", "environments")
+	obj.Keys().ContainsOnly("corpusDir", "targetDir", "targetPath", "fuzzerID", "maxTime", "status", "arguments", "environments")
 	obj.Value("corpusDir").Equal("")
 	obj.Value("targetDir").Equal("")
 	obj.Value("targetPath").Equal("")
-	obj.Value("fuzzerName").Equal("afl")
+	obj.Value("fuzzerID").Equal(fuzzerID)
 	obj.Value("maxTime").Equal(100)
 	obj.Value("status").Equal(config.TASK_CREATED)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
-	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 
 }
 
@@ -111,16 +117,21 @@ func TestTask3(t *testing.T) {
 		os.RemoveAll("./target")
 	}()
 
-	e.POST("/fuzzer").
+	fuzzerID := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("id").
+		Number().
+		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerName": "afl",
-		"maxTime":    100,
+		"fuzzerID": fuzzerID,
+		"maxTime":  100,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -147,7 +158,7 @@ func TestTask3(t *testing.T) {
 	obj.Value("targetPath").NotEqual("")
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
-	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask4(t *testing.T) {
@@ -171,16 +182,21 @@ func TestTask4(t *testing.T) {
 		os.RemoveAll("tmp.zip")
 	}()
 
-	e.POST("/fuzzer").
+	fuzzerID := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "fuzzer").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("id").
+		Number().
+		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerName": "afl",
-		"maxTime":    100,
+		"fuzzerID": fuzzerID,
+		"maxTime":  100,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -245,7 +261,7 @@ func TestTask4(t *testing.T) {
 	e.PUT("/task").WithJSON(postdata2).Expect().Status(http.StatusBadRequest)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
-	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask5(t *testing.T) {
@@ -275,16 +291,21 @@ func TestTask5(t *testing.T) {
 		os.RemoveAll("tmp.zip")
 	}()
 
-	e.POST("/fuzzer").
+	fuzzerID := int(e.POST("/fuzzer").
 		WithMultipart().
 		WithFile("file", "afl").
 		WithFormField("name", "afl").
 		Expect().
-		Status(http.StatusOK)
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("id").
+		Number().
+		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerName": "afl",
-		"maxTime":    100,
+		"fuzzerID": fuzzerID,
+		"maxTime":  100,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -330,7 +351,7 @@ func TestTask5(t *testing.T) {
 	e.GET("/task/result").Expect().Status(http.StatusOK).JSON().Object().Value("timeExecuted").Equal(60)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
-	e.DELETE("/fuzzer/afl").Expect().Status(http.StatusNoContent)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTaskUpdate(t *testing.T) {

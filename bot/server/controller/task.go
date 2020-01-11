@@ -18,14 +18,14 @@ import (
 type TaskController struct{}
 
 type TaskCreateReq struct {
-	FuzzerName   string            `json:"fuzzerName"`
-	MaxTime      int               `json:"maxTime"`
+	FuzzerID     uint64            `json:"fuzzerID" binding:"required"`
+	MaxTime      int               `json:"maxTime" binding:"required"`
 	Arguments    map[string]string `json:"arguments"`
 	Environments []string          `json:"environments"`
 }
 
 type TaskUpdateReq struct {
-	Status string `json:"status"`
+	Status string `json:"status" binding:"required"`
 }
 
 func (tc *TaskController) Retrieve(c *gin.Context) {
@@ -45,7 +45,7 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 		"corpusDir":    task.CorpusDir,
 		"targetDir":    task.TargetDir,
 		"targetPath":   task.TargetPath,
-		"fuzzerName":   task.FuzzerName,
+		"fuzzerID":     task.FuzzerID,
 		"maxTime":      task.MaxTime,
 		"status":       task.Status,
 		"arguments":    arguments,
@@ -67,7 +67,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task running")
 		return
 	}
-	_, err = models.GetFuzzerByName(req.FuzzerName)
+	_, err = models.GetFuzzerByID(req.FuzzerID)
 	if err != nil {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
 		return
@@ -96,7 +96,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	task.TargetPath = ""
 	task.TargetDir = ""
 	task.Status = config.TASK_CREATED
-	task.FuzzerName = req.FuzzerName
+	task.FuzzerID = req.FuzzerID
 	task.MaxTime = req.MaxTime
 	models.DB.Create(&task)
 
@@ -142,7 +142,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 			utils.BadRequestWithMsg(c, "you should upload target")
 			return
 		}
-		fuzzer, err := models.GetFuzzerByName(task.FuzzerName)
+		fuzzer, err := models.GetFuzzerByID(task.FuzzerID)
 		if err != nil {
 			utils.BadRequestWithMsg(c, "fuzzer not exists")
 			return
