@@ -7,83 +7,83 @@ import (
 	"net/http"
 )
 
-type DockerfileReq struct {
+type DeploymentReq struct {
 	Name    string `json:"name" binding:"required"`
 	Content string `json:"content"`
 }
 
-type DockerfileUriReq struct {
+type DeploymentUriReq struct {
 	ID uint64 `uri:"id" binding:"required"`
 }
 
-type DockerfileController struct{}
+type DeploymentController struct{}
 
-func (dc *DockerfileController) List(c *gin.Context) {
-	dockerfiles := []models.Dockerfile{}
-	err := models.GetObjects(&dockerfiles)
+func (dc *DeploymentController) List(c *gin.Context) {
+	deployments := []models.Deployment{}
+	err := models.GetObjects(&deployments)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, dockerfiles)
+	c.JSON(http.StatusOK, deployments)
 }
 
-func (dc *DockerfileController) Create(c *gin.Context) {
-	var req DockerfileReq
+func (dc *DeploymentController) Create(c *gin.Context) {
+	var req DeploymentReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		utils.BadRequest(c)
 		return
 	}
-	dockerfile := models.Dockerfile{
+	deployment := models.Deployment{
 		Name:    req.Name,
 		Content: req.Content,
 	}
-	err = models.InsertObject(&dockerfile)
+	err = models.InsertObject(&deployment)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, dockerfile)
+	c.JSON(http.StatusOK, deployment)
 }
 
-func (dc *DockerfileController) Update(c *gin.Context) {
-	var uriReq DockerfileUriReq
+func (dc *DeploymentController) Update(c *gin.Context) {
+	var uriReq DeploymentUriReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
 		utils.BadRequest(c)
 		return
 	}
-	var req DockerfileReq
+	var req DeploymentReq
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		utils.BadRequest(c)
 		return
 	}
-	var dockerfile models.Dockerfile
-	err = models.GetObjectByID(&dockerfile, uriReq.ID)
+	var deployment models.Deployment
+	err = models.GetObjectByID(&deployment, uriReq.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	dockerfile.Name = req.Name
-	dockerfile.Content = req.Content
-	if err = models.DB.Save(&dockerfile).Error; err != nil {
+	deployment.Name = req.Name
+	deployment.Content = req.Content
+	if err = models.DB.Save(&deployment).Error; err != nil {
 		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, "")
 }
 
-func (dc *DockerfileController) Destroy(c *gin.Context) {
-	var uriReq DockerfileUriReq
+func (dc *DeploymentController) Destroy(c *gin.Context) {
+	var uriReq DeploymentUriReq
 
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
 		utils.BadRequest(c)
 		return
 	}
-	err = models.DeleteObjectByID(models.Dockerfile{}, uriReq.ID)
+	err = models.DeleteObjectByID(models.Deployment{}, uriReq.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

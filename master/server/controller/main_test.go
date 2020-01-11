@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -27,7 +28,7 @@ func prepareTestDB() {
 	}
 
 	models.DB.SingularTable(true)
-	models.DB.AutoMigrate(&models.Dockerfile{}, &models.Task{}, &models.TaskTarget{}, &models.TaskCorpus{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.Fuzzer{})
+	models.DB.AutoMigrate(&models.Deployment{}, &models.Task{}, &models.TaskTarget{}, &models.TaskCorpus{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.Fuzzer{})
 
 }
 
@@ -37,11 +38,11 @@ func prepareRouter() {
 	r.Use(gin.Recovery())
 	gin.SetMode("debug")
 
-	dockerfileController := new(DockerfileController)
-	r.GET("/dockerfile", dockerfileController.List)
-	r.POST("/dockerfile", dockerfileController.Create)
-	r.PUT("/dockerfile/:id", dockerfileController.Update)
-	r.DELETE("/dockerfile/:id", dockerfileController.Destroy)
+	deploymentController := new(DeploymentController)
+	r.GET("/deployment", deploymentController.List)
+	r.POST("/deployment", deploymentController.Create)
+	r.PUT("/deployment/:id", deploymentController.Update)
+	r.DELETE("/deployment/:id", deploymentController.Destroy)
 
 	taskController := new(TaskController)
 	r.GET("/task", taskController.List)
@@ -83,6 +84,7 @@ func TestMain(m *testing.M) {
 	prepareConfig()
 	prepareTestDB()
 	prepareRouter()
+	service.Setup()
 	m.Run()
 	models.DB.Close()
 }

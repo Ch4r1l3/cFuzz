@@ -3,7 +3,8 @@ package models
 type Task struct {
 	ID           uint64 `gorm:"primary_key" json:"id"`
 	Name         string `json:"name"`
-	DockerfileID uint64 `json:"dockerfileid"`
+	Image        string `json:"image"`
+	DeploymentID uint64 `json:"deploymentid"`
 	Time         uint64 `json:"time"`
 	FuzzerID     uint64 `json:"fuzzerid"`
 	Running      bool   `json:"running"`

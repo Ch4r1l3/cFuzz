@@ -15,7 +15,14 @@ type Server struct {
 	TempPath     string `mapstructure:"tempPath"`
 }
 
+type Kubernetes struct {
+	ConfigPath    string `mapstructure:"configPath"`
+	Namespace     string `mapstructure:"namespace"`
+	CheckTaskTime int    `mapstructure:"checkTaskTime"`
+}
+
 var ServerConf = &Server{}
+var KubernetesConf = &Kubernetes{}
 
 func Setup() {
 	viper.SetConfigType("YAML")
@@ -26,4 +33,5 @@ func Setup() {
 
 	viper.ReadConfig(bytes.NewBuffer(data))
 	viper.UnmarshalKey("server", ServerConf)
+	viper.UnmarshalKey("kubernetes", KubernetesConf)
 }

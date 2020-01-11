@@ -13,11 +13,11 @@ func InitRouter() *gin.Engine {
 
 	gin.SetMode(config.ServerConf.RunMode)
 
-	dockerfileController := new(controller.DockerfileController)
-	r.GET("/dockerfile", dockerfileController.List)
-	r.POST("/dockerfile", dockerfileController.Create)
-	r.PUT("/dockerfile/:id", dockerfileController.Update)
-	r.DELETE("/dockerfile/:id", dockerfileController.Destroy)
+	deploymentController := new(controller.DeploymentController)
+	r.GET("/deployment", deploymentController.List)
+	r.POST("/deployment", deploymentController.Create)
+	r.PUT("/deployment/:id", deploymentController.Update)
+	r.DELETE("/deployment/:id", deploymentController.Destroy)
 
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.List)

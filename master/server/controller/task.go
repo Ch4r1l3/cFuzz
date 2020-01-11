@@ -2,10 +2,11 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,7 +14,8 @@ import (
 )
 
 type TaskCreateReq struct {
-	DockerfileID uint64            `json:"dockerfileid" binding:"required"`
+	Image        string            `json:"image"`
+	DeploymentID uint64            `json:"deploymentid"`
 	Time         uint64            `json:"time" binding:"required"`
 	FuzzerID     uint64            `json:"fuzzerid" binding:"required"`
 	Environments []string          `json:"environments"`
@@ -21,7 +23,8 @@ type TaskCreateReq struct {
 }
 
 type TaskUpdateReq struct {
-	DockerfileID uint64            `json:"dockerfileid"`
+	Image        string            `json:"image"`
+	DeploymentID uint64            `json:"deploymentid"`
 	Time         uint64            `json:"time"`
 	FuzzerID     uint64            `json:"fuzzerid"`
 	Environments []string          `json:"environments"`
@@ -30,11 +33,11 @@ type TaskUpdateReq struct {
 }
 
 type TaskUpdateUriReq struct {
-	ID uint64 `json:"id"`
+	ID uint64 `uri:"id" binding:"required"`
 }
 
 type TaskIDUriReq struct {
-	TaskID uint64 `json:"taskid"`
+	TaskID uint64 `uri:"taskid" binding:"required"`
 }
 
 func getTaskID(c *gin.Context) (uint64, error) {
@@ -117,7 +120,8 @@ func (tc *TaskController) List(c *gin.Context) {
 		}
 		results = append(results, map[string]interface{}{
 			"id":           task.ID,
-			"dockerfileid": task.DockerfileID,
+			"deploymentid": task.DeploymentID,
+			"image":        task.Image,
 			"time":         task.Time,
 			"fuzzerid":     task.FuzzerID,
 			"running":      task.Running,
@@ -135,15 +139,27 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequest(c)
 		return
 	}
-	if !models.IsDockerfileExistsByID(req.DockerfileID) || !models.IsFuzzerExistsByID(req.FuzzerID) {
-		utils.BadRequestWithMsg(c, "dockerfile not exists or fuzzer not exists")
+	if req.Image == "" && req.DeploymentID == 0 {
+		utils.BadRequest(c)
 		return
 	}
 	task := models.Task{
-		DockerfileID: req.DockerfileID,
-		FuzzerID:     req.FuzzerID,
-		Time:         req.Time,
+		FuzzerID: req.FuzzerID,
+		Time:     req.Time,
 	}
+	if req.Image != "" {
+		task.Image = req.Image
+	} else {
+		if !models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
+			utils.BadRequestWithMsg(c, "deployment not exists")
+		}
+		task.DeploymentID = req.DeploymentID
+	}
+	if !models.IsFuzzerExistsByID(req.FuzzerID) {
+		utils.BadRequestWithMsg(c, "fuzzer not exists")
+		return
+	}
+
 	err = models.InsertObject(&task)
 	if err != nil {
 		utils.DBError(c)
@@ -156,7 +172,6 @@ func (tc *TaskController) Create(c *gin.Context) {
 		}
 	}()
 	if req.Environments != nil {
-		fmt.Println(req.Environments)
 		err = models.InsertEnvironments(task.ID, req.Environments)
 		if err != nil {
 			Err = err
@@ -165,7 +180,6 @@ func (tc *TaskController) Create(c *gin.Context) {
 		}
 	}
 	if req.Arguments != nil {
-		fmt.Println(req.Arguments)
 		err = models.InsertArguments(task.ID, req.Arguments)
 		if err != nil {
 			Err = err
@@ -199,6 +213,38 @@ func (tc *TaskController) Update(c *gin.Context) {
 		return
 	}
 	if !task.Running && req.Running {
+		var deployment *appsv1.Deployment
+		if task.Image != "" {
+			deployment, err = service.GenerateDeployment(task.ID, task.Name, task.Image, 1)
+			if err != nil {
+				utils.InternalErrorWithMsg(c, "generate deployment failed")
+				return
+			}
+		} else if task.DeploymentID != 0 {
+			var tempDeployment models.Deployment
+			if err = models.GetObjectByID(&tempDeployment, task.ID); err != nil {
+				utils.BadRequestWithMsg(c, "deployment not exists")
+				return
+			}
+			deployment, err = service.GenerateDeploymentByYaml(tempDeployment.Content, task.ID)
+			if err != nil {
+				utils.BadRequestWithMsg(c, err.Error())
+				return
+			}
+		} else {
+			utils.BadRequestWithMsg(c, "image or deployment should have value")
+			return
+		}
+		err = service.CreateDeploy(deployment)
+		if err != nil {
+			utils.InternalErrorWithMsg(c, "create deployment failed")
+			return
+		}
+		err = service.CreateServiceByTaskID(task.ID)
+		if err != nil {
+			utils.InternalErrorWithMsg(c, "create service failed")
+			return
+		}
 		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Running", req.Running).Error; err != nil {
 			utils.DBError(c)
 			return
@@ -211,10 +257,31 @@ func (tc *TaskController) Update(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
+		err1 := service.DeleteServiceByTaskID(task.ID)
+		err2 := service.DeleteDeployByTaskID(task.ID)
+		if err1 != nil || err2 != nil {
+			utils.InternalErrorWithMsg(c, "kubernetes delete error")
+			return
+		}
+		c.JSON(http.StatusOK, "")
+		return
 	}
-	if req.DockerfileID != 0 {
-		if models.IsObjectExistsByID(&models.Dockerfile{}, req.DockerfileID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DockerfileID", req.DockerfileID).Error; err != nil {
+	if req.Image != "" {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DeploymentID", 0).Error; err != nil {
+			utils.DBError(c)
+			return
+		}
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Image", req.Image).Error; err != nil {
+			utils.DBError(c)
+			return
+		}
+	} else if req.DeploymentID != 0 {
+		if models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DeploymentID", req.DeploymentID).Error; err != nil {
+				utils.DBError(c)
+				return
+			}
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Image", "").Error; err != nil {
 				utils.DBError(c)
 				return
 			}
