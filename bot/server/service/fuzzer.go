@@ -45,16 +45,17 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 		running = true
 		go func() {
 			var Err error
+			f, err := os.OpenFile(config.ServerConf.TempPath+"/cfuzz.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 			logger := hclog.New(&hclog.LoggerOptions{
 				Name:   "plugin",
-				Output: os.Stdout,
+				Output: f,
 				Level:  hclog.Debug,
 			})
 			defer func() {
 				mutex.Lock()
 				running = false
 				if Err != nil {
-					models.DB.Model(&models.Task{}).Update("Status", config.TASK_ERROR)
+					models.DB.Model(&models.Task{}).Update("Status", models.TASK_ERROR)
 					logger.Debug("error is !!!!!:" + Err.Error())
 				}
 				mutex.Unlock()

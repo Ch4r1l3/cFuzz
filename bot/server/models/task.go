@@ -9,6 +9,13 @@ type Task struct {
 	MaxTime    int    `json:"maxTime"`
 }
 
+const (
+	TASK_CREATED = "TASK_CREATED"
+	TASK_RUNNING = "TASK_RUNNING"
+	TASK_STOPPED = "TASK_STOPPED"
+	TASK_ERROR   = "TASK_ERROR"
+)
+
 func GetTask() (*Task, error) {
 	var task Task
 	if err := DB.First(&task).Error; err != nil {

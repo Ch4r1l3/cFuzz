@@ -16,9 +16,10 @@ type Server struct {
 }
 
 type Kubernetes struct {
-	ConfigPath    string `mapstructure:"configPath"`
-	Namespace     string `mapstructure:"namespace"`
-	CheckTaskTime int    `mapstructure:"checkTaskTime"`
+	ConfigPath        string `mapstructure:"configPath"`
+	Namespace         string `mapstructure:"namespace"`
+	CheckTaskTime     int    `mapstructure:"checkTaskTime"`
+	MaxClientRetryNum int    `mapstructure:"maxClientRetryNum"`
 }
 
 var ServerConf = &Server{}

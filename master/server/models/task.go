@@ -109,6 +109,13 @@ func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
 
+func IsObjectExistsByTaskID(obj interface{}, taskid uint64) bool {
+	if err := DB.Where("task_id = ?", taskid).First(obj).Error; err != nil {
+		return false
+	}
+	return true
+}
+
 type TaskCrash struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
 	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`

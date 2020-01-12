@@ -8,4 +8,5 @@ server:
 kubernetes:
         configPath: ""
         namespace: "cfuzz"
-        checkTaskTime: 60
+        checkTaskTime: 10
+        maxClientRetryNum: 3

@@ -12,7 +12,15 @@ import (
 	"path/filepath"
 )
 
-func requestProxyGet(taskID uint64, url []string) (interface{}, error, int) {
+func bytes2interface(data []byte) (interface{}, error) {
+	var temp interface{}
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return nil, err
+	}
+	return temp, nil
+}
+
+func requestProxyGet(taskID uint64, url []string) ([]byte, error, int) {
 	urls := append([]string{"proxy"}, url...)
 	result := ClientSet.
 		CoreV1().
@@ -29,22 +37,18 @@ func requestProxyGet(taskID uint64, url []string) (interface{}, error, int) {
 		return nil, result.Error(), 0
 	}
 	bytesData, _ := result.Raw()
-	var temp interface{}
-	if err := json.Unmarshal(bytesData, &temp); err != nil {
-		return nil, err, 0
-	}
-	return temp, nil, statusCode
+	return bytesData, nil, statusCode
 }
 
-func requestProxyPost(taskID uint64, url []string, data interface{}) (interface{}, error, int) {
+func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error, int) {
 	return requestProxyPostPut("Post", taskID, url, data)
 }
 
-func requestProxyPut(taskID uint64, url []string, data interface{}) (interface{}, error, int) {
+func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error, int) {
 	return requestProxyPostPut("Put", taskID, url, data)
 }
 
-func requestProxyPostPut(method string, taskID uint64, url []string, data interface{}) (interface{}, error, int) {
+func requestProxyPostPut(method string, taskID uint64, url []string, data interface{}) ([]byte, error, int) {
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		return nil, err, 0
@@ -72,22 +76,18 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		return nil, result.Error(), 0
 	}
 	bytesData, _ := result.Raw()
-	var temp interface{}
-	if err := json.Unmarshal(bytesData, &temp); err != nil {
-		return nil, err, 0
-	}
-	return temp, nil, statusCode
+	return bytesData, nil, statusCode
 }
 
-func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) (interface{}, error, int) {
+func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
 	return requestProxyPostPutWithFile("Post", taskID, url, form, filePath)
 }
 
-func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) (interface{}, error, int) {
+func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
 	return requestProxyPostPutWithFile("Put", taskID, url, form, filePath)
 }
 
-func requestProxyPostPutWithFile(method string, taskID uint64, url []string, form map[string]string, filePath string) (interface{}, error, int) {
+func requestProxyPostPutWithFile(method string, taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err, 0
@@ -128,10 +128,6 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 	if statusCode == 0 {
 		return nil, result.Error(), 0
 	}
-	var temp interface{}
 	bytesData, _ := result.Raw()
-	if err := json.Unmarshal(bytesData, &temp); err != nil {
-		return nil, err, 0
-	}
-	return temp, nil, statusCode
+	return bytesData, nil, statusCode
 }

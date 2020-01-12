@@ -9,9 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strconv"
 )
 
 type TaskCreateReq struct {
@@ -56,36 +53,6 @@ func getTaskID(c *gin.Context) (uint64, error) {
 	return req.TaskID, nil
 }
 
-func TaskDeleteHandler(c *gin.Context) {
-	p1 := c.Param("path1")
-	p2 := c.Param("path2")
-	p3 := c.Param("path3")
-	if p1 != "" && p2 == "" && p3 == "" {
-		n, err := strconv.ParseUint(p1, 10, 64)
-		if err != nil {
-			utils.BadRequest(c)
-			return
-		}
-		task := new(TaskController)
-		task.Destroy(c, n)
-	} else if p1 != "" && p2 != "" && p3 == "" {
-		n, err := strconv.ParseUint(p1, 10, 64)
-		if err != nil {
-			utils.BadRequest(c)
-			return
-		}
-		if p2 == "target" {
-			taskTarget := new(TaskTargetController)
-			taskTarget.Destroy(c, n)
-		} else if p2 == "corpus" {
-			taskCorpus := new(TaskCorpusController)
-			taskCorpus.Destroy(c, n)
-		}
-	} else {
-		utils.BadRequest(c)
-	}
-}
-
 type TaskController struct{}
 
 func (tc *TaskController) List(c *gin.Context) {
@@ -120,6 +87,37 @@ func (tc *TaskController) List(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, results)
+}
+
+func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
+	var task models.Task
+	err := models.GetObjectByID(&task, id)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	environments, err := models.GetEnvironments(task.ID)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	arguments, err := models.GetArguments(task.ID)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	result := map[string]interface{}{
+		"id":           task.ID,
+		"deploymentid": task.DeploymentID,
+		"name":         task.Name,
+		"image":        task.Image,
+		"time":         task.Time,
+		"fuzzerid":     task.FuzzerID,
+		"running":      task.Running,
+		"environments": environments,
+		"arguments":    arguments,
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (tc *TaskController) Create(c *gin.Context) {
@@ -205,6 +203,16 @@ func (tc *TaskController) Update(c *gin.Context) {
 		return
 	}
 	if !task.Running && req.Running {
+		//var tempTarget models.TaskTarget
+		if !models.IsObjectExistsByTaskID(&models.TaskTarget{}, task.ID) {
+			utils.BadRequestWithMsg(c, "you should upload target first")
+			return
+		}
+		var tempCorpus models.TaskCorpus
+		if !models.IsObjectExistsByTaskID(&tempCorpus, task.ID) {
+			utils.BadRequestWithMsg(c, "you should upload corpus first")
+			return
+		}
 		err = service.CreateServiceByTaskID(task.ID)
 		if err != nil {
 			utils.InternalErrorWithMsg(c, "create service failed")
@@ -340,155 +348,4 @@ func (tc *TaskController) Destroy(c *gin.Context, id uint64) {
 		return
 	}
 	c.JSON(http.StatusNoContent, "")
-}
-
-type TaskCorpusController struct{}
-
-func (tcc *TaskCorpusController) Retrieve(c *gin.Context) {
-	var taskid uint64
-	var err error
-	if taskid, err = getTaskID(c); err != nil {
-		return
-	}
-	var corpus []models.TaskCorpus
-	if err := models.GetObjectsByTaskID(corpus, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusOK, corpus)
-}
-
-func (tcc *TaskCorpusController) Create(c *gin.Context) {
-	var taskid uint64
-	var err error
-	if taskid, err = getTaskID(c); err != nil {
-		return
-	}
-	var corpusArray []models.TaskCorpus
-	if err = models.GetObjectsByTaskID(corpusArray, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	if len(corpusArray) > 0 {
-		utils.BadRequestWithMsg(c, "you should delete corpus first")
-		return
-	}
-	var tempFile string
-	if tempFile, err = utils.SaveTempFile(c, "file", "corpus"); err != nil {
-		return
-	}
-	corpus := models.TaskCorpus{
-		TaskID:   taskid,
-		Path:     tempFile,
-		FileName: filepath.Base(tempFile),
-	}
-	if err := models.InsertObject(&corpus); err != nil {
-		os.RemoveAll(tempFile)
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusOK, corpus)
-}
-
-func (tcc *TaskCorpusController) Destroy(c *gin.Context, taskid uint64) {
-	var corpus []models.TaskCorpus
-	if err := models.GetObjectsByTaskID(corpus, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	for _, v := range corpus {
-		os.RemoveAll(v.Path)
-	}
-	if err := models.DeleteObjectsByTaskID(&models.TaskCorpus{}, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusNoContent, "")
-}
-
-/*
-func (tcc *TaskCorpusController) DestroyByID(c *gin.Context, taskid uint64, corpusid uint64) {
-	if !models.IsObjectExistsByID(&models.Task{}, taskid) {
-		utils.NotFound(c)
-		return
-	}
-	if !models.IsObjectExistsByID(&models.TaskCorpus{}, corpusid) {
-		utils.NotFound(c)
-		return
-	}
-	if err := models.DeleteObjectByID(&models.TaskCorpus{}, corpusid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusNoContent, "")
-}
-*/
-
-type TaskTargetController struct{}
-
-func (ttc *TaskTargetController) Retrieve(c *gin.Context) {
-	var taskid uint64
-	var err error
-	if taskid, err = getTaskID(c); err != nil {
-		return
-	}
-	var targets []models.TaskTarget
-	if err = models.GetObjectsByTaskID(targets, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusOK, targets)
-}
-
-func (ttc *TaskTargetController) Create(c *gin.Context) {
-	var taskid uint64
-	var err error
-	if taskid, err = getTaskID(c); err != nil {
-		return
-	}
-	var targets []models.TaskTarget
-	if err = models.GetObjectsByTaskID(targets, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	if len(targets) > 0 {
-		utils.BadRequestWithMsg(c, "you should delete target first")
-		return
-	}
-	var tempFile string
-	if tempFile, err = utils.SaveTempFile(c, "file", "target"); err != nil {
-		return
-	}
-	target := models.TaskTarget{
-		TaskID: taskid,
-		Path:   tempFile,
-	}
-	if err = models.InsertObject(&target); err != nil {
-		os.RemoveAll(tempFile)
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusOK, target)
-}
-
-func (ttc *TaskTargetController) Destroy(c *gin.Context, id uint64) {
-	var taskid uint64
-	var err error
-	if taskid, err = getTaskID(c); err != nil {
-		return
-	}
-	var targets []models.TaskTarget
-	if err = models.GetObjectsByTaskID(targets, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	for _, v := range targets {
-		os.RemoveAll(v.Path)
-	}
-	if err = models.DeleteObjectsByTaskID(&models.TaskTarget{}, taskid); err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusNoContent, "")
-
 }

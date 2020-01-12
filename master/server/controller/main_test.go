@@ -46,19 +46,18 @@ func prepareRouter() {
 
 	taskController := new(TaskController)
 	r.GET("/task", taskController.List)
+	r.GET("/task/:path1", TaskGetHandler)
 	r.POST("/task", taskController.Create)
 	r.PUT("/task/:id", taskController.Update)
 	r.DELETE("/task/:path1", TaskDeleteHandler)
 
 	taskCorpusController := new(TaskCorpusController)
-	r.GET("/task/:taskid/corpus", taskCorpusController.Retrieve)
+	r.GET("/task/:path1/:path2", TaskGetHandler)
 	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
-	r.DELETE("/task/:path1/:path2/:path3", TaskDeleteHandler)
+	r.DELETE("/task/:path1/:path2", TaskDeleteHandler)
 
 	taskTargetController := new(TaskTargetController)
-	r.GET("/task/:taskid/target", taskTargetController.Retrieve)
 	r.POST("/task/:taskid/target", taskTargetController.Create)
-	r.DELETE("/task/:path1/:path2", TaskDeleteHandler)
 
 	fuzzerController := new(FuzzerController)
 	r.GET("/fuzzer", fuzzerController.List)

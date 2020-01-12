@@ -1,8 +1,10 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	botmodels "github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,6 +17,15 @@ import (
 	"strconv"
 	"time"
 )
+
+type clientFuzzerPostResp struct {
+	ID   uint64 `json:"id" binding:"required"`
+	Name string `json:"string" binding:"required"`
+}
+
+type clientTaskGetResp struct {
+	Status string `json:"status"`
+}
 
 func GetAllDeploys() ([]appsv1.Deployment, error) {
 	deploys, err := ClientSet.AppsV1().Deployments(config.KubernetesConf.Namespace).List(metav1.ListOptions{})
@@ -158,18 +169,39 @@ func TestProxy() {
 func handleTasks() {
 	for {
 		var tasks []models.Task
+		count := make(map[uint64]int)
 		if err := models.GetObjects(&tasks); err != nil {
 			fmt.Println(err)
 		} else {
 			for _, task := range tasks {
 				if task.Running {
 					result, err, statusCode := requestProxyGet(task.ID, []string{"fuzzer"})
-					if err == nil {
-						fmt.Println("handleTask")
-						fmt.Println(statusCode)
-						fmt.Println(result)
-						fmt.Println("handleTask")
+					if err != nil {
+						v, ok := count[task.ID]
+						if ok {
+							count[task.ID] = v + 1
+						} else {
+							count[task.ID] = 1
+						}
+						if v >= config.KubernetesConf.MaxClientRetryNum {
+							delete(count, task.ID)
+							models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Running", false)
+						}
+						return
 					}
+					result, err, statusCode = requestProxyGet(task.ID, []string{"task"})
+					var clientTask clientTaskGetResp
+					if err := json.Unmarshal(result, &clientTask); err != nil {
+						fmt.Println(err.Error())
+						return
+					}
+					if clientTask.Status != botmodels.TASK_RUNNING {
+						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Running", false)
+						DeleteServiceByTaskID(task.ID)
+						DeleteDeployByTaskID(task.ID)
+						return
+					}
+					fmt.Println(statusCode)
 				}
 			}
 		}
@@ -225,14 +257,57 @@ func setupNewPod() {
 						if err != nil {
 							return
 						}
-						fmt.Println(statusCode)
-						if statusCode < 300 {
-							v, ok := result.(map[string]interface{})
-							if ok {
-								fmt.Println(v)
-							}
+						if statusCode > 300 {
+							return
 						}
-
+						var clientFuzzer clientFuzzerPostResp
+						if err := json.Unmarshal(result, &clientFuzzer); err != nil {
+							return
+						}
+						if !ok {
+							fmt.Println(result)
+							fmt.Println("cannot change to struct")
+							return
+						}
+						taskArguments, err := models.GetArguments(task.ID)
+						if err != nil {
+							return
+						}
+						taskEnvironments, err := models.GetEnvironments(task.ID)
+						if err != nil {
+							return
+						}
+						postData := map[string]interface{}{
+							"fuzzerID":    clientFuzzer.ID,
+							"maxTime":     task.Time,
+							"arguments":   taskArguments,
+							"enviroments": taskEnvironments,
+						}
+						result, err, statusCode = requestProxyPost(task.ID, []string{"task"}, postData)
+						if err != nil {
+							return
+						}
+						var taskTarget []models.TaskTarget
+						if err = models.GetObjectsByTaskID(&taskTarget, uint64(taskID)); err != nil || len(taskTarget) == 0 {
+							return
+						}
+						var taskCorpus []models.TaskCorpus
+						if err = models.GetObjectsByTaskID(&taskCorpus, uint64(taskID)); err != nil || len(taskCorpus) == 0 {
+							return
+						}
+						result, err, statusCode = requestProxyPostWithFile(uint64(taskID), []string{"task/target"}, form, taskTarget[0].Path)
+						if err != nil {
+							return
+						}
+						result, err, statusCode = requestProxyPostWithFile(uint64(taskID), []string{"task/corpus"}, form, taskCorpus[0].Path)
+						if err != nil {
+							return
+						}
+						putData := map[string]interface{}{
+							"status": "TASK_RUNNING",
+						}
+						result, err, statusCode = requestProxyPut(task.ID, []string{"task"}, putData)
+						fmt.Println(statusCode)
 					}
 				}
 			},

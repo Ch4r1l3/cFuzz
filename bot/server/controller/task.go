@@ -63,7 +63,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 	task, err := models.GetTask()
-	if err == nil && task.Status == config.TASK_RUNNING {
+	if err == nil && task.Status == models.TASK_RUNNING {
 		utils.BadRequestWithMsg(c, "task running")
 		return
 	}
@@ -95,7 +95,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	task.CorpusDir = ""
 	task.TargetPath = ""
 	task.TargetDir = ""
-	task.Status = config.TASK_CREATED
+	task.Status = models.TASK_CREATED
 	task.FuzzerID = req.FuzzerID
 	task.MaxTime = req.MaxTime
 	models.DB.Create(&task)
@@ -128,11 +128,11 @@ func (tc *TaskController) Update(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task not exists")
 		return
 	}
-	if task.Status == config.TASK_RUNNING && req.Status == config.TASK_STOPPED {
+	if task.Status == models.TASK_RUNNING && req.Status == models.TASK_STOPPED {
 		service.StopFuzz()
-		models.DB.Model(task).Update("Status", config.TASK_STOPPED)
+		models.DB.Model(task).Update("Status", models.TASK_STOPPED)
 
-	} else if task.Status == config.TASK_CREATED && req.Status == config.TASK_RUNNING {
+	} else if task.Status == models.TASK_CREATED && req.Status == models.TASK_RUNNING {
 		//check plugin and target
 		if _, err = os.Stat(task.CorpusDir); task.CorpusDir == "" || os.IsNotExist(err) {
 			utils.BadRequestWithMsg(c, "you should upload corpus")
@@ -159,7 +159,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, environments)
 
-		models.DB.Model(task).Update("Status", config.TASK_RUNNING)
+		models.DB.Model(task).Update("Status", models.TASK_RUNNING)
 
 	} else {
 		utils.BadRequestWithMsg(c, "wrong status")

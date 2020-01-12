@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/Ch4r1l3/cFuzz/bot/server/config"
+	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/gavv/httpexpect"
 	"io/ioutil"
 	"net/http"
@@ -89,7 +89,7 @@ func TestTask2(t *testing.T) {
 	obj.Value("targetPath").Equal("")
 	obj.Value("fuzzerID").Equal(fuzzerID)
 	obj.Value("maxTime").Equal(100)
-	obj.Value("status").Equal(config.TASK_CREATED)
+	obj.Value("status").Equal(models.TASK_CREATED)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
@@ -207,10 +207,10 @@ func TestTask4(t *testing.T) {
 		},
 	}
 	postdata1 := map[string]interface{}{
-		"status": config.TASK_RUNNING,
+		"status": models.TASK_RUNNING,
 	}
 	postdata2 := map[string]interface{}{
-		"status": config.TASK_STOPPED,
+		"status": models.TASK_STOPPED,
 	}
 	e.POST("/task").
 		WithJSON(postdata).
@@ -293,7 +293,7 @@ func TestTask5(t *testing.T) {
 
 	fuzzerID := int(e.POST("/fuzzer").
 		WithMultipart().
-		WithFile("file", "afl").
+		WithFile("file", "../test_data/afl").
 		WithFormField("name", "afl").
 		Expect().
 		Status(http.StatusOK).
@@ -316,10 +316,10 @@ func TestTask5(t *testing.T) {
 		},
 	}
 	postdata1 := map[string]interface{}{
-		"status": config.TASK_RUNNING,
+		"status": models.TASK_RUNNING,
 	}
 	postdata2 := map[string]interface{}{
-		"status": config.TASK_STOPPED,
+		"status": models.TASK_STOPPED,
 	}
 	e.POST("/task").
 		WithJSON(postdata).
@@ -342,12 +342,12 @@ func TestTask5(t *testing.T) {
 	<-time.After(time.Duration(3) * time.Second)
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Value("status").Equal(config.TASK_RUNNING)
+	obj.Value("status").Equal(models.TASK_RUNNING)
 
 	<-time.After(time.Duration(70) * time.Second)
 	e.PUT("/task").WithJSON(postdata2).Expect().Status(http.StatusOK)
 	<-time.After(time.Duration(70) * time.Second)
-	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(config.TASK_STOPPED)
+	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TASK_STOPPED)
 	e.GET("/task/result").Expect().Status(http.StatusOK).JSON().Object().Value("timeExecuted").Equal(60)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
@@ -363,7 +363,7 @@ func TestTaskUpdate(t *testing.T) {
 		"status": "abc",
 	}
 	postdata2 := map[string]interface{}{
-		"status": config.TASK_STOPPED,
+		"status": models.TASK_STOPPED,
 	}
 	e.PUT("/task").Expect().Status(http.StatusBadRequest)
 	e.PUT("/task").WithJSON(postdata1).Expect().Status(http.StatusBadRequest)
