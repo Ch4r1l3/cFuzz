@@ -5,6 +5,8 @@ server:
         writeTimeout: 60
         tempPath: /tmp
         crashesPath: ./crashes
+        logToFile: true
+        logFileDir: "/tmp"
 
 kubernetes:
         configPath: ""

@@ -13,6 +13,8 @@ import (
 )
 
 var ClientSet kubernetes.Interface
+var controlChan map[uint64]chan struct{}
+var crashesMap map[uint64]map[uint64]bool
 
 func setupNamespace() {
 	if config.KubernetesConf.Namespace == "" {
@@ -39,6 +41,8 @@ const (
 )
 
 func Setup() {
+	controlChan = make(map[uint64]chan struct{})
+	crashesMap = make(map[uint64]map[uint64]bool)
 	var kubeConfig *rest.Config
 	var err error
 	if config.KubernetesConf.ConfigPath != "" {
@@ -58,6 +62,6 @@ func Setup() {
 	}
 
 	setupNamespace()
-	setupNewPod()
+	watchDeploy()
 	go handleTasks()
 }

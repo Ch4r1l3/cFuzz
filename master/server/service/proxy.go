@@ -20,7 +20,7 @@ func bytes2interface(data []byte) (interface{}, error) {
 	return temp, nil
 }
 
-func requestProxyGet(taskID uint64, url []string) ([]byte, error, int) {
+func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	urls := append([]string{"proxy"}, url...)
 	result := ClientSet.
 		CoreV1().
@@ -31,20 +31,15 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error, int) {
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).Do()
 
-	var statusCode int
-	result.StatusCode(&statusCode)
-	if statusCode == 0 {
-		return nil, result.Error(), 0
-	}
 	bytesData, _ := result.Raw()
-	return bytesData, nil, statusCode
+	return bytesData, nil
 }
 
-func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error, int) {
+func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Post", taskID, url, data)
 }
 
-func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error, int) {
+func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Put", taskID, url, data)
 }
 
@@ -66,10 +61,10 @@ func requestProxyPostRaw(taskID uint64, url []string, data interface{}) ([]byte,
 		SetHeader("Content-Type", "application/json").DoRaw()
 }
 
-func requestProxyPostPut(method string, taskID uint64, url []string, data interface{}) ([]byte, error, int) {
+func requestProxyPostPut(method string, taskID uint64, url []string, data interface{}) ([]byte, error) {
 	bytes, err := json.Marshal(data)
 	if err != nil {
-		return nil, err, 0
+		return nil, err
 	}
 	client := ClientSet.CoreV1().RESTClient()
 	var request *rest.Request
@@ -88,27 +83,22 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		Suffix(urls...).
 		Body(bytes).
 		SetHeader("Content-Type", "application/json").Do()
-	var statusCode int
-	result.StatusCode(&statusCode)
-	if statusCode == 0 {
-		return nil, result.Error(), 0
-	}
 	bytesData, _ := result.Raw()
-	return bytesData, nil, statusCode
+	return bytesData, nil
 }
 
-func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
+func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Post", taskID, url, form, filePath)
 }
 
-func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
+func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Put", taskID, url, form, filePath)
 }
 
-func requestProxyPostPutWithFile(method string, taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error, int) {
+func requestProxyPostPutWithFile(method string, taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, err, 0
+		return nil, err
 	}
 	defer file.Close()
 
@@ -116,7 +106,7 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filepath.Base(filePath))
 	if err != nil {
-		return nil, err, 0
+		return nil, err
 	}
 	io.Copy(part, file)
 	for k, v := range form {
@@ -141,11 +131,6 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		Body(body.Bytes()).
 		SetHeader("Content-Type", writer.FormDataContentType()).
 		Do()
-	var statusCode int
-	result.StatusCode(&statusCode)
-	if statusCode == 0 {
-		return nil, result.Error(), 0
-	}
 	bytesData, _ := result.Raw()
-	return bytesData, nil, statusCode
+	return bytesData, nil
 }

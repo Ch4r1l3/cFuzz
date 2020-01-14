@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
+	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/gavv/httpexpect"
 	"io/ioutil"
 	"net/http"
@@ -55,16 +56,16 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "running", "environments", "arguments", "image", "name", "fuzzCycleTime")
+	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
 	obj.Value("time").NotEqual(0)
 	obj.Value("fuzzCycleTime").NotEqual(0)
 	obj.Value("fuzzerid").NotEqual(0)
-	obj.Value("running").Equal(false)
 	obj.Value("environments").Array().Elements("123", "2333")
 	obj.Value("arguments").Object().Value("a1").Equal("a2")
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
+	obj.Value("status").NotEqual("")
 	e.DELETE("/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
@@ -160,10 +161,10 @@ func TestTask3(t *testing.T) {
 		},
 	}
 	taskPostData2 := map[string]interface{}{
-		"running": true,
+		"status": models.TaskStarted,
 	}
 	taskPostData3 := map[string]interface{}{
-		"running": false,
+		"status": models.TaskStopped,
 	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
@@ -171,9 +172,9 @@ func TestTask3(t *testing.T) {
 	e.POST(fmt.Sprintf("/task/%d/target", taskID)).WithMultipart().WithFile("file", "../test_data/test").Expect().Status(http.StatusOK)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
 	e.POST(fmt.Sprintf("/task/%d/corpus", taskID)).WithMultipart().WithFile("file", "../test_data/corpus").Expect().Status(http.StatusOK)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusOK)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*30) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("running").Equal(true)
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
+	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusOK)
 	<-time.After(time.Duration(10) * time.Second)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)

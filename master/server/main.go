@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
+	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/router"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
@@ -12,6 +13,7 @@ import (
 func main() {
 	config.Setup()
 	os.MkdirAll(config.ServerConf.CrashesPath, os.ModePerm)
+	logger.Setup()
 	models.Setup()
 	defer models.DB.Close()
 	service.Setup()

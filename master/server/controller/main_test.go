@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
+	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/gin-gonic/gin"
@@ -84,6 +85,7 @@ func TestMain(m *testing.M) {
 	prepareConfig()
 	prepareTestDB()
 	prepareRouter()
+	logger.Setup()
 	service.Setup()
 	m.Run()
 	models.DB.Close()

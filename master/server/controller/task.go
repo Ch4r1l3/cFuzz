@@ -31,7 +31,7 @@ type TaskUpdateReq struct {
 	FuzzerID      uint64            `json:"fuzzerid"`
 	Environments  []string          `json:"environments"`
 	Arguments     map[string]string `json:"arguments"`
-	Running       bool              `json:"running"`
+	Status        string            `json:"status"`
 }
 
 type TaskUpdateUriReq struct {
@@ -84,7 +84,8 @@ func (tc *TaskController) List(c *gin.Context) {
 			"time":          task.Time,
 			"fuzzCycleTime": task.FuzzCycleTime,
 			"fuzzerid":      task.FuzzerID,
-			"running":       task.Running,
+			"status":        task.Status,
+			"errorMsg":      task.ErrorMsg,
 			"environments":  environments,
 			"arguments":     arguments,
 		})
@@ -117,7 +118,8 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		"time":          task.Time,
 		"fuzzCycleTime": task.FuzzCycleTime,
 		"fuzzerid":      task.FuzzerID,
-		"running":       task.Running,
+		"status":        task.Status,
+		"errorMsg":      task.ErrorMsg,
 		"environments":  environments,
 		"arguments":     arguments,
 	}
@@ -128,11 +130,11 @@ func (tc *TaskController) Create(c *gin.Context) {
 	var req TaskCreateReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	if req.Image == "" && req.DeploymentID == 0 {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, "image and deployment is empty")
 		return
 	}
 	task := models.Task{
@@ -140,6 +142,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		FuzzCycleTime: req.FuzzCycleTime,
 		Time:          req.Time,
 		Name:          req.Name,
+		Status:        models.TaskCreated,
 	}
 	if req.Image != "" {
 		task.Image = req.Image
@@ -184,8 +187,83 @@ func (tc *TaskController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-func (tc *TaskController) Update(c *gin.Context) {
+func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
 	var Err error
+	if !models.IsObjectExistsByTaskID(&models.TaskTarget{}, task.ID) {
+		utils.BadRequestWithMsg(c, "you should upload target first")
+		return
+	}
+	if !models.IsObjectExistsByTaskID(&models.TaskCorpus{}, task.ID) {
+		utils.BadRequestWithMsg(c, "you should upload corpus first")
+		return
+	}
+
+	err := service.CreateServiceByTaskID(task.ID)
+	if err != nil {
+		utils.InternalErrorWithMsg(c, "create service failed")
+		return
+	}
+
+	defer func() {
+		if Err != nil {
+			service.DeleteServiceByTaskID(task.ID)
+		}
+	}()
+	var deployment *appsv1.Deployment
+	if task.Image != "" {
+		deployment, err = service.GenerateDeployment(task.ID, task.Name, task.Image, 1)
+		if err != nil {
+			Err = err
+			utils.InternalErrorWithMsg(c, "generate deployment failed")
+			return
+		}
+	} else if task.DeploymentID != 0 {
+		var tempDeployment models.Deployment
+		if err = models.GetObjectByID(&tempDeployment, task.ID); err != nil {
+			Err = err
+			utils.BadRequestWithMsg(c, "deployment not exists")
+			return
+		}
+		deployment, err = service.GenerateDeploymentByYaml(tempDeployment.Content, task.ID)
+		if err != nil {
+			Err = err
+			utils.BadRequestWithMsg(c, err.Error())
+			return
+		}
+	} else {
+		utils.BadRequestWithMsg(c, "image or deployment should have value")
+		return
+	}
+	err = service.CreateDeploy(deployment)
+	if err != nil {
+		Err = err
+		utils.InternalErrorWithMsg(c, "create deployment failed")
+		return
+	}
+	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
+		service.DeleteDeployByTaskID(task.ID)
+		utils.DBError(c)
+		return
+	}
+	c.JSON(http.StatusNoContent, "")
+}
+
+func (tc *TaskController) taskStop(c *gin.Context, taskID uint64) {
+	if err := models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped).Error; err != nil {
+		utils.DBError(c)
+		return
+	}
+	err1 := service.DeleteServiceByTaskID(taskID)
+	err2 := service.DeleteDeployByTaskID(taskID)
+	if err1 != nil || err2 != nil {
+		utils.InternalErrorWithMsg(c, "kubernetes delete error")
+		return
+	}
+	c.JSON(http.StatusOK, "")
+	return
+}
+
+func (tc *TaskController) Update(c *gin.Context) {
 	var uriReq TaskUpdateUriReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
@@ -203,85 +281,17 @@ func (tc *TaskController) Update(c *gin.Context) {
 		utils.BadRequest(c)
 		return
 	}
-	if task.Running && req.Running {
-		utils.BadRequest(c)
+	if task.Status == models.TaskCreated && req.Status == models.TaskStarted {
+		tc.taskStart(c, &task)
+		return
+	} else if task.Status != models.TaskCreated && task.Status != models.TaskStopped && task.Status != models.TaskError && req.Status == models.TaskStopped {
+		tc.taskStop(c, task.ID)
+		return
+	} else if task.Status != models.TaskCreated {
+		utils.BadRequestWithMsg(c, "task already started or stopped")
 		return
 	}
-	if !task.Running && req.Running {
-		//var tempTarget models.TaskTarget
-		if !models.IsObjectExistsByTaskID(&models.TaskTarget{}, task.ID) {
-			utils.BadRequestWithMsg(c, "you should upload target first")
-			return
-		}
-		var tempCorpus models.TaskCorpus
-		if !models.IsObjectExistsByTaskID(&tempCorpus, task.ID) {
-			utils.BadRequestWithMsg(c, "you should upload corpus first")
-			return
-		}
-		err = service.CreateServiceByTaskID(task.ID)
-		if err != nil {
-			utils.InternalErrorWithMsg(c, "create service failed")
-			return
-		}
-		defer func() {
-			if Err != nil {
-				service.DeleteServiceByTaskID(task.ID)
-			}
-		}()
-		var deployment *appsv1.Deployment
-		if task.Image != "" {
-			deployment, err = service.GenerateDeployment(task.ID, task.Name, task.Image, 1)
-			if err != nil {
-				Err = err
-				utils.InternalErrorWithMsg(c, "generate deployment failed")
-				return
-			}
-		} else if task.DeploymentID != 0 {
-			var tempDeployment models.Deployment
-			if err = models.GetObjectByID(&tempDeployment, task.ID); err != nil {
-				Err = err
-				utils.BadRequestWithMsg(c, "deployment not exists")
-				return
-			}
-			deployment, err = service.GenerateDeploymentByYaml(tempDeployment.Content, task.ID)
-			if err != nil {
-				Err = err
-				utils.BadRequestWithMsg(c, err.Error())
-				return
-			}
-		} else {
-			utils.BadRequestWithMsg(c, "image or deployment should have value")
-			return
-		}
-		err = service.CreateDeploy(deployment)
-		if err != nil {
-			//fmt.Println(err.Error())
-			Err = err
-			utils.InternalErrorWithMsg(c, "create deployment failed")
-			return
-		}
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Running", req.Running).Error; err != nil {
-			service.DeleteDeployByTaskID(task.ID)
-			utils.DBError(c)
-			return
-		}
-		c.JSON(http.StatusOK, "")
-		return
-	}
-	if task.Running && !req.Running {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Running", req.Running).Error; err != nil {
-			utils.DBError(c)
-			return
-		}
-		err1 := service.DeleteServiceByTaskID(task.ID)
-		err2 := service.DeleteDeployByTaskID(task.ID)
-		if err1 != nil || err2 != nil {
-			utils.InternalErrorWithMsg(c, "kubernetes delete error")
-			return
-		}
-		c.JSON(http.StatusOK, "")
-		return
-	}
+
 	if req.Image != "" {
 		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DeploymentID", 0).Error; err != nil {
 			utils.DBError(c)

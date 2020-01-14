@@ -8,8 +8,18 @@ type Task struct {
 	Time          uint64 `json:"time"`
 	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
 	FuzzerID      uint64 `json:"fuzzerid"`
-	Running       bool   `json:"running"`
+	Status        string `json:"status"`
+	ErrorMsg      string `json:"errorMsg"`
 }
+
+const (
+	TaskRunning      = "TaskRunning"
+	TaskStarted      = "TaskStarted"
+	TaskCreated      = "TaskCreated"
+	TaskInitializing = "TaskInitializing"
+	TaskStopped      = "TaskStopped"
+	TaskError        = "TaskError"
+)
 
 type TaskTarget struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`

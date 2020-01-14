@@ -14,6 +14,8 @@ type Server struct {
 	WriteTimeout string `mapstructure:"writeTimeout"`
 	TempPath     string `mapstructure:"tempPath"`
 	CrashesPath  string `mapstructure:"crashesPath"`
+	LogToFile    bool   `mapstructure:"logToFile"`
+	LogFileDir   string `mapstructure:"logFileDir"`
 }
 
 type Kubernetes struct {
