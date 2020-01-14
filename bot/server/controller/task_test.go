@@ -25,8 +25,9 @@ func TestTask1(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 	postdata := map[string]interface{}{
-		"fuzzerID": 1,
-		"maxTime":  100,
+		"fuzzerID":      1,
+		"maxTime":       100,
+		"fuzzCycleTime": 60,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -67,8 +68,9 @@ func TestTask2(t *testing.T) {
 		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerID": fuzzerID,
-		"maxTime":  100,
+		"fuzzerID":      fuzzerID,
+		"maxTime":       100,
+		"fuzzCycleTime": 60,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -83,12 +85,13 @@ func TestTask2(t *testing.T) {
 		Expect().
 		Status(http.StatusOK)
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Keys().ContainsOnly("corpusDir", "targetDir", "targetPath", "fuzzerID", "maxTime", "status", "arguments", "environments")
+	obj.Keys().ContainsOnly("corpusDir", "targetDir", "targetPath", "fuzzerID", "maxTime", "status", "arguments", "environments", "fuzzCycleTime")
 	obj.Value("corpusDir").Equal("")
 	obj.Value("targetDir").Equal("")
 	obj.Value("targetPath").Equal("")
 	obj.Value("fuzzerID").Equal(fuzzerID)
 	obj.Value("maxTime").Equal(100)
+	obj.Value("fuzzCycleTime").Equal(60)
 	obj.Value("status").Equal(models.TASK_CREATED)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
@@ -130,8 +133,9 @@ func TestTask3(t *testing.T) {
 		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerID": fuzzerID,
-		"maxTime":  100,
+		"fuzzerID":      fuzzerID,
+		"maxTime":       100,
+		"fuzzCycleTime": 60,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -195,8 +199,9 @@ func TestTask4(t *testing.T) {
 		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerID": fuzzerID,
-		"maxTime":  100,
+		"fuzzerID":      fuzzerID,
+		"maxTime":       100,
+		"fuzzCycleTime": 60,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",
@@ -304,8 +309,9 @@ func TestTask5(t *testing.T) {
 		Raw())
 
 	postdata := map[string]interface{}{
-		"fuzzerID": fuzzerID,
-		"maxTime":  100,
+		"fuzzerID":      fuzzerID,
+		"maxTime":       100,
+		"fuzzCycleTime": 60,
 		"arguments": map[string]string{
 			"A": "1",
 			"B": "2",

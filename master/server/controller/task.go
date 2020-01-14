@@ -12,24 +12,26 @@ import (
 )
 
 type TaskCreateReq struct {
-	Name         string            `json:"name" binding:"required"`
-	Image        string            `json:"image"`
-	DeploymentID uint64            `json:"deploymentid"`
-	Time         uint64            `json:"time" binding:"required"`
-	FuzzerID     uint64            `json:"fuzzerid" binding:"required"`
-	Environments []string          `json:"environments"`
-	Arguments    map[string]string `json:"arguments"`
+	Name          string            `json:"name" binding:"required"`
+	Image         string            `json:"image"`
+	DeploymentID  uint64            `json:"deploymentid"`
+	Time          uint64            `json:"time" binding:"required"`
+	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
+	FuzzerID      uint64            `json:"fuzzerid" binding:"required"`
+	Environments  []string          `json:"environments"`
+	Arguments     map[string]string `json:"arguments"`
 }
 
 type TaskUpdateReq struct {
-	Name         string            `json:"name"`
-	Image        string            `json:"image"`
-	DeploymentID uint64            `json:"deploymentid"`
-	Time         uint64            `json:"time"`
-	FuzzerID     uint64            `json:"fuzzerid"`
-	Environments []string          `json:"environments"`
-	Arguments    map[string]string `json:"arguments"`
-	Running      bool              `json:"running"`
+	Name          string            `json:"name"`
+	Image         string            `json:"image"`
+	DeploymentID  uint64            `json:"deploymentid"`
+	Time          uint64            `json:"time"`
+	FuzzCycleTime uint64            `json:"fuzzCycleTime"`
+	FuzzerID      uint64            `json:"fuzzerid"`
+	Environments  []string          `json:"environments"`
+	Arguments     map[string]string `json:"arguments"`
+	Running       bool              `json:"running"`
 }
 
 type TaskUpdateUriReq struct {
@@ -75,15 +77,16 @@ func (tc *TaskController) List(c *gin.Context) {
 			return
 		}
 		results = append(results, map[string]interface{}{
-			"id":           task.ID,
-			"deploymentid": task.DeploymentID,
-			"name":         task.Name,
-			"image":        task.Image,
-			"time":         task.Time,
-			"fuzzerid":     task.FuzzerID,
-			"running":      task.Running,
-			"environments": environments,
-			"arguments":    arguments,
+			"id":            task.ID,
+			"deploymentid":  task.DeploymentID,
+			"name":          task.Name,
+			"image":         task.Image,
+			"time":          task.Time,
+			"fuzzCycleTime": task.FuzzCycleTime,
+			"fuzzerid":      task.FuzzerID,
+			"running":       task.Running,
+			"environments":  environments,
+			"arguments":     arguments,
 		})
 	}
 	c.JSON(http.StatusOK, results)
@@ -107,15 +110,16 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		return
 	}
 	result := map[string]interface{}{
-		"id":           task.ID,
-		"deploymentid": task.DeploymentID,
-		"name":         task.Name,
-		"image":        task.Image,
-		"time":         task.Time,
-		"fuzzerid":     task.FuzzerID,
-		"running":      task.Running,
-		"environments": environments,
-		"arguments":    arguments,
+		"id":            task.ID,
+		"deploymentid":  task.DeploymentID,
+		"name":          task.Name,
+		"image":         task.Image,
+		"time":          task.Time,
+		"fuzzCycleTime": task.FuzzCycleTime,
+		"fuzzerid":      task.FuzzerID,
+		"running":       task.Running,
+		"environments":  environments,
+		"arguments":     arguments,
 	}
 	c.JSON(http.StatusOK, result)
 }
@@ -132,9 +136,10 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 	task := models.Task{
-		FuzzerID: req.FuzzerID,
-		Time:     req.Time,
-		Name:     req.Name,
+		FuzzerID:      req.FuzzerID,
+		FuzzCycleTime: req.FuzzCycleTime,
+		Time:          req.Time,
+		Name:          req.Name,
 	}
 	if req.Image != "" {
 		task.Image = req.Image
@@ -314,6 +319,12 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 	if req.Time != 0 {
 		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Time", req.Time).Error; err != nil {
+			utils.DBError(c)
+			return
+		}
+	}
+	if req.FuzzCycleTime != 0 {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("FuzzCycleTime", req.Time).Error; err != nil {
 			utils.DBError(c)
 			return
 		}

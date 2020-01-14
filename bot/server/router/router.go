@@ -27,6 +27,7 @@ func InitRouter() *gin.Engine {
 
 	taskCrashController := new(controller.TaskCrashController)
 	r.GET("/task/crash", taskCrashController.List)
+	r.GET("/task/crash/:id", taskCrashController.Download)
 
 	taskCorpusController := new(controller.TaskCorpusController)
 	r.POST("/task/corpus", taskCorpusController.Create)

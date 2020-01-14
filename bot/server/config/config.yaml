@@ -6,5 +6,4 @@ server:
         tempPath: /tmp
         uploadFileLimit: 80
         defaultFuzzerName: fuzzer
-        defaultFuzzTime: 60
         defaultReproduceTime: 10

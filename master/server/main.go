@@ -6,10 +6,12 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/router"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
+	"os"
 )
 
 func main() {
 	config.Setup()
+	os.MkdirAll(config.ServerConf.CrashesPath, os.ModePerm)
 	models.Setup()
 	defer models.DB.Close()
 	service.Setup()

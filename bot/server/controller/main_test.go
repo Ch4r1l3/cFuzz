@@ -53,6 +53,7 @@ func prepareRouter() {
 
 	taskCrashController := new(TaskCrashController)
 	r.GET("/task/crash", taskCrashController.List)
+	r.GET("/task/crash/:id", taskCrashController.Download)
 
 	taskCorpusController := new(TaskCorpusController)
 	r.POST("/task/corpus", taskCorpusController.Create)

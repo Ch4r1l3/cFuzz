@@ -13,6 +13,7 @@ type Server struct {
 	ReadTimeout  string `mapstructure:"readTimeout"`
 	WriteTimeout string `mapstructure:"writeTimeout"`
 	TempPath     string `mapstructure:"tempPath"`
+	CrashesPath  string `mapstructure:"crashesPath"`
 }
 
 type Kubernetes struct {

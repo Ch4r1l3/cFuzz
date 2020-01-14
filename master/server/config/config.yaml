@@ -4,9 +4,10 @@ server:
         readTimeout: 60
         writeTimeout: 60
         tempPath: /tmp
+        crashesPath: ./crashes
 
 kubernetes:
         configPath: ""
         namespace: "cfuzz"
         checkTaskTime: 10
-        maxClientRetryNum: 3
+        maxClientRetryNum: 30

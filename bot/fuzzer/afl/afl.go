@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -20,6 +21,7 @@ type AFL struct {
 	outputDir    string
 	arguments    map[string]string
 	environments []string
+	crashNum     int
 }
 
 func (a *AFL) getArgument(key string) (string, error) {
@@ -101,10 +103,15 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	a.logger.Debug("fuzz in afl")
 
 	arguments := []string{}
-	arguments = append(arguments, INPUT_DIR_FLAG)
-	arguments = append(arguments, a.corpusDir)
-	arguments = append(arguments, OUTPUT_DIR_FLAG)
+	//check if output path exist
+	if _, err := os.Stat(path.Join(a.outputDir, FUZZER_STATS_FILE)); os.IsNotExist(err) {
+		arguments = append(arguments, INPUT_DIR_FLAG)
+		arguments = append(arguments, a.corpusDir)
+	} else {
+		arguments = append(arguments, RESUME_FLAG)
+	}
 
+	arguments = append(arguments, OUTPUT_DIR_FLAG)
 	arguments = append(arguments, a.outputDir)
 
 	//if MEMORY_LIMIT exists in arguments, append it to arguments
@@ -168,7 +175,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz parse stats file error: " + err.Error())
 	}
 
-	crashes, err := GetAllCrashes(a.outputDir)
+	crashes, err := a.GetAllCrashes(a.outputDir)
 	if err != nil {
 		return fuzzer.FuzzResult{}, errors.New("AFL Fuzz get crashes error: " + err.Error())
 	}

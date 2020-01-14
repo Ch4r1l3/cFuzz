@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/bot/server/service"
@@ -18,14 +19,19 @@ import (
 type TaskController struct{}
 
 type TaskCreateReq struct {
-	FuzzerID     uint64            `json:"fuzzerID" binding:"required"`
-	MaxTime      int               `json:"maxTime" binding:"required"`
-	Arguments    map[string]string `json:"arguments"`
-	Environments []string          `json:"environments"`
+	FuzzerID      uint64            `json:"fuzzerID" binding:"required"`
+	MaxTime       int               `json:"maxTime" binding:"required"`
+	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
+	Arguments     map[string]string `json:"arguments"`
+	Environments  []string          `json:"environments"`
 }
 
 type TaskUpdateReq struct {
 	Status string `json:"status" binding:"required"`
+}
+
+type TaskIDReq struct {
+	ID uint64 `uri:"id" binding:"required"`
 }
 
 func (tc *TaskController) Retrieve(c *gin.Context) {
@@ -42,14 +48,15 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"corpusDir":    task.CorpusDir,
-		"targetDir":    task.TargetDir,
-		"targetPath":   task.TargetPath,
-		"fuzzerID":     task.FuzzerID,
-		"maxTime":      task.MaxTime,
-		"status":       task.Status,
-		"arguments":    arguments,
-		"environments": environments,
+		"corpusDir":     task.CorpusDir,
+		"targetDir":     task.TargetDir,
+		"targetPath":    task.TargetPath,
+		"fuzzerID":      task.FuzzerID,
+		"maxTime":       task.MaxTime,
+		"fuzzCycleTime": task.FuzzCycleTime,
+		"status":        task.Status,
+		"arguments":     arguments,
+		"environments":  environments,
 	})
 
 }
@@ -59,7 +66,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	var req TaskCreateReq
 	err := c.BindJSON(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	task, err := models.GetTask()
@@ -98,6 +105,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	task.Status = models.TASK_CREATED
 	task.FuzzerID = req.FuzzerID
 	task.MaxTime = req.MaxTime
+	task.FuzzCycleTime = req.FuzzCycleTime
 	models.DB.Create(&task)
 
 	//create arguments
@@ -157,7 +165,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
-		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, config.ServerConf.DefaultFuzzTime, arguments, environments)
+		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, int(task.FuzzCycleTime), arguments, environments)
 
 		models.DB.Model(task).Update("Status", models.TASK_RUNNING)
 
@@ -202,6 +210,22 @@ func (tcc *TaskCrashController) List(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, crashes)
+}
+
+func (tcc *TaskCrashController) Download(c *gin.Context) {
+	var req TaskIDReq
+	if err := c.ShouldBindUri(&req); err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	crash, err := models.GetCrashByID(req.ID)
+	if err != nil {
+		utils.BadRequestWithMsg(c, err.Error())
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=crash%d", req.ID))
+	c.Writer.Header().Add("Content-Type", "application/octet-stream")
+	c.File(crash.Path)
 }
 
 type TaskCorpusController struct{}

@@ -1,15 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 )
 
 func ParseFuzzerStatsFile(outDir string) (map[string]string, error) {
 	result := make(map[string]string)
-	content, err := ioutil.ReadFile(path.Join(outDir, FUZZERSTATSFILE))
+	content, err := ioutil.ReadFile(path.Join(outDir, FUZZER_STATS_FILE))
 	if err != nil {
 		return nil, err
 	}
@@ -25,8 +27,11 @@ func ParseFuzzerStatsFile(outDir string) (map[string]string, error) {
 	return result, nil
 }
 
-func GetAllCrashes(outDir string) ([]fuzzer.Crash, error) {
-	crashPath := path.Join(outDir, CRASHPATH)
+func (a *AFL) GetAllCrashes(outDir string) ([]fuzzer.Crash, error) {
+	a.logger.Debug("afl in get all crash")
+	crashPath := path.Join(outDir, CRASH_PATH)
+	crashStorePath := path.Join(outDir, CRASH_STORE_PATH)
+	os.MkdirAll(crashStorePath, os.ModePerm)
 	files, err := ioutil.ReadDir(crashPath)
 	if err != nil {
 		return nil, err
@@ -37,10 +42,14 @@ func GetAllCrashes(outDir string) ([]fuzzer.Crash, error) {
 	crashes := []fuzzer.Crash{}
 	for _, v := range files {
 		if v.Name() != "README.txt" {
+			crashName := fmt.Sprintf("crash%d", a.crashNum)
+			a.crashNum += 1
+			os.Link(path.Join(crashPath, v.Name()), path.Join(crashStorePath, crashName))
 			crashes = append(crashes, fuzzer.Crash{
-				InputPath: path.Join(crashPath, v.Name()),
+				InputPath: path.Join(crashStorePath, crashName),
 			})
 		}
+		a.logger.Debug(v.Name())
 	}
 	return crashes, nil
 }

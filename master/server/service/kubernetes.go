@@ -25,6 +25,12 @@ type clientFuzzerPostResp struct {
 
 type clientTaskGetResp struct {
 	Status string `json:"status"`
+	Error  string `json:"error"`
+}
+
+type clientCrashGetResp struct {
+	ID            uint64 `json:"id" binding:"required"`
+	ReproduceAble bool   `json:"reproduceAble" binding:"required"`
 }
 
 func GetAllDeploys() ([]appsv1.Deployment, error) {
@@ -170,13 +176,14 @@ func handleTasks() {
 	for {
 		var tasks []models.Task
 		count := make(map[uint64]int)
+		crashesMap := make(map[uint64]map[uint64]bool)
 		if err := models.GetObjects(&tasks); err != nil {
 			fmt.Println(err)
 		} else {
 			for _, task := range tasks {
 				if task.Running {
 					result, err, statusCode := requestProxyGet(task.ID, []string{"fuzzer"})
-					if err != nil {
+					if err != nil || statusCode >= 300 {
 						v, ok := count[task.ID]
 						if ok {
 							count[task.ID] = v + 1
@@ -185,23 +192,51 @@ func handleTasks() {
 						}
 						if v >= config.KubernetesConf.MaxClientRetryNum {
 							delete(count, task.ID)
+							if _, ok = crashesMap[task.ID]; ok {
+								delete(crashesMap, task.ID)
+							}
 							models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Running", false)
 						}
 						return
 					}
+					fmt.Printf("fuzzer status Code: %d\n", statusCode)
 					result, err, statusCode = requestProxyGet(task.ID, []string{"task"})
 					var clientTask clientTaskGetResp
 					if err := json.Unmarshal(result, &clientTask); err != nil {
 						fmt.Println(err.Error())
 						return
 					}
+					fmt.Println(string(result))
 					if clientTask.Status != botmodels.TASK_RUNNING {
+						fmt.Println("client status is not running, status: " + clientTask.Status + ".")
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Running", false)
 						DeleteServiceByTaskID(task.ID)
 						DeleteDeployByTaskID(task.ID)
 						return
+					} else {
+						result, err, statusCode = requestProxyGet(task.ID, []string{"task", "crash"})
+						if err != nil {
+							return
+						}
+						var crashes []clientCrashGetResp
+						if err = json.Unmarshal(result, &crashes); err != nil {
+							fmt.Println(err.Error())
+							return
+						}
+						fmt.Println("handle task")
+						fmt.Println(statusCode)
+						fmt.Println(crashes)
+						for _, crash := range crashes {
+							if _, ok := crashesMap[task.ID]; !ok {
+								crashesMap[task.ID] = make(map[uint64]bool)
+							}
+							if _, ok := crashesMap[task.ID][crash.ID]; !ok {
+								crashesMap[task.ID][crash.ID] = true
+								result, err, statusCode = requestProxyGet(task.ID, []string{"task", "crash", strconv.Itoa(int(crash.ID))})
+								fmt.Println(result)
+							}
+						}
 					}
-					fmt.Println(statusCode)
 				}
 			}
 		}
@@ -232,6 +267,7 @@ func setupNewPod() {
 					}
 					if len(deploy.Status.Conditions) >= 1 && deploy.Status.Conditions[0].Type == appsv1.DeploymentAvailable {
 						taskID, err := strconv.ParseInt(deploy.ObjectMeta.Labels[LabelName], 10, 64)
+						<-time.After(time.Duration(3) * time.Second)
 						if err != nil {
 							return
 						}
@@ -265,7 +301,6 @@ func setupNewPod() {
 							return
 						}
 						if !ok {
-							fmt.Println(result)
 							fmt.Println("cannot change to struct")
 							return
 						}
@@ -278,13 +313,18 @@ func setupNewPod() {
 							return
 						}
 						postData := map[string]interface{}{
-							"fuzzerID":    clientFuzzer.ID,
-							"maxTime":     task.Time,
-							"arguments":   taskArguments,
-							"enviroments": taskEnvironments,
+							"fuzzerID":      clientFuzzer.ID,
+							"maxTime":       task.Time,
+							"fuzzCycleTime": task.FuzzCycleTime,
+							"arguments":     taskArguments,
+							"enviroments":   taskEnvironments,
 						}
-						result, err, statusCode = requestProxyPost(task.ID, []string{"task"}, postData)
+						//result, err, statusCode = requestProxyPost(task.ID, []string{"task"}, postData)
+						fmt.Printf("cycleTime %d\n", task.FuzzCycleTime)
+						result, err = requestProxyPostRaw(task.ID, []string{"task"}, postData)
+						fmt.Printf("create task result: %s\n", string(result))
 						if err != nil {
+							fmt.Println(err.Error())
 							return
 						}
 						var taskTarget []models.TaskTarget
@@ -307,7 +347,6 @@ func setupNewPod() {
 							"status": "TASK_RUNNING",
 						}
 						result, err, statusCode = requestProxyPut(task.ID, []string{"task"}, putData)
-						fmt.Println(statusCode)
 					}
 				}
 			},

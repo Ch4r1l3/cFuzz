@@ -142,9 +142,11 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 							} else {
 								reproduceResult[c.InputPath] = tresult
 							}
+							logger.Debug("find crash: " + c.InputPath)
 						}
 					}
-					go handleFuzzResult(fuzzResult, reproduceResult)
+					handleFuzzResult(fuzzResult, reproduceResult)
+					//go handleFuzzResult(fuzzResult, reproduceResult)
 
 				}
 			}

@@ -1,12 +1,13 @@
 package models
 
 type Task struct {
-	CorpusDir  string `json:"corpusDir"`
-	TargetDir  string `json:"targetDir"`
-	TargetPath string `json:"targetPath"`
-	Status     string `json:"status"`
-	FuzzerID   uint64 `json:"fuzzerID"`
-	MaxTime    int    `json:"maxTime"`
+	CorpusDir     string `json:"corpusDir"`
+	TargetDir     string `json:"targetDir"`
+	TargetPath    string `json:"targetPath"`
+	Status        string `json:"status"`
+	FuzzerID      uint64 `json:"fuzzerID"`
+	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
+	MaxTime       int    `json:"maxTime"`
 }
 
 const (
@@ -86,8 +87,7 @@ func GetEnvironments() ([]string, error) {
 
 type TaskCrash struct {
 	ID            uint64 `gorm:"primary_key";json:"id"`
-	Url           string `json:"url"`
-	Path          string `json:"-"`
+	Path          string `json:"path"`
 	ReproduceAble bool   `json:"reproduceAble"`
 }
 
@@ -97,6 +97,14 @@ func GetCrashes() ([]TaskCrash, error) {
 		return nil, err
 	}
 	return taskCrashes, nil
+}
+
+func GetCrashByID(id uint64) (*TaskCrash, error) {
+	var crash TaskCrash
+	if err := DB.Where("id = ?", id).First(&crash).Error; err != nil {
+		return nil, err
+	}
+	return &crash, nil
 }
 
 func CreateCrash(path string, reproduceAble bool) error {

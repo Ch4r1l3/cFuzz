@@ -48,6 +48,24 @@ func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, err
 	return requestProxyPostPut("Put", taskID, url, data)
 }
 
+func requestProxyPostRaw(taskID uint64, url []string, data interface{}) ([]byte, error) {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+	client := ClientSet.CoreV1().RESTClient()
+	var request *rest.Request
+	request = client.Post()
+	urls := append([]string{"proxy"}, url...)
+	return request.
+		Namespace(config.KubernetesConf.Namespace).
+		Resource("services").
+		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
+		Suffix(urls...).
+		Body(bytes).
+		SetHeader("Content-Type", "application/json").DoRaw()
+}
+
 func requestProxyPostPut(method string, taskID uint64, url []string, data interface{}) ([]byte, error, int) {
 	bytes, err := json.Marshal(data)
 	if err != nil {

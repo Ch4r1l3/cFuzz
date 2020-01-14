@@ -40,11 +40,12 @@ func TestTask1(t *testing.T) {
 	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData := map[string]interface{}{
-		"name":         "test",
-		"deploymentid": deploymentID,
-		"time":         100,
-		"fuzzerid":     fuzzerID,
-		"environments": []string{"123", "2333"},
+		"name":          "test",
+		"deploymentid":  deploymentID,
+		"time":          100,
+		"fuzzCycleTime": 60,
+		"fuzzerid":      fuzzerID,
+		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
 			"a2": "a3",
@@ -54,10 +55,11 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "running", "environments", "arguments", "image", "name")
+	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "running", "environments", "arguments", "image", "name", "fuzzCycleTime")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
 	obj.Value("time").NotEqual(0)
+	obj.Value("fuzzCycleTime").NotEqual(0)
 	obj.Value("fuzzerid").NotEqual(0)
 	obj.Value("running").Equal(false)
 	obj.Value("environments").Array().Elements("123", "2333")
@@ -88,11 +90,12 @@ func TestTask2(t *testing.T) {
 	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
-		"name":         "test",
-		"deploymentid": deploymentID,
-		"time":         100,
-		"fuzzerid":     fuzzerID,
-		"environments": []string{"123", "2333"},
+		"name":          "test",
+		"deploymentid":  deploymentID,
+		"time":          100,
+		"fuzzCycleTime": 60,
+		"fuzzerid":      fuzzerID,
+		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
 			"a2": "a3",
@@ -140,22 +143,17 @@ func TestTask3(t *testing.T) {
 	server := httptest.NewServer(r)
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
-	err := ioutil.WriteFile("./fuzzer_test", []byte("afl"), 0755)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		os.RemoveAll("./fuzzer_test")
-	}()
 
-	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
-		"name":         "test",
-		"image":        "registry.cn-hangzhou.aliyuncs.com/cfuzz/test:v1",
-		"time":         100,
-		"fuzzerid":     fuzzerID,
-		"environments": []string{"123", "2333"},
+		"name": "test",
+		//"image":        "registry.cn-hangzhou.aliyuncs.com/cfuzz/test:v1",
+		"image":         "cfuzz:v1",
+		"time":          100,
+		"fuzzCycleTime": 60,
+		"fuzzerid":      fuzzerID,
+		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
 			"a2": "a3",
@@ -172,10 +170,10 @@ func TestTask3(t *testing.T) {
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
 	e.POST(fmt.Sprintf("/task/%d/target", taskID)).WithMultipart().WithFile("file", "../test_data/test").Expect().Status(http.StatusOK)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
-	e.POST(fmt.Sprintf("/task/%d/corpus", taskID)).WithMultipart().WithFile("file", "fuzzer_test").Expect().Status(http.StatusOK)
+	e.POST(fmt.Sprintf("/task/%d/corpus", taskID)).WithMultipart().WithFile("file", "../test_data/corpus").Expect().Status(http.StatusOK)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusOK)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime+5) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("running").Equal(false)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*30) * time.Second)
+	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("running").Equal(true)
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusOK)
 	<-time.After(time.Duration(10) * time.Second)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
