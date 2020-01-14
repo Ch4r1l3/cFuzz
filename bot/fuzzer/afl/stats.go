@@ -49,7 +49,6 @@ func (a *AFL) GetAllCrashes(outDir string) ([]fuzzer.Crash, error) {
 				InputPath: path.Join(crashStorePath, crashName),
 			})
 		}
-		a.logger.Debug(v.Name())
 	}
 	return crashes, nil
 }
