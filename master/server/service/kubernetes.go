@@ -187,7 +187,10 @@ func handleSingleTask(taskID uint64) {
 				return
 			}
 			if task.Status != models.TaskRunning {
-
+				if task.Status == models.TaskInitializing {
+					<-controlChan[taskID]
+				}
+				return
 			}
 			result, err := requestProxyGet(taskID, []string{"task"})
 			var clientTask clientTaskGetResp
@@ -425,6 +428,5 @@ func watchDeploy() {
 			},
 		},
 	)
-	stop := make(chan struct{})
-	go controller.Run(stop)
+	go controller.Run(deployWatchChan)
 }

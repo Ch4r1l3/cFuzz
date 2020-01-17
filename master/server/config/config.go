@@ -23,6 +23,7 @@ type Kubernetes struct {
 	Namespace         string `mapstructure:"namespace"`
 	CheckTaskTime     int    `mapstructure:"checkTaskTime"`
 	MaxClientRetryNum int    `mapstructure:"maxClientRetryNum"`
+	RequestTimeout    int    `mapstructure:"requestTimeout"`
 }
 
 var ServerConf = &Server{}

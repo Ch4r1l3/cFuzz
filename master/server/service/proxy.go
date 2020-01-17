@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func bytes2interface(data []byte) (interface{}, error) {
@@ -29,10 +30,12 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 		Namespace(config.KubernetesConf.Namespace).
 		Resource("services").
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
 		Suffix(urls...).Do()
 
 	bytesData, _ := result.Raw()
-	return bytesData, nil
+	err := result.Error()
+	return bytesData, err
 }
 
 func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
@@ -58,6 +61,7 @@ func requestProxyPostRaw(taskID uint64, url []string, data interface{}) ([]byte,
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).
 		Body(bytes).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
 		SetHeader("Content-Type", "application/json").DoRaw()
 }
 
@@ -82,9 +86,11 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).
 		Body(bytes).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
 		SetHeader("Content-Type", "application/json").Do()
 	bytesData, _ := result.Raw()
-	return bytesData, nil
+	err = result.Error()
+	return bytesData, err
 }
 
 func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
@@ -130,7 +136,9 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		Suffix(urls...).
 		Body(body.Bytes()).
 		SetHeader("Content-Type", writer.FormDataContentType()).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
 		Do()
 	bytesData, _ := result.Raw()
-	return bytesData, nil
+	err = result.Error()
+	return bytesData, err
 }

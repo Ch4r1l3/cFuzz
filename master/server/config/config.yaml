@@ -13,3 +13,4 @@ kubernetes:
         namespace: "cfuzz"
         checkTaskTime: 10
         maxClientRetryNum: 30
+        requestTimeout: 5
