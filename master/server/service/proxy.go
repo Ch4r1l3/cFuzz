@@ -30,7 +30,7 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 		Namespace(config.KubernetesConf.Namespace).
 		Resource("services").
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
-		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
 		Suffix(urls...).Do()
 
 	bytesData, _ := result.Raw()
@@ -61,7 +61,7 @@ func requestProxyPostRaw(taskID uint64, url []string, data interface{}) ([]byte,
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).
 		Body(bytes).
-		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)*time.Second).
 		SetHeader("Content-Type", "application/json").DoRaw()
 }
 
@@ -86,7 +86,7 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).
 		Body(bytes).
-		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)*time.Second).
 		SetHeader("Content-Type", "application/json").Do()
 	bytesData, _ := result.Raw()
 	err = result.Error()
@@ -136,7 +136,7 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		Suffix(urls...).
 		Body(body.Bytes()).
 		SetHeader("Content-Type", writer.FormDataContentType()).
-		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
 		Do()
 	bytesData, _ := result.Raw()
 	err = result.Error()
