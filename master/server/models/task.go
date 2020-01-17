@@ -139,7 +139,8 @@ type TaskFuzzResult struct {
 }
 
 type TaskFuzzResultStat struct {
-	Key    string `json:"key"`
-	Value  string `json:"value"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	UpdateAt int64  `json:"updateAt"`
+	TaskID   uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
 }

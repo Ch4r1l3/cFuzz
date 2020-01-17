@@ -1,5 +1,9 @@
 package models
 
+import (
+	"time"
+)
+
 type Task struct {
 	CorpusDir     string `json:"corpusDir"`
 	TargetDir     string `json:"targetDir"`
@@ -118,6 +122,7 @@ func CreateCrash(path string, reproduceAble bool) error {
 type TaskFuzzResult struct {
 	Command      string `json:"command"`
 	TimeExecuted int    `json:"timeExecuted"`
+	UpdateAt     int64  `json:"updateAt"`
 }
 
 type TaskFuzzResultStat struct {
@@ -135,6 +140,7 @@ func CreateFuzzResult(command []string, stats map[string]string, timeExecuted in
 	fuzzResult := TaskFuzzResult{
 		Command:      tcommand,
 		TimeExecuted: timeExecuted,
+		UpdateAt:     time.Now().Unix(),
 	}
 	if err := DB.Save(&fuzzResult).Error; err != nil {
 		return err
