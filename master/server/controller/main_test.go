@@ -47,15 +47,11 @@ func prepareRouter() {
 
 	taskController := new(TaskController)
 	r.GET("/task", taskController.List)
-	r.GET("/task/:path1", TaskGetHandler)
 	r.POST("/task", taskController.Create)
 	r.PUT("/task/:id", taskController.Update)
-	r.DELETE("/task/:path1", TaskDeleteHandler)
 
 	taskCorpusController := new(TaskCorpusController)
-	r.GET("/task/:path1/:path2", TaskGetHandler)
 	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
-	r.DELETE("/task/:path1/:path2", TaskDeleteHandler)
 
 	taskTargetController := new(TaskTargetController)
 	r.POST("/task/:taskid/target", taskTargetController.Create)
@@ -64,6 +60,13 @@ func prepareRouter() {
 	r.GET("/fuzzer", fuzzerController.List)
 	r.POST("/fuzzer", fuzzerController.Create)
 	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+
+	r.GET("/task/:path1", TaskGetHandler)
+	r.GET("/task/:path1/:path2", TaskGetHandler)
+	r.GET("/task/:path1/:path2/:path3", TaskGetHandler)
+
+	r.DELETE("/task/:path1", TaskDeleteHandler)
+	r.DELETE("/task/:path1/:path2", TaskDeleteHandler)
 }
 
 func prepareConfig() {
@@ -77,11 +80,14 @@ func prepareConfig() {
 
 	viper.ReadConfig(bytes.NewBuffer(data))
 	viper.UnmarshalKey("server", config.ServerConf)
+	config.ServerConf.CrashesPath = "./crashes"
 	viper.UnmarshalKey("kubernetes", config.KubernetesConf)
+	config.KubernetesConf.CheckTaskTime = 10
 }
 
 func TestMain(m *testing.M) {
 	os.RemoveAll("./test.db")
+	os.RemoveAll("./crashes")
 	prepareConfig()
 	prepareTestDB()
 	prepareRouter()

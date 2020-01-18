@@ -1,15 +1,16 @@
 package models
 
 type Task struct {
-	ID            uint64 `gorm:"primary_key" json:"id"`
-	Name          string `json:"name"`
-	Image         string `json:"image"`
-	DeploymentID  uint64 `json:"deploymentid"`
-	Time          uint64 `json:"time"`
-	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
-	FuzzerID      uint64 `json:"fuzzerid"`
-	Status        string `json:"status"`
-	ErrorMsg      string `json:"errorMsg"`
+	ID             uint64 `gorm:"primary_key" json:"id"`
+	Name           string `json:"name"`
+	Image          string `json:"image"`
+	DeploymentID   uint64 `json:"deploymentid"`
+	Time           uint64 `json:"time"`
+	FuzzCycleTime  uint64 `json:"fuzzCycleTime"`
+	FuzzerID       uint64 `json:"fuzzerid"`
+	Status         string `json:"status"`
+	ErrorMsg       string `json:"errorMsg"`
+	StatusUpdateAt int64  `json:"-"`
 }
 
 const (
@@ -120,6 +121,10 @@ func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
 
+func GetObjectByTaskIDAndID(obj interface{}, taskid uint64, id uint64) error {
+	return DB.Where("task_id = ? AND id = ?", taskid, id).Error
+}
+
 func IsObjectExistsByTaskID(obj interface{}, taskid uint64) bool {
 	if err := DB.Where("task_id = ?", taskid).First(obj).Error; err != nil {
 		return false
@@ -128,19 +133,48 @@ func IsObjectExistsByTaskID(obj interface{}, taskid uint64) bool {
 }
 
 type TaskCrash struct {
-	ID     uint64 `gorm:"primary_key" json:"id"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	ID            uint64 `gorm:"primary_key" json:"id"`
+	TaskID        uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	Path          string `json:"-"`
+	ReproduceAble bool   `json:"reproduceAble"`
 }
 
 type TaskFuzzResult struct {
+	ID           uint64 `gorm:"primary_key" json:"id"`
 	Command      string `json:"command"`
 	TimeExecuted int    `json:"timeExecuted"`
-	TaskID       int    `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	TaskID       uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	UpdateAt     int64  `json:"updateAt"`
 }
 
 type TaskFuzzResultStat struct {
-	Key      string `json:"key"`
-	Value    string `json:"value"`
-	UpdateAt int64  `json:"updateAt"`
-	TaskID   uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	Key              string `json:"key"`
+	Value            string `json:"value"`
+	TaskFuzzResultID uint64 `json:"taskid" sql:"type:bigint REFERENCES task_fuzz_result(id) ON DELETE CASCADE"`
+}
+
+func InsertTaskFuzzResultStat(id uint64, stats map[string]string) error {
+	for k, v := range stats {
+		taskFuzzResultStat := TaskFuzzResultStat{
+			TaskFuzzResultID: id,
+			Key:              k,
+			Value:            v,
+		}
+		if err := DB.Create(&taskFuzzResultStat).Error; err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func GetTaskFuzzResultStat(id uint64) (map[string]string, error) {
+	var taskFuzzResultStat []TaskFuzzResultStat
+	if err := DB.Where("task_fuzz_result_id = ?", id).Find(&taskFuzzResultStat).Error; err != nil {
+		return nil, err
+	}
+	stats := make(map[string]string)
+	for _, v := range taskFuzzResultStat {
+		stats[v.Key] = v.Value
+	}
+	return stats, nil
 }

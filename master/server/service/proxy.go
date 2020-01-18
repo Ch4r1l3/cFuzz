@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"io"
+	"io/ioutil"
 	"k8s.io/client-go/rest"
 	"mime/multipart"
 	"os"
@@ -36,6 +37,39 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	bytesData, _ := result.Raw()
 	err := result.Error()
 	return bytesData, err
+}
+
+func requestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
+	urls := append([]string{"proxy"}, url...)
+	resp, err := ClientSet.
+		CoreV1().
+		RESTClient().
+		Get().
+		Namespace(config.KubernetesConf.Namespace).
+		Resource("services").
+		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
+		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
+		Suffix(urls...).
+		Stream()
+	defer resp.Close()
+	if err != nil {
+		return "", err
+	}
+	if _, err = os.Stat(saveDir); os.IsNotExist(err) {
+		return "", err
+	}
+	tempFile, err := ioutil.TempFile(saveDir, "crash")
+	if err != nil {
+		return "", err
+	}
+	_, err = io.Copy(tempFile, resp)
+	if err != nil {
+		tempFile.Close()
+		os.RemoveAll(tempFile.Name())
+		return "", err
+	}
+	tempFile.Close()
+	return tempFile.Name(), nil
 }
 
 func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {

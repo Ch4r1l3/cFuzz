@@ -9,8 +9,11 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -30,10 +33,30 @@ type clientCrashGetResp struct {
 	ReproduceAble bool   `json:"reproduceAble" binding:"required"`
 }
 
+type clientResultGetResp struct {
+	Command      string            `json:"command" binding:"required"`
+	TimeExecuted int               `json:"timeExecuted" binding:"required"`
+	UpdateAt     int64             `json:"updateAt" binding:"required"`
+	Stats        map[string]string `json:"stats" binding:"required"`
+}
+
 func isDeployReady(deploy *appsv1.Deployment) bool {
-	logger.Logger.Debug("deployment status", "status", deploy.Status)
-	logger.Logger.Debug("deployment OwnerReferences", "OwnerReferences", deploy.ObjectMeta.OwnerReferences)
+	//logger.Logger.Debug("deployment status", "status", deploy.Status)
+	//logger.Logger.Debug("deployment OwnerReferences", "OwnerReferences", deploy.ObjectMeta.OwnerReferences)
 	return deploy.Status.AvailableReplicas >= 1
+}
+
+func isPodFailed(pod *corev1.Pod) bool {
+	for _, status := range pod.Status.ContainerStatuses {
+		logger.Logger.Debug("container status", "status", status.State.Waiting)
+		if status.State.Waiting == nil {
+			continue
+		}
+		if status.State.Waiting.Reason == "ImagePullBackOff" {
+			return true
+		}
+	}
+	return false
 }
 
 func watchDeploy() {
@@ -45,13 +68,46 @@ func watchDeploy() {
 		time.Second*0,
 		cache.ResourceEventHandlerFuncs{
 			UpdateFunc: func(oldObj, newObj interface{}) {
-				if deploy, ok := newObj.(*appsv1.Deployment); ok && isDeployReady(deploy) {
+				deploy, ok := newObj.(*appsv1.Deployment)
+				if ok && isDeployReady(deploy) {
 					go initDeployTask(deploy)
 				}
 			},
 		},
 	)
 	go controller.Run(deployWatchChan)
+}
+
+func watchPod() {
+	watchlist := cache.NewListWatchFromClient(ClientSet.CoreV1().RESTClient(), "pods", config.KubernetesConf.Namespace, fields.Everything())
+	_, controller := cache.NewInformer(
+		watchlist,
+		&corev1.Pod{},
+		time.Second*0,
+		cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				pod, ok := newObj.(*corev1.Pod)
+				if ok && isPodFailed(pod) {
+					go deleteDeploy(pod)
+				}
+			},
+		},
+	)
+	tempChan := make(chan struct{})
+	go controller.Run(tempChan)
+}
+
+func deleteDeploy(pod *corev1.Pod) {
+	taskID, err := getPodTaskID(pod)
+	if err != nil {
+		return
+	}
+	logger.Logger.Debug("deployment failed to start")
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "failed to create deployment")
+	DeleteDeployByTaskID(taskID)
+	DeleteServiceByTaskID(taskID)
 }
 
 func initDeployTask(deploy *appsv1.Deployment) {
@@ -64,8 +120,9 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	}
 	defer func() {
 		if Err != nil {
-			logger.Logger.Warn("Error exit init", "reason", Err.Error())
+			logger.Logger.Error("Error exit init", "reason", Err.Error())
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "DB Error")
 			DeleteDeployByTaskID(taskID)
 			DeleteServiceByTaskID(taskID)
@@ -78,6 +135,11 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	if task.Status == models.TaskStarted || task.Status == models.TaskRunning {
 		if err := models.DB.Model(&models.Task{}).
 			Where("id = ?", taskID).Update("Status", models.TaskInitializing).Error; err != nil {
+			Err = errors.Wrap(err, "DB Error")
+			return
+		}
+		if err := models.DB.Model(&models.Task{}).
+			Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
 			Err = errors.Wrap(err, "DB Error")
 			return
 		}
@@ -197,6 +259,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 			DeleteServiceByTaskID(taskID)
 			DeleteDeployByTaskID(taskID)
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
+			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
 			<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime) * time.Second)
 			delete(controlChan, task.ID)
 			delete(crashesMap, task.ID)
@@ -212,7 +275,13 @@ func handleTasks() {
 			fmt.Println(err)
 		} else {
 			for _, task := range tasks {
-				if task.Status == models.TaskInitializing {
+				if task.Status == models.TaskStarted && task.StatusUpdateAt+config.KubernetesConf.MaxStartTime < time.Now().Unix() {
+					logger.Logger.Error("deployment start too long", "start", task.StatusUpdateAt, "now", time.Now().Unix())
+					models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskError)
+					models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
+					models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ErrorMsg", "deployment start waste to much time")
+					DeleteDeployByTaskID(task.ID)
+					DeleteServiceByTaskID(task.ID)
 				}
 			}
 		}
@@ -224,6 +293,8 @@ func handleTasks() {
 func handleSingleTask(taskID uint64) {
 	var Err error
 	errRetryNum := 0
+	var lastUpdateTime int64
+	lastUpdateTime = 0
 	goReturn := func() bool {
 		errRetryNum += 1
 		return errRetryNum >= config.KubernetesConf.MaxClientRetryNum
@@ -231,11 +302,20 @@ func handleSingleTask(taskID uint64) {
 	defer func() {
 		if Err != nil {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", Err.Error())
+			DeleteDeployByTaskID(taskID)
+			DeleteServiceByTaskID(taskID)
 		}
 	}()
 	if err := models.DB.Model(&models.Task{}).
 		Where("id = ?", taskID).Update("Status", models.TaskRunning).Error; err != nil {
+		logger.Logger.Error("DB error", "reason", err.Error())
+		Err = err
+		return
+	}
+	if err := models.DB.Model(&models.Task{}).
+		Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
 		logger.Logger.Error("DB error", "reason", err.Error())
 		Err = err
 		return
@@ -310,6 +390,7 @@ func handleSingleTask(taskID uint64) {
 				} else {
 					models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
 				}
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
 				DeleteServiceByTaskID(taskID)
 				DeleteDeployByTaskID(taskID)
 				return
@@ -335,13 +416,75 @@ func handleSingleTask(taskID uint64) {
 				}
 				logger.Logger.Debug("task", "crashes", crashes)
 				for _, crash := range crashes {
+					crashesPath := filepath.Join(config.ServerConf.CrashesPath, strconv.Itoa(int(taskID)))
 					if _, ok := crashesMap[taskID]; !ok {
 						crashesMap[taskID] = make(map[uint64]bool)
+						os.MkdirAll(crashesPath, os.ModePerm)
 					}
 					if _, ok := crashesMap[taskID][crash.ID]; !ok {
 						crashesMap[taskID][crash.ID] = true
-						result, err = requestProxyGet(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))})
-						logger.Logger.Debug("get task crash", "result", result)
+						savePath, err := requestProxySaveFile(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))}, crashesPath)
+						if err != nil {
+							logger.Logger.Error("request save file error", "reason", err.Error())
+						}
+						taskCrash := models.TaskCrash{
+							TaskID: taskID,
+							Path:   savePath,
+						}
+						if err := models.DB.Create(&taskCrash).Error; err != nil {
+							if goReturn() {
+								Err = err
+								return
+							} else {
+								continue
+							}
+						}
+					}
+				}
+				result, err = requestProxyGet(taskID, []string{"task", "result"})
+				if err != nil {
+					logger.Logger.Error("client get result failed", "reason", err.Error())
+					if goReturn() {
+						Err = err
+						return
+					} else {
+						continue
+					}
+				}
+				if len(result) > 10 {
+					var fuzzResult clientResultGetResp
+					if err = json.Unmarshal(result, &fuzzResult); err != nil {
+						logger.Logger.Error("client fuzz result json decode fail", "len", len(result), "content", result, "reason", err.Error())
+						if goReturn() {
+							return
+						} else {
+							continue
+						}
+					}
+					if lastUpdateTime != fuzzResult.UpdateAt {
+						lastUpdateTime = fuzzResult.UpdateAt
+						taskFuzzResult := models.TaskFuzzResult{
+							Command:      fuzzResult.Command,
+							TimeExecuted: fuzzResult.TimeExecuted,
+							TaskID:       taskID,
+							UpdateAt:     fuzzResult.UpdateAt,
+						}
+						if err = models.DB.Create(&taskFuzzResult).Error; err != nil {
+							if goReturn() {
+								Err = err
+								return
+							} else {
+								continue
+							}
+						}
+						if err = models.InsertTaskFuzzResultStat(taskFuzzResult.ID, fuzzResult.Stats); err != nil {
+							if goReturn() {
+								Err = err
+								return
+							} else {
+								continue
+							}
+						}
 					}
 				}
 			}

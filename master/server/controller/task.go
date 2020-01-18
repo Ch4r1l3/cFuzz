@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
+	"time"
 )
 
 type TaskCreateReq struct {
@@ -243,6 +244,13 @@ func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
 	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
 		service.DeleteDeployByTaskID(task.ID)
 		utils.DBError(c)
+		Err = err
+		return
+	}
+	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
+		service.DeleteDeployByTaskID(task.ID)
+		utils.DBError(c)
+		Err = err
 		return
 	}
 	c.JSON(http.StatusNoContent, "")

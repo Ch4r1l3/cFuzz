@@ -150,3 +150,17 @@ func getDeployTaskID(deploy *appsv1.Deployment) (uint64, error) {
 	}
 	return uint64(taskID), nil
 }
+
+func getPodTaskID(pod *apiv1.Pod) (uint64, error) {
+	if pod.ObjectMeta.Labels == nil {
+		return 0, errors.New("label not exists")
+	}
+	if _, ok := pod.ObjectMeta.Labels[LabelName]; !ok {
+		return 0, errors.New("taskid not exists in label")
+	}
+	taskID, err := strconv.ParseInt(pod.ObjectMeta.Labels[LabelName], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(taskID), nil
+}

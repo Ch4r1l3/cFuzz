@@ -17,6 +17,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"command":      result.Command,
 		"timeExecuted": result.TimeExecuted,
+		"updateAt":     result.UpdateAt,
 		"stats":        stats,
 	})
 }

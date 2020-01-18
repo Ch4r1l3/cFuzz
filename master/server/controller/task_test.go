@@ -221,3 +221,87 @@ func TestTask4(t *testing.T) {
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
+
+func TestTask5(t *testing.T) {
+	server := httptest.NewServer(r)
+	defer server.Close()
+	e := httpexpect.New(t, server.URL)
+
+	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+
+	taskPostData1 := map[string]interface{}{
+		"name": "test",
+		//"image":        "registry.cn-hangzhou.aliyuncs.com/cfuzz/test:v1",
+		"image":         "cfuzz:v1",
+		"time":          config.KubernetesConf.CheckTaskTime * 8,
+		"fuzzCycleTime": 60,
+		"fuzzerid":      fuzzerID,
+		"environments":  []string{"123", "2333"},
+		"arguments": map[string]string{
+			"a1": "a2",
+			"a2": "a3",
+		},
+	}
+	taskPostData2 := map[string]interface{}{
+		"status": models.TaskStarted,
+	}
+	taskPostData3 := map[string]interface{}{
+		"status": models.TaskStopped,
+	}
+
+	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST(fmt.Sprintf("/task/%d/target", taskID)).WithMultipart().WithFile("file", "../test_data/test").Expect().Status(http.StatusOK)
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST(fmt.Sprintf("/task/%d/corpus", taskID)).WithMultipart().WithFile("file", "../test_data/corpus").Expect().Status(http.StatusOK)
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
+	e.GET("/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
+	obj := e.GET("/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
+	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats")
+	obj.Value("command").NotEqual("")
+	obj.Value("timeExecuted").NotEqual(0)
+	obj.Value("updateAt").NotEqual(0)
+	obj.Value("stats").NotNull()
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusOK)
+	<-time.After(time.Duration(5) * time.Second)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+}
+
+func TestTask6(t *testing.T) {
+	server := httptest.NewServer(r)
+	defer server.Close()
+	e := httpexpect.New(t, server.URL)
+
+	fuzzerID := int(e.POST("/fuzzer").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+
+	taskPostData1 := map[string]interface{}{
+		"name":          "test",
+		"image":         "deadbeef:v1",
+		"time":          config.KubernetesConf.CheckTaskTime * 8,
+		"fuzzCycleTime": 60,
+		"fuzzerid":      fuzzerID,
+		"environments":  []string{"123", "2333"},
+		"arguments": map[string]string{
+			"a1": "a2",
+			"a2": "a3",
+		},
+	}
+	taskPostData2 := map[string]interface{}{
+		"status": models.TaskStarted,
+	}
+
+	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST(fmt.Sprintf("/task/%d/target", taskID)).WithMultipart().WithFile("file", "../test_data/test").Expect().Status(http.StatusOK)
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST(fmt.Sprintf("/task/%d/corpus", taskID)).WithMultipart().WithFile("file", "../test_data/corpus").Expect().Status(http.StatusOK)
+	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
+	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
+	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").Equal("failed to create deployment")
+	<-time.After(time.Duration(5) * time.Second)
+	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+}

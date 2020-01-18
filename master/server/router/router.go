@@ -21,15 +21,11 @@ func InitRouter() *gin.Engine {
 
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.List)
-	r.GET("/task/:path1", controller.TaskGetHandler)
 	r.POST("/task", taskController.Create)
 	r.PUT("/task/:id", taskController.Update)
-	r.DELETE("/task/:path1", controller.TaskDeleteHandler)
 
 	taskCorpusController := new(controller.TaskCorpusController)
-	r.GET("/task/:path1/:path2", controller.TaskGetHandler)
 	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
-	r.DELETE("/task/:path1/:path2", controller.TaskDeleteHandler)
 
 	taskTargetController := new(controller.TaskTargetController)
 	r.POST("/task/:taskid/target", taskTargetController.Create)
@@ -39,5 +35,11 @@ func InitRouter() *gin.Engine {
 	r.POST("/fuzzer", fuzzerController.Create)
 	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
 
+	r.GET("/task/:path1", controller.TaskGetHandler)
+	r.GET("/task/:path1/:path2", controller.TaskGetHandler)
+	r.GET("/task/:path1/:path2/:path3", controller.TaskGetHandler)
+
+	r.DELETE("/task/:path1", controller.TaskDeleteHandler)
+	r.DELETE("/task/:path1/:path2", controller.TaskDeleteHandler)
 	return r
 }

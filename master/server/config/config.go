@@ -23,6 +23,7 @@ type Kubernetes struct {
 	Namespace         string `mapstructure:"namespace"`
 	CheckTaskTime     int    `mapstructure:"checkTaskTime"`
 	MaxClientRetryNum int    `mapstructure:"maxClientRetryNum"`
+	MaxStartTime      int64  `mapstructure:"maxStartTime"`
 	RequestTimeout    int    `mapstructure:"requestTimeout"`
 }
 
