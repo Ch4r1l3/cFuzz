@@ -66,5 +66,5 @@ func Setup() {
 	setupNamespace()
 	watchDeploy()
 	watchPod()
-	go handleTasks()
+	go checkTasks()
 }

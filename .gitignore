@@ -3,3 +3,4 @@
 *.swo
 *~
 *.db
+/master/server/controller/crashes
