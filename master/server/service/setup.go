@@ -13,9 +13,10 @@ import (
 )
 
 var ClientSet kubernetes.Interface
-var controlChan map[uint64]chan struct{}
 var crashesMap map[uint64]map[uint64]bool
+var activeRoutineNum map[uint64]*int32
 var deployWatchChan chan struct{}
+var podWatchChan chan struct{}
 
 func setupNamespace() {
 	if config.KubernetesConf.Namespace == "" {
@@ -42,9 +43,9 @@ const (
 )
 
 func Setup() {
-	controlChan = make(map[uint64]chan struct{})
-	crashesMap = make(map[uint64]map[uint64]bool)
 	deployWatchChan = make(chan struct{})
+	podWatchChan = make(chan struct{})
+	activeRoutineNum = make(map[uint64]*int32)
 	var kubeConfig *rest.Config
 	var err error
 	if config.KubernetesConf.ConfigPath != "" {
@@ -63,6 +64,7 @@ func Setup() {
 		log.Fatal(err)
 	}
 
+	initCrashesMap()
 	setupNamespace()
 	watchDeploy()
 	watchPod()

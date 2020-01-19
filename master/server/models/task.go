@@ -1,5 +1,9 @@
 package models
 
+import (
+	"github.com/jinzhu/gorm"
+)
+
 type Task struct {
 	ID             uint64 `gorm:"primary_key" json:"id"`
 	Name           string `json:"name"`
@@ -11,6 +15,7 @@ type Task struct {
 	Status         string `json:"status"`
 	ErrorMsg       string `json:"errorMsg"`
 	StatusUpdateAt int64  `json:"-"`
+	StartedAt      int64  `json:"startedAt"`
 }
 
 const (
@@ -177,4 +182,15 @@ func GetTaskFuzzResultStat(id uint64) (map[string]string, error) {
 		stats[v.Key] = v.Value
 	}
 	return stats, nil
+}
+
+func GetLastestFuzzResultByTaskID(taskid uint64) (*TaskFuzzResult, error) {
+	var taskFuzzResult TaskFuzzResult
+	if err := DB.Where("task_id = ?", taskid).Order("update_at desc").First(&taskFuzzResult).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return &taskFuzzResult, nil
+		}
+		return nil, err
+	}
+	return &taskFuzzResult, nil
 }

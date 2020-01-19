@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/pkg/errors"
@@ -147,23 +146,24 @@ func initDeployTask(deploy *appsv1.Deployment) {
 		return
 	}
 
-	v, ok := controlChan[task.ID]
-	if ok {
-		v <- struct{}{}
-	} else {
-		controlChan[task.ID] = make(chan struct{})
-		go func() {
-			<-time.After(time.Duration(task.Time) * time.Second)
-			logger.Logger.Debug("time end!")
-			controlChan[task.ID] <- struct{}{}
-			DeleteServiceByTaskID(taskID)
-			DeleteDeployByTaskID(taskID)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-			<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime) * time.Second)
-			delete(controlChan, task.ID)
-			delete(crashesMap, task.ID)
-		}()
+	if err := models.DB.Model(&models.Task{}).
+		Where("id = ?", taskID).Update("Status", models.TaskRunning).Error; err != nil {
+		logger.Logger.Error("DB error", "reason", err.Error())
+		Err = errors.Wrap(err, "DB error")
+		return
 	}
-	checkSingleTask(taskID)
+	if err := models.DB.Model(&models.Task{}).
+		Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
+		logger.Logger.Error("DB error", "reason", err.Error())
+		Err = errors.Wrap(err, "DB error")
+		return
+	}
+	if task.StartedAt == 0 {
+		if err := models.DB.Model(&models.Task{}).
+			Where("id = ?", taskID).Update("StartedAt", time.Now().Unix()).Error; err != nil {
+			logger.Logger.Error("DB error", "reason", err.Error())
+			Err = errors.Wrap(err, "DB error")
+			return
+		}
+	}
 }

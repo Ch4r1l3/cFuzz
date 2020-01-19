@@ -63,8 +63,7 @@ func watchPod() {
 			},
 		},
 	)
-	tempChan := make(chan struct{})
-	go controller.Run(tempChan)
+	go controller.Run(podWatchChan)
 }
 
 func deleteTaskByPod(pod *corev1.Pod) {

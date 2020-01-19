@@ -56,7 +56,7 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime")
+	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
 	obj.Value("time").NotEqual(0)
@@ -66,6 +66,7 @@ func TestTask1(t *testing.T) {
 	obj.Value("arguments").Object().Value("a1").Equal("a2")
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
 	obj.Value("status").NotEqual("")
+	obj.Value("startedAt").Equal(0)
 	e.DELETE("/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/fuzzer/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)

@@ -87,6 +87,7 @@ func (tc *TaskController) List(c *gin.Context) {
 			"fuzzerid":      task.FuzzerID,
 			"status":        task.Status,
 			"errorMsg":      task.ErrorMsg,
+			"startedAt":     task.StartedAt,
 			"environments":  environments,
 			"arguments":     arguments,
 		})
@@ -121,6 +122,7 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		"fuzzerid":      task.FuzzerID,
 		"status":        task.Status,
 		"errorMsg":      task.ErrorMsg,
+		"startedAt":     task.StartedAt,
 		"environments":  environments,
 		"arguments":     arguments,
 	}

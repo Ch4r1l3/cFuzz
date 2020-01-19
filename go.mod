@@ -16,6 +16,7 @@ require (
 	github.com/jinzhu/gorm v1.9.11
 	github.com/mattn/go-sqlite3 v2.0.2+incompatible // indirect
 	github.com/moul/http2curl v1.0.0 // indirect
+	github.com/panjf2000/ants/v2 v2.2.2
 	github.com/pkg/errors v0.8.0
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/spf13/viper v1.6.1
