@@ -167,13 +167,14 @@ func checkSingleTask(taskID uint64) {
 				crashesMap[taskID] = make(map[uint64]bool)
 				os.MkdirAll(crashesPath, os.ModePerm)
 			}
-			if _, ok := crashesMap[taskID][crash.ID]; !ok {
+			if !crashesMap[taskID][crash.ID] {
 				crashesMap[taskID][crash.ID] = true
 				savePath, err := requestProxySaveFile(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))}, crashesPath)
 				if err != nil {
 					logger.Logger.Error("request save file error", "reason", err.Error())
 				}
 				taskCrash := models.TaskCrash{
+					ID:     crash.ID,
 					TaskID: taskID,
 					Path:   savePath,
 				}

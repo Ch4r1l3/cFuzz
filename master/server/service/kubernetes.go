@@ -20,6 +20,14 @@ func GetAllDeploys() ([]appsv1.Deployment, error) {
 	return deploys.Items, nil
 }
 
+func GetAllServices() ([]apiv1.Service, error) {
+	services, err := ClientSet.CoreV1().Services(config.KubernetesConf.Namespace).List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return services.Items, nil
+}
+
 func GetDeployByTaskID(taskID uint64) ([]appsv1.Deployment, error) {
 	labelSelector := fmt.Sprintf(LabelFmt, taskID)
 	deploys, err := ClientSet.AppsV1().Deployments(config.KubernetesConf.Namespace).List(metav1.ListOptions{LabelSelector: labelSelector})
@@ -163,4 +171,19 @@ func getPodTaskID(pod *apiv1.Pod) (uint64, error) {
 		return 0, err
 	}
 	return uint64(taskID), nil
+}
+
+func getServiceTaskID(service *apiv1.Service) (uint64, error) {
+	if service.ObjectMeta.Labels == nil {
+		return 0, errors.New("label not exists")
+	}
+	if _, ok := service.ObjectMeta.Labels[LabelName]; !ok {
+		return 0, errors.New("taskid not exists in label")
+	}
+	taskID, err := strconv.ParseInt(service.ObjectMeta.Labels[LabelName], 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint64(taskID), nil
+
 }

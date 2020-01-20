@@ -2,6 +2,8 @@ package service
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
+	"github.com/Ch4r1l3/cFuzz/master/server/logger"
+	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -10,6 +12,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 	"log"
 	"path/filepath"
+	"time"
 )
 
 var ClientSet kubernetes.Interface
@@ -64,9 +67,58 @@ func Setup() {
 		log.Fatal(err)
 	}
 
+	initKubernetesCleanup()
 	initCrashesMap()
 	setupNamespace()
 	watchDeploy()
 	watchPod()
 	go checkTasks()
+}
+
+func initKubernetesCleanup() {
+	var tasks []models.Task
+	if err := models.GetObjects(&tasks); err != nil {
+		logger.Logger.Error("checkTasks", "error", err.Error())
+		return
+	}
+	tempRecord := make(map[uint64]bool)
+	for _, task := range tasks {
+		if task.Status == models.TaskStarted || task.Status == models.TaskInitializing || (config.KubernetesConf.InitCleanup && task.Status == models.TaskRunning) {
+			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskError)
+			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
+			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ErrorMsg", "server stopped")
+		}
+		if task.Status == models.TaskRunning {
+			tempRecord[task.ID] = true
+		}
+	}
+	deploys, err := GetAllDeploys()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, deploy := range deploys {
+		taskID, err := getDeployTaskID(&deploy)
+		if err != nil {
+			continue
+		}
+		// clean all those deployment that is not running
+		if !tempRecord[taskID] {
+			DeleteDeployByTaskID(taskID)
+		}
+	}
+	services, err := GetAllServices()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, service := range services {
+		taskID, err := getServiceTaskID(&service)
+		if err != nil {
+			continue
+		}
+		// clean all those service that is not running
+		if !tempRecord[taskID] {
+			DeleteServiceByTaskID(taskID)
+		}
+	}
+
 }

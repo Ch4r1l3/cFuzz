@@ -25,6 +25,7 @@ type Kubernetes struct {
 	MaxClientRetryNum int    `mapstructure:"maxClientRetryNum"`
 	MaxStartTime      int64  `mapstructure:"maxStartTime"`
 	RequestTimeout    int    `mapstructure:"requestTimeout"`
+	InitCleanup       bool   `mapstructure:"initCleanup"`
 }
 
 var ServerConf = &Server{}

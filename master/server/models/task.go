@@ -138,7 +138,7 @@ func IsObjectExistsByTaskID(obj interface{}, taskid uint64) bool {
 }
 
 type TaskCrash struct {
-	ID            uint64 `gorm:"primary_key" json:"id"`
+	ID            uint64 `gorm:"primary_key;auto_increment:false" json:"id"`
 	TaskID        uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
 	Path          string `json:"-"`
 	ReproduceAble bool   `json:"reproduceAble"`
