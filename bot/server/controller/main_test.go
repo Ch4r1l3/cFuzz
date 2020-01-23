@@ -28,7 +28,7 @@ func prepareTestDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	models.DB.AutoMigrate(&models.Fuzzer{}, &models.Task{}, &models.TaskCrash{}, &models.TaskArgument{}, &models.TaskEnvironment{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{})
+	models.DB.AutoMigrate(&models.StorageItem{}, &models.Task{}, &models.TaskCrash{}, &models.TaskArgument{}, &models.TaskEnvironment{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{})
 
 }
 
@@ -40,28 +40,23 @@ func prepareRouter() {
 	gin.SetMode(config.ServerConf.RunMode)
 	r.MaxMultipartMemory = config.ServerConf.UploadFileLimit << 20
 
-	fuzzerController := new(FuzzerController)
-	r.GET("/fuzzer", fuzzerController.List)
-	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+	storageItemController := new(StorageItemController)
+	r.GET("/storage_item", storageItemController.List)
+	r.GET("/storage_item/:id", storageItemController.Retrieve)
+	r.POST("/storage_item", storageItemController.Create)
+	r.POST("/storage_item/exist", storageItemController.CreateExist)
+	r.DELETE("/storage_item/:id", storageItemController.Destroy)
 
 	taskController := new(TaskController)
 	r.GET("/task", taskController.Retrieve)
 	r.POST("/task", taskController.Create)
-	r.PUT("/task", taskController.Update)
+	r.POST("/task/start", taskController.StartFuzz)
+	r.POST("/task/stop", taskController.StopFuzz)
 	r.DELETE("/task", taskController.Destroy)
 
 	taskCrashController := new(TaskCrashController)
 	r.GET("/task/crash", taskCrashController.List)
 	r.GET("/task/crash/:id", taskCrashController.Download)
-
-	taskCorpusController := new(TaskCorpusController)
-	r.POST("/task/corpus", taskCorpusController.Create)
-	r.DELETE("/task/corpus", taskCorpusController.Destroy)
-
-	taskTargetController := new(TaskTargetController)
-	r.POST("/task/target", taskTargetController.Create)
-	r.DELETE("/task/target", taskTargetController.Destroy)
 
 	taskResultController := new(TaskResultController)
 	r.GET("/task/result", taskResultController.Retrieve)

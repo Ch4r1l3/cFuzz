@@ -14,7 +14,6 @@ type Server struct {
 	WriteTimeout         string `mapstructure:"writeTimeout"`
 	TempPath             string `mapstructure:"tempPath"`
 	UploadFileLimit      int64  `mapstructure:"uploadFileLimit"`
-	DefaultFuzzerName    string `mapstructure:"defaultFuzzerName"`
 	DefaultReproduceTime int    `mapstructure:"defaultReproduceTime"`
 }
 

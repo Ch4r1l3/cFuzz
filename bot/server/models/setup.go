@@ -14,5 +14,5 @@ func Setup() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	DB.AutoMigrate(&Fuzzer{}, &Task{}, &TaskCrash{}, &TaskArgument{}, &TaskEnvironment{}, &TaskFuzzResult{}, &TaskFuzzResultStat{})
+	DB.AutoMigrate(&StorageItem{}, &Task{}, &TaskCrash{}, &TaskArgument{}, &TaskEnvironment{}, &TaskFuzzResult{}, &TaskFuzzResultStat{})
 }

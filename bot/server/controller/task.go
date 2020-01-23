@@ -6,21 +6,18 @@ import (
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
 )
 
 type TaskController struct{}
 
 type TaskCreateReq struct {
 	FuzzerID      uint64            `json:"fuzzerID" binding:"required"`
+	CorpusID      uint64            `json:"corpusID" binding:"required"`
+	TargetID      uint64            `json:"targetID" binding:"required"`
 	MaxTime       int               `json:"maxTime" binding:"required"`
 	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
 	Arguments     map[string]string `json:"arguments"`
 	Environments  []string          `json:"environments"`
-}
-
-type TaskUpdateReq struct {
-	Status string `json:"status" binding:"required"`
 }
 
 type TaskIDReq struct {
@@ -41,10 +38,9 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"corpusDir":     task.CorpusDir,
-		"targetDir":     task.TargetDir,
-		"targetPath":    task.TargetPath,
 		"fuzzerID":      task.FuzzerID,
+		"corpusID":      task.CorpusID,
+		"targetID":      task.TargetID,
 		"maxTime":       task.MaxTime,
 		"fuzzCycleTime": task.FuzzCycleTime,
 		"status":        task.Status,
@@ -67,10 +63,28 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task running")
 		return
 	}
-	_, err = models.GetFuzzerByID(req.FuzzerID)
-	if err != nil {
-		utils.BadRequestWithMsg(c, "fuzzer not exists")
-		return
+
+	ids := []uint64{req.FuzzerID, req.CorpusID, req.TargetID}
+	types := []string{models.Fuzzer, models.Corpus, models.Target}
+	for i, _ := range ids {
+		ok, err := models.IsStorageItemExistByID(ids[i])
+		if err != nil {
+			utils.DBError(c)
+			return
+		}
+		if !ok {
+			utils.BadRequestWithMsg(c, types[i]+" not exists")
+			return
+		}
+		storageItem, err := models.GetStorageItemByID(ids[i])
+		if err != nil {
+			utils.DBError(c)
+			return
+		}
+		if storageItem.Type != types[i] {
+			utils.BadRequestWithMsg(c, "type wrong")
+			return
+		}
 	}
 
 	if req.MaxTime <= 0 {
@@ -78,28 +92,20 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 
-	//remove corpus dir and target path
-	if _, err = os.Stat(task.CorpusDir); task.CorpusDir != "" && !os.IsNotExist(err) {
-		os.RemoveAll(task.CorpusDir)
-	}
-
-	if _, err = os.Stat(task.TargetDir); task.TargetDir != "" && !os.IsNotExist(err) {
-		os.RemoveAll(task.TargetDir)
-	}
 	//clear tasks and others
 	models.DB.Delete(&task)
 	models.DB.Delete(&models.TaskArgument{})
 	models.DB.Delete(&models.TaskEnvironment{})
 
 	//create task
-	task.CorpusDir = ""
-	task.TargetPath = ""
-	task.TargetDir = ""
-	task.Status = models.TASK_CREATED
-	task.FuzzerID = req.FuzzerID
-	task.MaxTime = req.MaxTime
-	task.FuzzCycleTime = req.FuzzCycleTime
-	models.DB.Create(&task)
+	models.DB.Create(&models.Task{
+		Status:        models.TASK_CREATED,
+		FuzzerID:      req.FuzzerID,
+		CorpusID:      req.CorpusID,
+		TargetID:      req.TargetID,
+		MaxTime:       req.MaxTime,
+		FuzzCycleTime: req.FuzzCycleTime,
+	})
 
 	//create arguments
 	err = models.InsertArguments(req.Arguments)
@@ -117,37 +123,29 @@ func (tc *TaskController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, req)
 }
 
-func (tc *TaskController) Update(c *gin.Context) {
-	var req TaskUpdateReq
-	err := c.BindJSON(&req)
-	if err != nil {
-		utils.BadRequest(c)
-		return
-	}
+func (tc *TaskController) StopFuzz(c *gin.Context) {
 	task, err := models.GetTask()
 	if err != nil {
 		utils.BadRequestWithMsg(c, "task not exists")
 		return
 	}
-	if task.Status == models.TASK_RUNNING && req.Status == models.TASK_STOPPED {
+	if task.Status == models.TASK_RUNNING {
 		service.StopFuzz()
 		models.DB.Model(task).Update("Status", models.TASK_STOPPED)
+		c.JSON(http.StatusNoContent, "")
+	} else {
+		utils.BadRequest(c)
+		return
+	}
+}
 
-	} else if task.Status == models.TASK_CREATED && req.Status == models.TASK_RUNNING {
-		//check plugin and target
-		if _, err = os.Stat(task.CorpusDir); task.CorpusDir == "" || os.IsNotExist(err) {
-			utils.BadRequestWithMsg(c, "you should upload corpus")
-			return
-		}
-		if _, err = os.Stat(task.TargetPath); task.TargetPath == "" || os.IsNotExist(err) {
-			utils.BadRequestWithMsg(c, "you should upload target")
-			return
-		}
-		fuzzer, err := models.GetFuzzerByID(task.FuzzerID)
-		if err != nil {
-			utils.BadRequestWithMsg(c, "fuzzer not exists")
-			return
-		}
+func (tc *TaskController) StartFuzz(c *gin.Context) {
+	task, err := models.GetTask()
+	if err != nil {
+		utils.BadRequestWithMsg(c, "task not exists")
+		return
+	}
+	if task.Status == models.TASK_CREATED {
 		arguments, err := models.GetArguments()
 		if err != nil {
 			utils.DBError(c)
@@ -158,35 +156,37 @@ func (tc *TaskController) Update(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
-		service.Fuzz(fuzzer.Path, task.TargetPath, task.CorpusDir, task.MaxTime, int(task.FuzzCycleTime), arguments, environments)
+		ids := []uint64{task.FuzzerID, task.TargetID, task.CorpusID}
+		paths := []string{}
+		for i, _ := range ids {
+			storageItem, err := models.GetStorageItemByID(ids[i])
+			if err != nil {
+				utils.DBError(c)
+				return
+			}
+			if !utils.IsPathExists(storageItem.Path) {
+				utils.InternalErrorWithMsg(c, "storageItem file missing, this should not happen")
+				return
+			}
+			paths = append(paths, storageItem.Path)
+		}
+
+		service.Fuzz(paths[0], paths[1], paths[2], task.MaxTime, int(task.FuzzCycleTime), arguments, environments)
 
 		models.DB.Model(task).Update("Status", models.TASK_RUNNING)
-
+		c.JSON(http.StatusNoContent, "")
 	} else {
-		utils.BadRequestWithMsg(c, "wrong status")
+		utils.BadRequest(c)
 		return
 	}
-
-	c.JSON(http.StatusOK, "")
-
 }
 
 func (tc *TaskController) Destroy(c *gin.Context) {
 	service.StopFuzz()
-	task, err := models.GetTask()
+	_, err := models.GetTask()
 	if err != nil {
 		utils.DBError(c)
 		return
-	}
-	if task.CorpusDir != "" {
-		if _, err = os.Stat(task.CorpusDir); !os.IsNotExist(err) {
-			os.RemoveAll(task.CorpusDir)
-		}
-	}
-	if task.TargetDir != "" {
-		if _, err = os.Stat(task.TargetDir); !os.IsNotExist(err) {
-			os.RemoveAll(task.TargetDir)
-		}
 	}
 	models.DB.Delete(&models.Task{})
 	models.DB.Delete(&models.TaskArgument{})

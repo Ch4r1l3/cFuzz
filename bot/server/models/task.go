@@ -5,11 +5,10 @@ import (
 )
 
 type Task struct {
-	CorpusDir     string `json:"corpusDir"`
-	TargetDir     string `json:"targetDir"`
-	TargetPath    string `json:"targetPath"`
 	Status        string `json:"status"`
 	FuzzerID      uint64 `json:"fuzzerID"`
+	CorpusID      uint64 `json:"corpusID"`
+	TargetID      uint64 `json:"targetID"`
 	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
 	MaxTime       int    `json:"maxTime"`
 }

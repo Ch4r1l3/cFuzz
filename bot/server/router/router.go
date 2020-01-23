@@ -14,28 +14,23 @@ func InitRouter() *gin.Engine {
 	gin.SetMode(config.ServerConf.RunMode)
 	r.MaxMultipartMemory = config.ServerConf.UploadFileLimit << 20
 
-	fuzzerController := new(controller.FuzzerController)
-	r.GET("/fuzzer", fuzzerController.List)
-	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+	storageItemController := new(controller.StorageItemController)
+	r.GET("/storage_item", storageItemController.List)
+	r.GET("/storage_item/:id", storageItemController.Retrieve)
+	r.POST("/storage_item", storageItemController.Create)
+	r.POST("/storage_item/exist", storageItemController.CreateExist)
+	r.DELETE("/storage_item/:id", storageItemController.Destroy)
 
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.Retrieve)
 	r.POST("/task", taskController.Create)
-	r.PUT("/task", taskController.Update)
+	r.POST("/task/start", taskController.StartFuzz)
+	r.POST("/task/stop", taskController.StopFuzz)
 	r.DELETE("/task", taskController.Destroy)
 
 	taskCrashController := new(controller.TaskCrashController)
 	r.GET("/task/crash", taskCrashController.List)
 	r.GET("/task/crash/:id", taskCrashController.Download)
-
-	taskCorpusController := new(controller.TaskCorpusController)
-	r.POST("/task/corpus", taskCorpusController.Create)
-	r.DELETE("/task/corpus", taskCorpusController.Destroy)
-
-	taskTargetController := new(controller.TaskTargetController)
-	r.POST("/task/target", taskTargetController.Create)
-	r.DELETE("/task/target", taskTargetController.Destroy)
 
 	taskResultController := new(controller.TaskResultController)
 	r.GET("/task/result", taskResultController.Retrieve)

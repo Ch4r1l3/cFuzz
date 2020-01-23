@@ -5,5 +5,4 @@ server:
         writeTimeout: 60
         tempPath: /tmp
         uploadFileLimit: 80
-        defaultFuzzerName: fuzzer
         defaultReproduceTime: 10
