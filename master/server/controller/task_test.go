@@ -159,17 +159,11 @@ func TestTask3(t *testing.T) {
 			"a2": "a3",
 		},
 	}
-	taskPostData2 := map[string]interface{}{
-		"status": models.TaskStarted,
-	}
-	taskPostData3 := map[string]interface{}{
-		"status": models.TaskStopped,
-	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
 	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
 	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	taskPostData4 := map[string]interface{}{
 		"targetid": targetID,
@@ -177,10 +171,10 @@ func TestTask3(t *testing.T) {
 	}
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusNoContent)
 
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(5) * time.Second)
 	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
@@ -211,18 +205,12 @@ func TestTask4(t *testing.T) {
 			"a2": "a3",
 		},
 	}
-	taskPostData2 := map[string]interface{}{
-		"status": models.TaskStarted,
-	}
-	taskPostData3 := map[string]interface{}{
-		"status": models.TaskStopped,
-	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*5) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusBadRequest)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
 	<-time.After(time.Duration(5) * time.Second)
 	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
@@ -253,15 +241,9 @@ func TestTask5(t *testing.T) {
 			"a2": "a3",
 		},
 	}
-	taskPostData2 := map[string]interface{}{
-		"status": models.TaskStarted,
-	}
-	taskPostData3 := map[string]interface{}{
-		"status": models.TaskStopped,
-	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
 	obj := e.GET("/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
@@ -270,7 +252,7 @@ func TestTask5(t *testing.T) {
 	obj.Value("timeExecuted").NotEqual(0)
 	obj.Value("updateAt").NotEqual(0)
 	obj.Value("stats").NotNull()
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(5) * time.Second)
 	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
@@ -301,12 +283,9 @@ func TestTask6(t *testing.T) {
 			"a2": "a3",
 		},
 	}
-	taskPostData2 := map[string]interface{}{
-		"status": models.TaskStarted,
-	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").Equal("failed to create deployment")
@@ -328,7 +307,7 @@ func TestTask7(t *testing.T) {
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ubuntu:16.04",
+		"image":         "nginx:1.16-alpine",
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
 		"fuzzerid":      fuzzerID,
@@ -340,12 +319,9 @@ func TestTask7(t *testing.T) {
 			"a2": "a3",
 		},
 	}
-	taskPostData2 := map[string]interface{}{
-		"status": models.TaskStarted,
-	}
 
 	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusNoContent)
+	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*2) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	<-time.After(time.Duration(5) * time.Second)

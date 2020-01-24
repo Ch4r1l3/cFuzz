@@ -22,6 +22,8 @@ func InitRouter() *gin.Engine {
 	taskController := new(controller.TaskController)
 	r.GET("/task", taskController.List)
 	r.POST("/task", taskController.Create)
+	r.POST("/task/:id/start", taskController.Start)
+	r.POST("/task/:id/stop", taskController.Stop)
 	r.PUT("/task/:id", taskController.Update)
 	r.DELETE("/task/:id", taskController.Destroy)
 

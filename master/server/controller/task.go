@@ -185,7 +185,22 @@ func (tc *TaskController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
-func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
+func (tc *TaskController) Start(c *gin.Context) {
+	var uriReq UriIDReq
+	err := c.ShouldBindUri(&uriReq)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	var task models.Task
+	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
+		utils.NotFound(c)
+		return
+	}
+	if task.Status != models.TaskCreated {
+		utils.BadRequestWithMsg(c, "wrong status")
+		return
+	}
 	var Err error
 	if !models.IsObjectExistsByID(&models.StorageItem{}, task.FuzzerID) {
 		utils.BadRequestWithMsg(c, "you should upload fuzzer first")
@@ -200,7 +215,7 @@ func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
 		return
 	}
 
-	err := service.CreateServiceByTaskID(task.ID)
+	err = service.CreateServiceByTaskID(task.ID)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, "create service failed")
 		return
@@ -257,13 +272,28 @@ func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
 	c.JSON(http.StatusNoContent, "")
 }
 
-func (tc *TaskController) taskStop(c *gin.Context, taskID uint64) {
-	if err := models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped).Error; err != nil {
+func (tc *TaskController) Stop(c *gin.Context) {
+	var uriReq UriIDReq
+	err := c.ShouldBindUri(&uriReq)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	var task models.Task
+	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
+		utils.NotFound(c)
+		return
+	}
+	if task.Status != models.TaskStarted && task.Status != models.TaskInitializing && task.Status != models.TaskRunning {
+		utils.BadRequestWithMsg(c, "wrong status")
+		return
+	}
+	if err := models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped).Error; err != nil {
 		utils.DBError(c)
 		return
 	}
-	err1 := service.DeleteServiceByTaskID(taskID)
-	err2 := service.DeleteDeployByTaskID(taskID)
+	err1 := service.DeleteServiceByTaskID(task.ID)
+	err2 := service.DeleteDeployByTaskID(task.ID)
 	if err1 != nil || err2 != nil {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
@@ -290,14 +320,9 @@ func (tc *TaskController) Update(c *gin.Context) {
 		utils.BadRequest(c)
 		return
 	}
-	if task.Status == models.TaskCreated && req.Status == models.TaskStarted {
-		tc.taskStart(c, &task)
-		return
-	} else if task.Status != models.TaskCreated && task.Status != models.TaskStopped && task.Status != models.TaskError && req.Status == models.TaskStopped {
-		tc.taskStop(c, task.ID)
-		return
-	} else if task.Status != models.TaskCreated {
-		utils.BadRequestWithMsg(c, "task already started or stopped")
+
+	if task.Status != models.TaskCreated {
+		utils.BadRequestWithMsg(c, "you can change task after it started")
 		return
 	}
 
@@ -325,37 +350,25 @@ func (tc *TaskController) Update(c *gin.Context) {
 			return
 		}
 	}
-	if req.FuzzerID != 0 {
-		if models.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("FuzzerID", req.FuzzerID).Error; err != nil {
+	ids := []uint64{req.FuzzerID, req.CorpusID, req.TargetID}
+	types := []string{models.Fuzzer, models.Corpus, models.Target}
+	modelsField := []string{"FuzzerID", "CorpusID", "TargetID"}
+	for i, _ := range ids {
+		if ids[i] != 0 {
+			var storageItem models.StorageItem
+			err = models.GetObjectByID(&storageItem, ids[i])
+			if err != nil {
+				utils.BadRequest(c)
+				return
+			}
+			if storageItem.Type != types[i] {
+				utils.BadRequestWithMsg(c, "wrong type")
+				return
+			}
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update(modelsField[i], ids[i]).Error; err != nil {
 				utils.DBError(c)
 				return
 			}
-		} else {
-			utils.BadRequest(c)
-			return
-		}
-	}
-	if req.CorpusID != 0 {
-		if models.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("CorpusID", req.CorpusID).Error; err != nil {
-				utils.DBError(c)
-				return
-			}
-		} else {
-			utils.BadRequest(c)
-			return
-		}
-	}
-	if req.TargetID != 0 {
-		if models.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("TargetID", req.TargetID).Error; err != nil {
-				utils.DBError(c)
-				return
-			}
-		} else {
-			utils.BadRequest(c)
-			return
 		}
 	}
 	if req.Time != 0 {
