@@ -29,7 +29,7 @@ func prepareTestDB() {
 	}
 
 	models.DB.SingularTable(true)
-	models.DB.AutoMigrate(&models.Deployment{}, &models.Task{}, &models.TaskTarget{}, &models.TaskCorpus{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.Fuzzer{})
+	models.DB.AutoMigrate(&models.Deployment{}, &models.Task{}, &models.StorageItem{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{})
 
 }
 
@@ -49,24 +49,18 @@ func prepareRouter() {
 	r.GET("/task", taskController.List)
 	r.POST("/task", taskController.Create)
 	r.PUT("/task/:id", taskController.Update)
+	r.DELETE("/task/:id", taskController.Destroy)
 
-	taskCorpusController := new(TaskCorpusController)
-	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
-
-	taskTargetController := new(TaskTargetController)
-	r.POST("/task/:taskid/target", taskTargetController.Create)
-
-	fuzzerController := new(FuzzerController)
-	r.GET("/fuzzer", fuzzerController.List)
-	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+	storageItemController := new(StorageItemController)
+	r.GET("/storage_item", storageItemController.List)
+	r.GET("/storage_item/:type", storageItemController.ListByType)
+	r.POST("/storage_item", storageItemController.Create)
+	r.POST("/storage_item/exist", storageItemController.CreateExist)
+	r.DELETE("/storage_item/:id", storageItemController.Destroy)
 
 	r.GET("/task/:path1", TaskGetHandler)
 	r.GET("/task/:path1/:path2", TaskGetHandler)
 	r.GET("/task/:path1/:path2/:path3", TaskGetHandler)
-
-	r.DELETE("/task/:path1", TaskDeleteHandler)
-	r.DELETE("/task/:path1/:path2", TaskDeleteHandler)
 }
 
 func prepareConfig() {

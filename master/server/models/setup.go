@@ -36,5 +36,5 @@ func Setup() {
 	}
 	DB.Exec("PRAGMA foreign_keys = ON")
 	DB.SingularTable(true)
-	DB.AutoMigrate(&Deployment{}, &Task{}, &TaskTarget{}, &TaskCorpus{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{}, &Fuzzer{})
+	DB.AutoMigrate(&Deployment{}, &Task{}, &StorageItem{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{})
 }

@@ -23,23 +23,18 @@ func InitRouter() *gin.Engine {
 	r.GET("/task", taskController.List)
 	r.POST("/task", taskController.Create)
 	r.PUT("/task/:id", taskController.Update)
+	r.DELETE("/task/:id", taskController.Destroy)
 
-	taskCorpusController := new(controller.TaskCorpusController)
-	r.POST("/task/:taskid/corpus", taskCorpusController.Create)
-
-	taskTargetController := new(controller.TaskTargetController)
-	r.POST("/task/:taskid/target", taskTargetController.Create)
-
-	fuzzerController := new(controller.FuzzerController)
-	r.GET("/fuzzer", fuzzerController.List)
-	r.POST("/fuzzer", fuzzerController.Create)
-	r.DELETE("/fuzzer/:id", fuzzerController.Destroy)
+	storageItemController := new(controller.StorageItemController)
+	r.GET("/storage_item", storageItemController.List)
+	r.GET("/storage_item/:type", storageItemController.ListByType)
+	r.POST("/storage_item", storageItemController.Create)
+	r.POST("/storage_item/exist", storageItemController.CreateExist)
+	r.DELETE("/storage_item/:id", storageItemController.Destroy)
 
 	r.GET("/task/:path1", controller.TaskGetHandler)
 	r.GET("/task/:path1/:path2", controller.TaskGetHandler)
 	r.GET("/task/:path1/:path2/:path3", controller.TaskGetHandler)
 
-	r.DELETE("/task/:path1", controller.TaskDeleteHandler)
-	r.DELETE("/task/:path1/:path2", controller.TaskDeleteHandler)
 	return r
 }

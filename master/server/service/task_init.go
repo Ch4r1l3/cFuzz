@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	botmodels "github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/pkg/errors"
@@ -47,14 +48,9 @@ func initDeployTask(deploy *appsv1.Deployment) {
 		DeleteServiceByTaskID(taskID)
 		return
 	}
-	var fuzzer models.Fuzzer
-	if err = models.GetObjectByID(&fuzzer, task.FuzzerID); err != nil {
-		Err = errors.Wrap(err, "DB Error")
-		return
-	}
 	//test if bot is not up, retry 3 times
 	for i := 0; i < 3; i++ {
-		_, err = requestProxyGet(uint64(taskID), []string{"fuzzer"})
+		_, err = requestProxyGet(uint64(taskID), []string{"storage_item"})
 		if err != nil {
 			if i == 2 {
 				Err = errors.Wrap(err, "service Error")
@@ -65,20 +61,51 @@ func initDeployTask(deploy *appsv1.Deployment) {
 		}
 		<-time.After(time.Second)
 	}
-	//upload fuzzer to bot
-	form := map[string]string{
-		"name": fuzzer.Name,
+	//upload fuzzer, corpus, target
+	ids := []uint64{task.FuzzerID, task.CorpusID, task.TargetID}
+	types := []string{botmodels.Fuzzer, botmodels.Corpus, botmodels.Target}
+	botids := []uint64{}
+	for i, _ := range ids {
+		var storageItem models.StorageItem
+		if err = models.GetObjectByID(&storageItem, ids[i]); err != nil {
+			Err = errors.Wrap(err, "DB Error")
+			return
+		}
+		if storageItem.ExistsInImage {
+			uploadFuzzerPostData := map[string]interface{}{
+				"type":          types[i],
+				"existsInImage": true,
+				"path":          storageItem.Path,
+			}
+			result, err := requestProxyPost(uint64(taskID), []string{"storage_item", "exist"}, uploadFuzzerPostData)
+			if err != nil {
+				Err = errors.Wrap(err, "upload fuzzer Error")
+				return
+			}
+			var resp clientStorageItemPostResp
+			if err := json.Unmarshal(result, &resp); err != nil {
+				Err = errors.Wrap(err, "json decode fuzzer resp Error")
+				return
+			}
+			botids = append(botids, resp.ID)
+		} else {
+			form := map[string]string{
+				"type": types[i],
+			}
+			result, err := requestProxyPostWithFile(uint64(taskID), []string{"storage_item"}, form, storageItem.Path)
+			if err != nil {
+				Err = errors.Wrap(err, "upload fuzzer Error")
+				return
+			}
+			var resp clientStorageItemPostResp
+			if err := json.Unmarshal(result, &resp); err != nil {
+				Err = errors.Wrap(err, "json decode fuzzer resp Error")
+				return
+			}
+			botids = append(botids, resp.ID)
+		}
 	}
-	result, err := requestProxyPostWithFile(uint64(taskID), []string{"fuzzer"}, form, fuzzer.Path)
-	if err != nil {
-		Err = errors.Wrap(err, "upload fuzzer Error")
-		return
-	}
-	var clientFuzzer clientFuzzerPostResp
-	if err := json.Unmarshal(result, &clientFuzzer); err != nil {
-		Err = errors.Wrap(err, "json decode fuzzer resp Error")
-		return
-	}
+
 	taskArguments, err := models.GetArguments(task.ID)
 	if err != nil {
 		Err = errors.Wrap(err, "DB Error")
@@ -90,7 +117,9 @@ func initDeployTask(deploy *appsv1.Deployment) {
 		return
 	}
 	postData := map[string]interface{}{
-		"fuzzerID":      clientFuzzer.ID,
+		"fuzzerID":      botids[0],
+		"corpusID":      botids[1],
+		"targetID":      botids[2],
 		"maxTime":       task.Time,
 		"fuzzCycleTime": task.FuzzCycleTime,
 		"arguments":     taskArguments,
@@ -99,48 +128,15 @@ func initDeployTask(deploy *appsv1.Deployment) {
 
 	//create task on bot
 	//result, err = requestProxyPost(task.ID, []string{"task"}, postData)
-	result, err = requestProxyPostRaw(task.ID, []string{"task"}, postData)
+	result, err := requestProxyPostRaw(task.ID, []string{"task"}, postData)
 	logger.Logger.Debug("create task", "result", string(result))
 	if err != nil {
 		Err = errors.Wrap(err, "create task error")
 		return
 	}
-	var taskTarget []models.TaskTarget
-	if err = models.GetObjectsByTaskID(&taskTarget, uint64(taskID)); err != nil || len(taskTarget) == 0 {
-		if err != nil {
-			Err = errors.Wrap(err, "get task target error")
-		} else {
-			Err = errors.New("get task target error target empty")
-		}
-		return
-	}
-	var taskCorpus []models.TaskCorpus
-	if err = models.GetObjectsByTaskID(&taskCorpus, uint64(taskID)); err != nil || len(taskCorpus) == 0 {
-		if err != nil {
-			Err = errors.Wrap(err, "get task corpus error")
-		} else {
-			Err = errors.New("get task corpus error corpus empty")
-		}
-		return
-	}
-
-	//upload target and corpus to bot
-	result, err = requestProxyPostWithFile(uint64(taskID), []string{"task", "target"}, form, taskTarget[0].Path)
-	if err != nil {
-		Err = errors.Wrap(err, "upload target error")
-		return
-	}
-	result, err = requestProxyPostWithFile(uint64(taskID), []string{"task", "corpus"}, form, taskCorpus[0].Path)
-	if err != nil {
-		Err = errors.Wrap(err, "upload corpus error")
-		return
-	}
 
 	//start fuzz target
-	putData := map[string]interface{}{
-		"status": "TASK_RUNNING",
-	}
-	result, err = requestProxyPut(task.ID, []string{"task"}, putData)
+	result, err = requestProxyPost(task.ID, []string{"task", "start"}, struct{}{})
 	if err != nil {
 		Err = errors.Wrap(err, "start bot fuzz error")
 		return

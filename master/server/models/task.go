@@ -12,6 +12,8 @@ type Task struct {
 	Time           uint64 `json:"time"`
 	FuzzCycleTime  uint64 `json:"fuzzCycleTime"`
 	FuzzerID       uint64 `json:"fuzzerid"`
+	CorpusID       uint64 `json:"corpusid"`
+	TargetID       uint64 `json:"targetid"`
 	Status         string `json:"status"`
 	ErrorMsg       string `json:"errorMsg"`
 	StatusUpdateAt int64  `json:"-"`
@@ -26,19 +28,6 @@ const (
 	TaskStopped      = "TaskStopped"
 	TaskError        = "TaskError"
 )
-
-type TaskTarget struct {
-	ID     uint64 `gorm:"primary_key" json:"id"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
-	Path   string `json:"-"`
-}
-
-type TaskCorpus struct {
-	ID       uint64 `gorm:"primary_key" json:"id"`
-	TaskID   uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
-	Path     string `json:"-"`
-	FileName string `json:"filename"`
-}
 
 type TaskEnvironment struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
@@ -128,13 +117,6 @@ func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 
 func GetObjectByTaskIDAndID(obj interface{}, taskid uint64, id uint64) error {
 	return DB.Where("task_id = ? AND id = ?", taskid, id).Error
-}
-
-func IsObjectExistsByTaskID(obj interface{}, taskid uint64) bool {
-	if err := DB.Where("task_id = ?", taskid).First(obj).Error; err != nil {
-		return false
-	}
-	return true
 }
 
 type TaskCrash struct {

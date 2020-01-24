@@ -1,8 +1,6 @@
 package controller
 
 import (
-	"errors"
-	//"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
@@ -18,7 +16,9 @@ type TaskCreateReq struct {
 	DeploymentID  uint64            `json:"deploymentid"`
 	Time          uint64            `json:"time" binding:"required"`
 	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
-	FuzzerID      uint64            `json:"fuzzerid" binding:"required"`
+	FuzzerID      uint64            `json:"fuzzerid"`
+	CorpusID      uint64            `json:"corpusid"`
+	TargetID      uint64            `json:"targetid"`
 	Environments  []string          `json:"environments"`
 	Arguments     map[string]string `json:"arguments"`
 }
@@ -30,30 +30,11 @@ type TaskUpdateReq struct {
 	Time          uint64            `json:"time"`
 	FuzzCycleTime uint64            `json:"fuzzCycleTime"`
 	FuzzerID      uint64            `json:"fuzzerid"`
+	CorpusID      uint64            `json:"corpusid"`
+	TargetID      uint64            `json:"targetid"`
 	Environments  []string          `json:"environments"`
 	Arguments     map[string]string `json:"arguments"`
 	Status        string            `json:"status"`
-}
-
-type TaskUpdateUriReq struct {
-	ID uint64 `uri:"id" binding:"required"`
-}
-
-type TaskIDUriReq struct {
-	TaskID uint64 `uri:"taskid" binding:"required"`
-}
-
-func getTaskID(c *gin.Context) (uint64, error) {
-	var req TaskIDUriReq
-	if err := c.ShouldBindUri(&req); err != nil {
-		utils.BadRequest(c)
-		return 0, err
-	}
-	if !models.IsObjectExistsByID(&models.Task{}, req.TaskID) {
-		utils.NotFound(c)
-		return 0, errors.New("not exists")
-	}
-	return req.TaskID, nil
 }
 
 type TaskController struct{}
@@ -85,6 +66,8 @@ func (tc *TaskController) List(c *gin.Context) {
 			"time":          task.Time,
 			"fuzzCycleTime": task.FuzzCycleTime,
 			"fuzzerid":      task.FuzzerID,
+			"corpusid":      task.CorpusID,
+			"targetid":      task.TargetID,
 			"status":        task.Status,
 			"errorMsg":      task.ErrorMsg,
 			"startedAt":     task.StartedAt,
@@ -120,6 +103,8 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		"time":          task.Time,
 		"fuzzCycleTime": task.FuzzCycleTime,
 		"fuzzerid":      task.FuzzerID,
+		"corpusid":      task.CorpusID,
+		"targetid":      task.TargetID,
 		"status":        task.Status,
 		"errorMsg":      task.ErrorMsg,
 		"startedAt":     task.StartedAt,
@@ -142,6 +127,8 @@ func (tc *TaskController) Create(c *gin.Context) {
 	}
 	task := models.Task{
 		FuzzerID:      req.FuzzerID,
+		CorpusID:      req.CorpusID,
+		TargetID:      req.TargetID,
 		FuzzCycleTime: req.FuzzCycleTime,
 		Time:          req.Time,
 		Name:          req.Name,
@@ -155,8 +142,16 @@ func (tc *TaskController) Create(c *gin.Context) {
 		}
 		task.DeploymentID = req.DeploymentID
 	}
-	if !models.IsFuzzerExistsByID(req.FuzzerID) {
+	if req.FuzzerID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
+		return
+	}
+	if req.CorpusID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
+		utils.BadRequestWithMsg(c, "corpus not exists")
+		return
+	}
+	if req.TargetID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
+		utils.BadRequestWithMsg(c, "target not exists")
 		return
 	}
 
@@ -192,11 +187,15 @@ func (tc *TaskController) Create(c *gin.Context) {
 
 func (tc *TaskController) taskStart(c *gin.Context, task *models.Task) {
 	var Err error
-	if !models.IsObjectExistsByTaskID(&models.TaskTarget{}, task.ID) {
+	if !models.IsObjectExistsByID(&models.StorageItem{}, task.FuzzerID) {
+		utils.BadRequestWithMsg(c, "you should upload fuzzer first")
+		return
+	}
+	if !models.IsObjectExistsByID(&models.StorageItem{}, task.TargetID) {
 		utils.BadRequestWithMsg(c, "you should upload target first")
 		return
 	}
-	if !models.IsObjectExistsByTaskID(&models.TaskCorpus{}, task.ID) {
+	if !models.IsObjectExistsByID(&models.StorageItem{}, task.CorpusID) {
 		utils.BadRequestWithMsg(c, "you should upload corpus first")
 		return
 	}
@@ -269,12 +268,12 @@ func (tc *TaskController) taskStop(c *gin.Context, taskID uint64) {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
 	}
-	c.JSON(http.StatusOK, "")
+	c.JSON(http.StatusNoContent, "")
 	return
 }
 
 func (tc *TaskController) Update(c *gin.Context) {
-	var uriReq TaskUpdateUriReq
+	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
 		utils.BadRequest(c)
@@ -327,8 +326,30 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 	}
 	if req.FuzzerID != 0 {
-		if models.IsObjectExistsByID(&models.Fuzzer{}, req.FuzzerID) {
+		if models.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
 			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("FuzzerID", req.FuzzerID).Error; err != nil {
+				utils.DBError(c)
+				return
+			}
+		} else {
+			utils.BadRequest(c)
+			return
+		}
+	}
+	if req.CorpusID != 0 {
+		if models.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("CorpusID", req.CorpusID).Error; err != nil {
+				utils.DBError(c)
+				return
+			}
+		} else {
+			utils.BadRequest(c)
+			return
+		}
+	}
+	if req.TargetID != 0 {
+		if models.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("TargetID", req.TargetID).Error; err != nil {
 				utils.DBError(c)
 				return
 			}
@@ -370,13 +391,26 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, "")
+	c.JSON(http.StatusNoContent, "")
 }
 
-func (tc *TaskController) Destroy(c *gin.Context, id uint64) {
-	if err := models.DeleteTask(id); err != nil {
+func (tc *TaskController) Destroy(c *gin.Context) {
+	var uriReq UriIDReq
+	err := c.ShouldBindUri(&uriReq)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	var task models.Task
+	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
+		utils.NotFound(c)
+		return
+	}
+	if err := models.DeleteTask(uriReq.ID); err != nil {
 		utils.DBError(c)
 		return
 	}
+	service.DeleteServiceByTaskID(uriReq.ID)
+	service.DeleteDeployByTaskID(uriReq.ID)
 	c.JSON(http.StatusNoContent, "")
 }

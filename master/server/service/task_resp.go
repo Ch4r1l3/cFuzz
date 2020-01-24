@@ -1,8 +1,9 @@
 package service
 
-type clientFuzzerPostResp struct {
-	ID   uint64 `json:"id" binding:"required"`
-	Name string `json:"string" binding:"required"`
+type clientStorageItemPostResp struct {
+	ID            uint64 `json:"id" binding:"required"`
+	Type          string `json:"type" binding:"required"`
+	ExistsInImage bool   `json:"existsInImage" binding:"required"`
 }
 
 type clientTaskGetResp struct {
