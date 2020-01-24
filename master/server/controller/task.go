@@ -16,9 +16,9 @@ type TaskCreateReq struct {
 	DeploymentID  uint64            `json:"deploymentid"`
 	Time          uint64            `json:"time" binding:"required"`
 	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
-	FuzzerID      uint64            `json:"fuzzerid"`
-	CorpusID      uint64            `json:"corpusid"`
-	TargetID      uint64            `json:"targetid"`
+	FuzzerID      uint64            `json:"fuzzerID"`
+	CorpusID      uint64            `json:"corpusID"`
+	TargetID      uint64            `json:"targetID"`
 	Environments  []string          `json:"environments"`
 	Arguments     map[string]string `json:"arguments"`
 }
@@ -29,9 +29,9 @@ type TaskUpdateReq struct {
 	DeploymentID  uint64            `json:"deploymentid"`
 	Time          uint64            `json:"time"`
 	FuzzCycleTime uint64            `json:"fuzzCycleTime"`
-	FuzzerID      uint64            `json:"fuzzerid"`
-	CorpusID      uint64            `json:"corpusid"`
-	TargetID      uint64            `json:"targetid"`
+	FuzzerID      uint64            `json:"fuzzerID"`
+	CorpusID      uint64            `json:"corpusID"`
+	TargetID      uint64            `json:"targetID"`
 	Environments  []string          `json:"environments"`
 	Arguments     map[string]string `json:"arguments"`
 	Status        string            `json:"status"`
@@ -65,9 +65,9 @@ func (tc *TaskController) List(c *gin.Context) {
 			"image":         task.Image,
 			"time":          task.Time,
 			"fuzzCycleTime": task.FuzzCycleTime,
-			"fuzzerid":      task.FuzzerID,
-			"corpusid":      task.CorpusID,
-			"targetid":      task.TargetID,
+			"fuzzerID":      task.FuzzerID,
+			"corpusID":      task.CorpusID,
+			"targetID":      task.TargetID,
 			"status":        task.Status,
 			"errorMsg":      task.ErrorMsg,
 			"startedAt":     task.StartedAt,
@@ -102,9 +102,9 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		"image":         task.Image,
 		"time":          task.Time,
 		"fuzzCycleTime": task.FuzzCycleTime,
-		"fuzzerid":      task.FuzzerID,
-		"corpusid":      task.CorpusID,
-		"targetid":      task.TargetID,
+		"fuzzerID":      task.FuzzerID,
+		"corpusID":      task.CorpusID,
+		"targetID":      task.TargetID,
 		"status":        task.Status,
 		"errorMsg":      task.ErrorMsg,
 		"startedAt":     task.StartedAt,

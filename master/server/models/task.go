@@ -11,9 +11,9 @@ type Task struct {
 	DeploymentID   uint64 `json:"deploymentid"`
 	Time           uint64 `json:"time"`
 	FuzzCycleTime  uint64 `json:"fuzzCycleTime"`
-	FuzzerID       uint64 `json:"fuzzerid"`
-	CorpusID       uint64 `json:"corpusid"`
-	TargetID       uint64 `json:"targetid"`
+	FuzzerID       uint64 `json:"fuzzerID"`
+	CorpusID       uint64 `json:"corpusID"`
+	TargetID       uint64 `json:"targetID"`
 	Status         string `json:"status"`
 	ErrorMsg       string `json:"errorMsg"`
 	StatusUpdateAt int64  `json:"-"`

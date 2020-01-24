@@ -44,7 +44,7 @@ func TestTask1(t *testing.T) {
 		"deploymentid":  deploymentID,
 		"time":          100,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
+		"fuzzerID":      fuzzerID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -55,12 +55,12 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerid", "corpusid", "targetid", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
+	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
 	obj.Value("time").NotEqual(0)
 	obj.Value("fuzzCycleTime").NotEqual(0)
-	obj.Value("fuzzerid").NotEqual(0)
+	obj.Value("fuzzerID").NotEqual(0)
 	obj.Value("environments").Array().Elements("123", "2333")
 	obj.Value("arguments").Object().Value("a1").Equal("a2")
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
@@ -95,7 +95,7 @@ func TestTask2(t *testing.T) {
 		"deploymentid":  deploymentID,
 		"time":          100,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
+		"fuzzerID":      fuzzerID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -106,7 +106,7 @@ func TestTask2(t *testing.T) {
 		"deploymentid": -1,
 	}
 	taskPostData3 := map[string]interface{}{
-		"fuzzerid": -1,
+		"fuzzerID": -1,
 	}
 	taskPostData4 := map[string]interface{}{
 		"time": -1,
@@ -152,7 +152,7 @@ func TestTask3(t *testing.T) {
 		"image":         "ch4r1l3/cfuzz:test-bot",
 		"time":          config.KubernetesConf.CheckTaskTime * 5,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
+		"fuzzerID":      fuzzerID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -166,8 +166,8 @@ func TestTask3(t *testing.T) {
 	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
 	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	taskPostData4 := map[string]interface{}{
-		"targetid": targetID,
-		"corpusid": corpusID,
+		"targetID": targetID,
+		"corpusID": corpusID,
 	}
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusNoContent)
 
@@ -196,9 +196,9 @@ func TestTask4(t *testing.T) {
 		"image":         "ch4r1l3/cfuzz:test-bot",
 		"time":          config.KubernetesConf.CheckTaskTime * 3,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
-		"targetid":      targetID,
-		"corpusid":      corpusID,
+		"fuzzerID":      fuzzerID,
+		"targetID":      targetID,
+		"corpusID":      corpusID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -232,9 +232,9 @@ func TestTask5(t *testing.T) {
 		"image":         "ch4r1l3/cfuzz:test-bot",
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
-		"targetid":      targetID,
-		"corpusid":      corpusID,
+		"fuzzerID":      fuzzerID,
+		"targetID":      targetID,
+		"corpusID":      corpusID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -274,9 +274,9 @@ func TestTask6(t *testing.T) {
 		"image":         "deadbeef:v1",
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
-		"targetid":      targetID,
-		"corpusid":      corpusID,
+		"fuzzerID":      fuzzerID,
+		"targetID":      targetID,
+		"corpusID":      corpusID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -310,9 +310,9 @@ func TestTask7(t *testing.T) {
 		"image":         "nginx:1.16-alpine",
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
-		"fuzzerid":      fuzzerID,
-		"targetid":      targetID,
-		"corpusid":      corpusID,
+		"fuzzerID":      fuzzerID,
+		"targetID":      targetID,
+		"corpusID":      corpusID,
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
