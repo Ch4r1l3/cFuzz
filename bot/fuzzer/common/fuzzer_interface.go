@@ -9,7 +9,7 @@ import (
 )
 
 type PrepareArg struct {
-	CorpusDir    string
+	CorpusDir    string //directory of corpus
 	TargetPath   string
 	Arguments    map[string]string
 	Environments []string

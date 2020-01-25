@@ -59,7 +59,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 	task, err := models.GetTask()
-	if err == nil && task.Status == models.TASK_RUNNING {
+	if err == nil && task.Status == models.TaskRunning {
 		utils.BadRequestWithMsg(c, "task running")
 		return
 	}
@@ -99,7 +99,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 
 	//create task
 	models.DB.Create(&models.Task{
-		Status:        models.TASK_CREATED,
+		Status:        models.TaskCreated,
 		FuzzerID:      req.FuzzerID,
 		CorpusID:      req.CorpusID,
 		TargetID:      req.TargetID,
@@ -129,9 +129,9 @@ func (tc *TaskController) StopFuzz(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task not exists")
 		return
 	}
-	if task.Status == models.TASK_RUNNING {
+	if task.Status == models.TaskRunning {
 		service.StopFuzz()
-		models.DB.Model(task).Update("Status", models.TASK_STOPPED)
+		models.DB.Model(task).Update("Status", models.TaskStopped)
 		c.JSON(http.StatusNoContent, "")
 	} else {
 		utils.BadRequest(c)
@@ -145,7 +145,7 @@ func (tc *TaskController) StartFuzz(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task not exists")
 		return
 	}
-	if task.Status == models.TASK_CREATED {
+	if task.Status == models.TaskCreated {
 		arguments, err := models.GetArguments()
 		if err != nil {
 			utils.DBError(c)
@@ -173,7 +173,7 @@ func (tc *TaskController) StartFuzz(c *gin.Context) {
 
 		service.Fuzz(paths[0], paths[1], paths[2], task.MaxTime, int(task.FuzzCycleTime), arguments, environments)
 
-		models.DB.Model(task).Update("Status", models.TASK_RUNNING)
+		models.DB.Model(task).Update("Status", models.TaskRunning)
 		c.JSON(http.StatusNoContent, "")
 	} else {
 		utils.BadRequest(c)

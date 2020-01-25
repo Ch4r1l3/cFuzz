@@ -55,7 +55,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				mutex.Lock()
 				running = false
 				if Err != nil {
-					models.DB.Model(&models.Task{}).Update("Status", models.TASK_ERROR)
+					models.DB.Model(&models.Task{}).Update("Status", models.TaskError)
 					logger.Debug("error is !!!!!:" + Err.Error())
 				}
 				mutex.Unlock()

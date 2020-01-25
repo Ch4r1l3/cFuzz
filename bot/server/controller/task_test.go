@@ -116,7 +116,7 @@ func TestTask2(t *testing.T) {
 	obj.Value("corpusID").Equal(corpusID)
 	obj.Value("maxTime").Equal(100)
 	obj.Value("fuzzCycleTime").Equal(60)
-	obj.Value("status").Equal(models.TASK_CREATED)
+	obj.Value("status").Equal(models.TaskCreated)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)
 	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
@@ -368,12 +368,12 @@ func TestTask5(t *testing.T) {
 	<-time.After(time.Duration(3) * time.Second)
 
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Value("status").Equal(models.TASK_RUNNING)
+	obj.Value("status").Equal(models.TaskRunning)
 
 	<-time.After(time.Duration(70) * time.Second)
 	e.POST("/task/stop").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(63) * time.Second)
-	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TASK_STOPPED)
+	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
 	e.GET("/task/result").Expect().Status(http.StatusOK).JSON().Object().Value("timeExecuted").Equal(60)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)

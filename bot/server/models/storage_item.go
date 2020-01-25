@@ -4,20 +4,23 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// StorageItem ...
 type StorageItem struct {
 	ID            uint64 `gorm:"primary_key" json:"id"`
-	Dir           string `json:"-"`
-	Path          string `json:"-"`
+	Dir           string `json:"-"` // Directory of StorageItem
+	Path          string `json:"-"` // Path of StorageItem
 	Type          string `json:"type"`
-	ExistsInImage bool   `json:"existsInImage"`
+	ExistsInImage bool   `json:"existsInImage"` //whether the StorageItem exist in the image
 }
 
+//types of StorageItem
 const (
 	Fuzzer = "fuzzer"
 	Target = "target"
 	Corpus = "corpus"
 )
 
+// check the input type
 func IsStorageItemTypeValid(mtype string) bool {
 	switch mtype {
 	case

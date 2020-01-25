@@ -9,15 +9,16 @@ type Task struct {
 	FuzzerID      uint64 `json:"fuzzerID"`
 	CorpusID      uint64 `json:"corpusID"`
 	TargetID      uint64 `json:"targetID"`
-	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
-	MaxTime       int    `json:"maxTime"`
+	FuzzCycleTime uint64 `json:"fuzzCycleTime"` //the fuzz cycle time
+	MaxTime       int    `json:"maxTime"`       //the total time it runs
 }
 
+//Task Status
 const (
-	TASK_CREATED = "TASK_CREATED"
-	TASK_RUNNING = "TASK_RUNNING"
-	TASK_STOPPED = "TASK_STOPPED"
-	TASK_ERROR   = "TASK_ERROR"
+	TaskCreated = "TaskCreated"
+	TaskRunning = "TaskRunning"
+	TaskStopped = "TaskStopped"
+	TaskError   = "TaskError"
 )
 
 func GetTask() (*Task, error) {
