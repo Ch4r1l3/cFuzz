@@ -16,20 +16,42 @@ import (
 
 type StorageItemController struct{}
 
-type StorageItemTypeReq struct {
-	Type string `json:"type" binding:"required"`
-}
-
 type UriIDReq struct {
 	ID uint64 `uri:"id" binding:"required"`
 }
 
+// swagger:model
 type StorageItemExistReq struct {
+	// path of storage item in the Image
+	// required: true
+	// example: /tmp
 	Path string `json:"path" binding:"required"`
+
+	// type of storage item
+	// required: true
+	// example: fuzzer
 	Type string `json:"type" binding:"required"`
 }
 
+// List StorageItem
 func (sic *StorageItemController) List(c *gin.Context) {
+	// swagger:operation GET /storage_item storageItem listStorageItem
+	// List StorageItem
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/StorageItem"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	storageItems, err := models.GetStorageItems()
 	if err != nil {
 		utils.DBError(c)
@@ -38,25 +60,33 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, storageItems)
 }
 
-func (sic *StorageItemController) ListByType(c *gin.Context) {
-	var req StorageItemTypeReq
-	if err := c.ShouldBindUri(&req); err != nil {
-		utils.BadRequest(c)
-		return
-	}
-	if !models.IsStorageItemTypeValid(req.Type) {
-		utils.BadRequestWithMsg(c, "storageItem type is not valid")
-		return
-	}
-	storageItems, err := models.GetStorageItemsByType(req.Type)
-	if err != nil {
-		utils.DBError(c)
-		return
-	}
-	c.JSON(http.StatusOK, storageItems)
-}
-
+// Retrieve StorageItem
 func (sic *StorageItemController) Retrieve(c *gin.Context) {
+	// swagger:operation GET /storage_item/{id} storageItem retrieveStorageItem
+	// Retrieve StorageItem
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   description: id of StorageItem
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/StorageItem"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req UriIDReq
 	err := c.ShouldBindUri(&req)
 	if err != nil {
@@ -79,7 +109,33 @@ func (sic *StorageItemController) Retrieve(c *gin.Context) {
 	c.JSON(http.StatusOK, storageItem)
 }
 
+// Create Exist StorageItem
 func (sic *StorageItemController) CreateExist(c *gin.Context) {
+	// swagger:operation POST /storage_item/exist storageItem createExistStorageItem
+	// Create Exist StorageItem
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: storageItemExistReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/StorageItemExistReq"
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/StorageItem"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req StorageItemExistReq
 	if err := c.ShouldBind(&req); err != nil {
 		utils.BadRequest(c)
@@ -118,8 +174,43 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 	c.JSON(http.StatusOK, storageItem)
 }
 
+// Create StorageItem
 func (sic *StorageItemController) Create(c *gin.Context) {
+	// swagger:operation POST /storage_item storageItem createStorageItem
+	// Create StorageItem
+	//
+	// ---
+	// produces:
+	// - application/json
+	// consumes:
+	// - multipart/form-data
+	//
+	// parameters:
+	// - name: type
+	//   in: formData
+	//   required: true
+	//   description: type of storageItem
+	//   type: string
+	//   enum: [fuzzer, corpus, target]
+	// - name: file
+	//   in: formData
+	//   required: true
+	//   type: file
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/StorageItem"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var Err error
+
+	// get form field
 	mtype := c.PostForm("type")
 	if mtype == "" {
 		utils.BadRequestWithMsg(c, "storageItem type empty")
@@ -139,6 +230,8 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	if strings.HasSuffix(header.Filename, ".zip") {
 		isZipFile = true
 	}
+
+	// create tempory ditrecoy to store file
 	tmpDir, err := ioutil.TempDir(config.ServerConf.TempPath, "storageItem")
 	if err != nil {
 		utils.InternalErrorWithMsg(c, "error create temp directory")
@@ -174,6 +267,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	}
 	tempFile.Close()
 
+	//if upload file is zip, unzip it
 	if isZipFile {
 		err = utils.Unzip(tempFile.Name())
 		if err != nil {
@@ -183,7 +277,6 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		}
 		os.RemoveAll(tempFile.Name())
 	}
-
 	var storePath string
 	if mtype == models.Corpus {
 		storePath = tmpDir
@@ -215,6 +308,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		storePath = tempFile.Name()
 	}
 
+	// if type is target or fuzzer, make it executable
 	if mtype == models.Target || mtype == models.Fuzzer {
 		os.Chmod(storePath, 0755)
 	}
@@ -233,7 +327,34 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, storageItem)
 }
 
+// Destroy StorageItem
 func (sic *StorageItemController) Destroy(c *gin.Context) {
+	// swagger:operation DELETE /storage_item/{id} storageItem deleteStorageItem
+	// Delete StorageItem
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   description: id of StorageItem
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '204':
+	//      description: delete success
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      description: not found
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req UriIDReq
 	err := c.ShouldBindUri(&req)
 	if err != nil {

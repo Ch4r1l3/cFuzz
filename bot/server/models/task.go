@@ -1,16 +1,19 @@
 package models
 
-import (
-	"time"
-)
-
+// swagger:model
 type Task struct {
-	Status        string `json:"status"`
-	FuzzerID      uint64 `json:"fuzzerID"`
-	CorpusID      uint64 `json:"corpusID"`
-	TargetID      uint64 `json:"targetID"`
+	// example: TaskCreated
+	Status string `json:"status"`
+	// example: 1
+	FuzzerID uint64 `json:"fuzzerID"`
+	// example: 2
+	CorpusID uint64 `json:"corpusID"`
+	// example: 3
+	TargetID uint64 `json:"targetID"`
+	// example: 60
 	FuzzCycleTime uint64 `json:"fuzzCycleTime"` //the fuzz cycle time
-	MaxTime       int    `json:"maxTime"`       //the total time it runs
+	// example: 3600
+	MaxTime int `json:"maxTime"` //the total time it runs
 }
 
 //Task Status
@@ -87,89 +90,4 @@ func GetEnvironments() ([]string, error) {
 		environments = append(environments, v.Value)
 	}
 	return environments, nil
-}
-
-type TaskCrash struct {
-	ID            uint64 `gorm:"primary_key";json:"id"`
-	Path          string `json:"path"`
-	ReproduceAble bool   `json:"reproduceAble"`
-}
-
-func GetCrashes() ([]TaskCrash, error) {
-	taskCrashes := []TaskCrash{}
-	if err := DB.Find(&taskCrashes).Error; err != nil {
-		return nil, err
-	}
-	return taskCrashes, nil
-}
-
-func GetCrashByID(id uint64) (*TaskCrash, error) {
-	var crash TaskCrash
-	if err := DB.Where("id = ?", id).First(&crash).Error; err != nil {
-		return nil, err
-	}
-	return &crash, nil
-}
-
-func CreateCrash(path string, reproduceAble bool) error {
-	taskCrash := TaskCrash{
-		Path:          path,
-		ReproduceAble: reproduceAble,
-	}
-	return DB.Save(&taskCrash).Error
-}
-
-type TaskFuzzResult struct {
-	Command      string `json:"command"`
-	TimeExecuted int    `json:"timeExecuted"`
-	UpdateAt     int64  `json:"updateAt"`
-}
-
-type TaskFuzzResultStat struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-func CreateFuzzResult(command []string, stats map[string]string, timeExecuted int) error {
-	DB.Delete(&TaskFuzzResult{})
-	DB.Delete(&TaskFuzzResultStat{})
-	tcommand := ""
-	for _, v := range command {
-		tcommand += v + " "
-	}
-	fuzzResult := TaskFuzzResult{
-		Command:      tcommand,
-		TimeExecuted: timeExecuted,
-		UpdateAt:     time.Now().Unix(),
-	}
-	if err := DB.Save(&fuzzResult).Error; err != nil {
-		return err
-	}
-	for k, v := range stats {
-		stat := TaskFuzzResultStat{
-			Key:   k,
-			Value: v,
-		}
-		if err := DB.Save(&stat).Error; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func GetFuzzResult() (*TaskFuzzResult, map[string]string, error) {
-	var result TaskFuzzResult
-	if err := DB.First(&result).Error; err != nil {
-		return nil, nil, err
-	}
-	resultStats := []TaskFuzzResultStat{}
-	if err := DB.Find(&resultStats).Error; err != nil {
-		return nil, nil, err
-	}
-	stats := make(map[string]string)
-	for _, v := range resultStats {
-		stats[v.Key] = v.Value
-	}
-	return &result, stats, nil
-
 }

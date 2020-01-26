@@ -5,12 +5,19 @@ import (
 )
 
 // StorageItem ...
+// swagger:model
 type StorageItem struct {
-	ID            uint64 `gorm:"primary_key" json:"id"`
-	Dir           string `json:"-"` // Directory of StorageItem
-	Path          string `json:"-"` // Path of StorageItem
-	Type          string `json:"type"`
-	ExistsInImage bool   `json:"existsInImage"` //whether the StorageItem exist in the image
+	// in: body
+	// example: 1
+	ID uint64 `gorm:"primary_key" json:"id"`
+	// example: /tmp/storageItem123x/
+	Dir string `json:"-"` // Directory of StorageItem
+	// example: /tmp/storageItem123x/123
+	Path string `json:"-"` // Path of StorageItem
+	// example: Fuzzer
+	Type string `json:"type"`
+	// example: true
+	ExistsInImage bool `json:"existsInImage"` //whether the StorageItem exist in the image
 }
 
 //types of StorageItem

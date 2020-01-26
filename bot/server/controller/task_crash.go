@@ -10,7 +10,24 @@ import (
 
 type TaskCrashController struct{}
 
+// List Crashes
 func (tcc *TaskCrashController) List(c *gin.Context) {
+	// swagger:operation GET /task/crash taskCrash listTaskCrash
+	// list all crash
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/TaskCrash"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	crashes, err := models.GetCrashes()
 	if err != nil {
 		utils.DBError(c)
@@ -19,7 +36,30 @@ func (tcc *TaskCrashController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, crashes)
 }
 
+// Download Crash
 func (tcc *TaskCrashController) Download(c *gin.Context) {
+	// swagger:operation GET /task/crash/{id} taskCrash downloadTaskCrash
+	// download crash by id
+	//
+	// ---
+	// produces:
+	// - application/octet-stream
+	//
+	// parameters:
+	// - name: id
+	//   description: id of crash
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: file
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req TaskIDReq
 	if err := c.ShouldBindUri(&req); err != nil {
 		utils.BadRequest(c)

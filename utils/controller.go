@@ -5,32 +5,38 @@ import (
 	"net/http"
 )
 
+// swagger:model
+type ErrResp struct {
+	// example: some error
+	Error string `json:"error"`
+}
+
 func BadRequest(c *gin.Context) {
-	c.JSON(http.StatusBadRequest, gin.H{
-		"error": "bad request",
+	c.JSON(http.StatusBadRequest, ErrResp{
+		Error: "bad request",
 	})
 }
 
 func DBError(c *gin.Context) {
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"error": "db error",
+	c.JSON(http.StatusInternalServerError, ErrResp{
+		Error: "db error",
 	})
 }
 
 func BadRequestWithMsg(c *gin.Context, msg string) {
-	c.JSON(http.StatusBadRequest, gin.H{
-		"error": msg,
+	c.JSON(http.StatusBadRequest, ErrResp{
+		Error: msg,
 	})
 }
 
 func InternalErrorWithMsg(c *gin.Context, msg string) {
-	c.JSON(http.StatusInternalServerError, gin.H{
-		"error": msg,
+	c.JSON(http.StatusInternalServerError, ErrResp{
+		Error: msg,
 	})
 }
 
 func NotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, gin.H{
-		"error": "not found",
+	c.JSON(http.StatusNotFound, ErrResp{
+		Error: "not found",
 	})
 }

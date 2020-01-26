@@ -9,6 +9,20 @@ import (
 type TaskResultController struct{}
 
 func (trc *TaskResultController) Retrieve(c *gin.Context) {
+	// swagger:operation GET /task/result taskResult listTaskResult
+	// get task result
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskFuzzResult"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	result, stats, err := models.GetFuzzResult()
 	if err != nil {
 		c.JSON(http.StatusOK, "")

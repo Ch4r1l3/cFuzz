@@ -10,21 +10,58 @@ import (
 
 type TaskController struct{}
 
+// swagger:model
 type TaskCreateReq struct {
-	FuzzerID      uint64            `json:"fuzzerID" binding:"required"`
-	CorpusID      uint64            `json:"corpusID" binding:"required"`
-	TargetID      uint64            `json:"targetID" binding:"required"`
-	MaxTime       int               `json:"maxTime" binding:"required"`
-	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
-	Arguments     map[string]string `json:"arguments"`
-	Environments  []string          `json:"environments"`
+	//example: 1
+	//required: true
+	FuzzerID uint64 `json:"fuzzerID" binding:"required"`
+
+	//example: 2
+	//required: true
+	CorpusID uint64 `json:"corpusID" binding:"required"`
+
+	//example: 3
+	//required: true
+	TargetID uint64 `json:"targetID" binding:"required"`
+
+	//example: 3600
+	//required: true
+	MaxTime int `json:"maxTime" binding:"required"`
+
+	//example: 60
+	//required: true
+	FuzzCycleTime uint64 `json:"fuzzCycleTime" binding:"required"`
+
+	Arguments map[string]string `json:"arguments"`
+
+	//example: [ASAN_ON=true, ASAN_AFL=true]
+	Environments []string `json:"environments"`
 }
 
 type TaskIDReq struct {
 	ID uint64 `uri:"id" binding:"required"`
 }
 
+// Retrieve Task
 func (tc *TaskController) Retrieve(c *gin.Context) {
+	// swagger:operation GET /task task retrieveTask
+	// Retrieve Task
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskCreateReq"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	task, err1 := models.GetTask()
 	if err1 != nil {
 		utils.BadRequestWithMsg(c, "create task first")
@@ -50,7 +87,33 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 
 }
 
+// Create Task
 func (tc *TaskController) Create(c *gin.Context) {
+	// swagger:operation POST /task task createTask
+	// Retrieve Task
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: TaskCreateReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//       "$ref": "#/definitions/TaskCreateReq"
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskCreateReq"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	//var task models.Task
 	var req TaskCreateReq
 	err := c.BindJSON(&req)
@@ -123,7 +186,22 @@ func (tc *TaskController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, req)
 }
 
+// Stop Fuzz
 func (tc *TaskController) StopFuzz(c *gin.Context) {
+	// swagger:operation POST /task/stop task stopTask
+	// Stop Task
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '204':
+	//      description: "stop task success"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	task, err := models.GetTask()
 	if err != nil {
 		utils.BadRequestWithMsg(c, "task not exists")
@@ -135,11 +213,28 @@ func (tc *TaskController) StopFuzz(c *gin.Context) {
 		c.JSON(http.StatusNoContent, "")
 	} else {
 		utils.BadRequest(c)
-		return
 	}
 }
 
+// Start Fuzz
 func (tc *TaskController) StartFuzz(c *gin.Context) {
+	// swagger:operation POST /task/start task startTask
+	// Start Task
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '204':
+	//      description: "start task success"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	task, err := models.GetTask()
 	if err != nil {
 		utils.BadRequestWithMsg(c, "task not exists")
@@ -177,11 +272,25 @@ func (tc *TaskController) StartFuzz(c *gin.Context) {
 		c.JSON(http.StatusNoContent, "")
 	} else {
 		utils.BadRequest(c)
-		return
 	}
 }
 
+// Delete Task
 func (tc *TaskController) Destroy(c *gin.Context) {
+	// swagger:operation DELETE /task task deleteTask
+	// Delete Task
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '204':
+	//      description: "delete task success"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	service.StopFuzz()
 	_, err := models.GetTask()
 	if err != nil {
