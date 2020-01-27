@@ -7,18 +7,37 @@ import (
 	"net/http"
 )
 
+// swagger:model
 type DeploymentReq struct {
-	Name    string `json:"name" binding:"required"`
-	Content string `json:"content"`
-}
+	// example: test-image
+	// required: true
+	Name string `json:"name" binding:"required"`
 
-type DeploymentUriReq struct {
-	ID uint64 `uri:"id" binding:"required"`
+	// example: 123
+	Content string `json:"content"`
 }
 
 type DeploymentController struct{}
 
+// List Deployment
 func (dc *DeploymentController) List(c *gin.Context) {
+	// swagger:operation GET /deployment deployment listDeployment
+	// list all deployment
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/Deployment"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	deployments := []models.Deployment{}
 	err := models.GetObjects(&deployments)
 	if err != nil {
@@ -28,7 +47,33 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, deployments)
 }
 
+// Create Deployment
 func (dc *DeploymentController) Create(c *gin.Context) {
+	// swagger:operation POST /deployment deployment createDeployment
+	// create deployment
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: DeploymentReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/DeploymentReq"
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/Deployment"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req DeploymentReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -47,8 +92,38 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, deployment)
 }
 
+// Update Deployment
 func (dc *DeploymentController) Update(c *gin.Context) {
-	var uriReq DeploymentUriReq
+	// swagger:operation PUT /deployment/{id} deployment updateDeployment
+	// update deployment
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	// - name: DeploymentReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/DeploymentReq"
+	//
+	// responses:
+	//   '204':
+	//      schema:
+	//        "$ref": "#/definitions/Deployment"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
+	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
 		utils.BadRequest(c)
@@ -72,11 +147,35 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, "")
+	c.JSON(http.StatusNoContent, "")
 }
 
 func (dc *DeploymentController) Destroy(c *gin.Context) {
-	var uriReq DeploymentUriReq
+	// swagger:operation DELETE /deployment/{id} deployment deleteDeployment
+	// delete deployment
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '204':
+	//      schema:
+	//        "$ref": "#/definitions/Deployment"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
+	var uriReq UriIDReq
 
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {

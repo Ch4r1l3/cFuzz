@@ -51,7 +51,7 @@ func TestDeployment2(t *testing.T) {
 	obj.Value("name").Equal("test1")
 	obj.Value("content").Equal("111")
 	id := int(obj.Value("id").Number().Raw())
-	e.PUT("/deployment/" + strconv.Itoa(id)).WithJSON(postdata2).Expect().Status(http.StatusOK)
+	e.PUT("/deployment/" + strconv.Itoa(id)).WithJSON(postdata2).Expect().Status(http.StatusNoContent)
 	obj = e.GET("/deployment").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	obj.Value("name").Equal("test2")
 	obj.Value("content").Equal("222")

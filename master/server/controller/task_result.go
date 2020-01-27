@@ -7,9 +7,39 @@ import (
 	"net/http"
 )
 
+// swagger:model
+type TaskResultResp struct {
+	models.TaskFuzzResult
+	// example: {"crashes": "1"}
+	// in: body
+	Stats map[string]string `json:"stats"`
+}
+
 type TaskResultController struct{}
 
+// Retrieve Task Result
 func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
+	// swagger:operation GET /task/{taskID}/result taskResult retrieveTaskResult
+	// retrieve task result
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: taskID
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskResultResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var taskFuzzResult []models.TaskFuzzResult
 	if err := models.GetObjectsByTaskID(&taskFuzzResult, taskID); err != nil {
 		utils.DBError(c)
@@ -24,11 +54,8 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"command":      taskFuzzResult[0].Command,
-		"timeExecuted": taskFuzzResult[0].TimeExecuted,
-		"updateAt":     taskFuzzResult[0].UpdateAt,
-		"stats":        stats,
+	c.JSON(http.StatusOK, TaskResultResp{
+		TaskFuzzResult: taskFuzzResult[0],
+		Stats:          stats,
 	})
-
 }

@@ -247,7 +247,7 @@ func TestTask5(t *testing.T) {
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
 	obj := e.GET("/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats")
+	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats", "id", "taskid")
 	obj.Value("command").NotEqual("")
 	obj.Value("timeExecuted").NotEqual(0)
 	obj.Value("updateAt").NotEqual(0)

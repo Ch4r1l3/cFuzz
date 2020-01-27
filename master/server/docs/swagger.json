@@ -1,0 +1,1177 @@
+{
+  "swagger": "2.0",
+  "paths": {
+    "/crash/{id}": {
+      "get": {
+        "description": "download crash by id",
+        "produces": [
+          "application/octet-stream"
+        ],
+        "tags": [
+          "taskCrash"
+        ],
+        "operationId": "downloadCrash",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "id of crash",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "file"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/deployment": {
+      "get": {
+        "description": "list all deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "operationId": "listDeployment",
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Deployment"
+              }
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "operationId": "createDeployment",
+        "parameters": [
+          {
+            "name": "DeploymentReq",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeploymentReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/Deployment"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/deployment/{id}": {
+      "put": {
+        "description": "update deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "operationId": "updateDeployment",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "DeploymentReq",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DeploymentReq"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "schema": {
+              "$ref": "#/definitions/Deployment"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "operationId": "deleteDeployment",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "schema": {
+              "$ref": "#/definitions/Deployment"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/storage_item": {
+      "get": {
+        "description": "List StorageItem",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "operationId": "listStorageItem",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Create StorageItem",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "operationId": "createStorageItem",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "name",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "type",
+            "in": "formData",
+            "required": true
+          },
+          {
+            "type": "file",
+            "name": "file",
+            "in": "formData",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/storage_item/exist": {
+      "post": {
+        "description": "Create Exist StorageItem",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "operationId": "createExistStorageItem",
+        "parameters": [
+          {
+            "name": "storageItemExistReq",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/StorageItemExistReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/storage_item/{id}": {
+      "delete": {
+        "description": "Delete StorageItem",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "operationId": "deleteStorageItem",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/storage_item/{type}": {
+      "get": {
+        "description": "List StorageItem By Type",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "operationId": "listStorageItemByType",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "type",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task": {
+      "get": {
+        "description": "list tasks",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "list tasks",
+        "operationId": "listTask",
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TaskResp"
+              }
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "create task",
+        "operationId": "createTask",
+        "parameters": [
+          {
+            "name": "taskCreateReq",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskCreateReq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/TaskResp"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task/{id}": {
+      "get": {
+        "description": "retrieve task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "retrieve task",
+        "operationId": "retrieveTask",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/TaskResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "update task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "update task",
+        "operationId": "updateTask",
+        "parameters": [
+          {
+            "name": "taskUpdateReq",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/TaskUpdateReq"
+            }
+          },
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "update task success"
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "delete task",
+        "operationId": "deleteTask",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "update task success"
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task/{id}/start": {
+      "post": {
+        "description": "start task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "start task",
+        "operationId": "startTask",
+        "responses": {
+          "204": {
+            "description": "start task success"
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task/{id}/stop": {
+      "post": {
+        "description": "stop task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "stop task",
+        "operationId": "stopTask",
+        "responses": {
+          "204": {
+            "description": "stop task success"
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task/{taskID}/crash": {
+      "get": {
+        "description": "list all crash",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "taskCrash"
+        ],
+        "operationId": "listTaskCrash",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "taskID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TaskCrash"
+              }
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/task/{taskID}/result": {
+      "get": {
+        "description": "retrieve task result",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "taskResult"
+        ],
+        "operationId": "retrieveTaskResult",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "taskID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/TaskResultResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Deployment": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "x-go-name": "Content",
+          "example": "123"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test-image"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "DeploymentReq": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "content": {
+          "type": "string",
+          "x-go-name": "Content",
+          "example": "123"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test-image"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "ErrResp": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "x-go-name": "Error",
+          "example": "some error"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/utils"
+    },
+    "StorageItem": {
+      "description": "item that record some file info",
+      "type": "object",
+      "properties": {
+        "existsInImage": {
+          "type": "boolean",
+          "x-go-name": "ExistsInImage",
+          "example": true
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "afl"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "fuzzer"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "StorageItemExistReq": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "afl"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path",
+          "example": "/tmp/afl/123"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type",
+          "example": "fuzzer"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "Task": {
+      "type": "object",
+      "properties": {
+        "corpusID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "CorpusID",
+          "example": 2
+        },
+        "deploymentid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "DeploymentID",
+          "example": 1
+        },
+        "errorMsg": {
+          "type": "string",
+          "x-go-name": "ErrorMsg",
+          "example": "pull image error"
+        },
+        "fuzzCycleTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzCycleTime",
+          "example": 60
+        },
+        "fuzzerID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzerID",
+          "example": 1
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "image": {
+          "type": "string",
+          "x-go-name": "Image",
+          "example": "test-image"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test"
+        },
+        "startedAt": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "StartedAt",
+          "example": 1579996805
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "TaskRunning"
+        },
+        "targetID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TargetID",
+          "example": 3
+        },
+        "time": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Time",
+          "example": 60
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "TaskCreateReq": {
+      "type": "object",
+      "required": [
+        "name",
+        "time",
+        "fuzzCycleTime"
+      ],
+      "properties": {
+        "arguments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Arguments",
+          "example": {
+            "MEMORY_LIMIT": "100"
+          }
+        },
+        "corpusID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "CorpusID",
+          "example": 2
+        },
+        "deploymentid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "DeploymentID",
+          "example": 1
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Environments",
+          "example": [
+            "AFL_FUZZ=1",
+            "ASAN=1"
+          ]
+        },
+        "fuzzCycleTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzCycleTime",
+          "example": 60
+        },
+        "fuzzerID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzerID",
+          "example": 1
+        },
+        "image": {
+          "type": "string",
+          "x-go-name": "Image",
+          "example": "afl-image"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test"
+        },
+        "targetID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TargetID",
+          "example": 3
+        },
+        "time": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Time",
+          "example": 3600
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "TaskFuzzResult": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "x-go-name": "Command",
+          "example": "/afl/afl-fuzz -i xx -o xx ./test"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "taskid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TaskID",
+          "example": 1
+        },
+        "timeExecuted": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TimeExecuted",
+          "example": 60
+        },
+        "updateAt": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UpdateAt",
+          "example": 1579996805
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "TaskResp": {
+      "type": "object",
+      "properties": {
+        "arguments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Arguments",
+          "example": {
+            "MEMORY_LIMIT": "100"
+          }
+        },
+        "corpusID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "CorpusID",
+          "example": 2
+        },
+        "deploymentid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "DeploymentID",
+          "example": 1
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Environments",
+          "example": [
+            "AFL_FUZZ=1",
+            "ASAN=1"
+          ]
+        },
+        "errorMsg": {
+          "type": "string",
+          "x-go-name": "ErrorMsg",
+          "example": "pull image error"
+        },
+        "fuzzCycleTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzCycleTime",
+          "example": 60
+        },
+        "fuzzerID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzerID",
+          "example": 1
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "image": {
+          "type": "string",
+          "x-go-name": "Image",
+          "example": "test-image"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test"
+        },
+        "startedAt": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "StartedAt",
+          "example": 1579996805
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status",
+          "example": "TaskRunning"
+        },
+        "targetID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TargetID",
+          "example": 3
+        },
+        "time": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Time",
+          "example": 60
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "TaskResultResp": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "x-go-name": "Command",
+          "example": "/afl/afl-fuzz -i xx -o xx ./test"
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Stats",
+          "example": {
+            "crashes": "1"
+          }
+        },
+        "taskid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TaskID",
+          "example": 1
+        },
+        "timeExecuted": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TimeExecuted",
+          "example": 60
+        },
+        "updateAt": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UpdateAt",
+          "example": 1579996805
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "TaskUpdateReq": {
+      "type": "object",
+      "properties": {
+        "arguments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Arguments",
+          "example": {
+            "MEMORY_LIMIT": "100"
+          }
+        },
+        "corpusID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "CorpusID",
+          "example": 2
+        },
+        "deploymentid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "DeploymentID",
+          "example": 1
+        },
+        "environments": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Environments",
+          "example": [
+            "AFL_FUZZ=1",
+            "ASAN=1"
+          ]
+        },
+        "fuzzCycleTime": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzCycleTime",
+          "example": 60
+        },
+        "fuzzerID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "FuzzerID",
+          "example": 1
+        },
+        "image": {
+          "type": "string",
+          "x-go-name": "Image",
+          "example": "afl-image"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test"
+        },
+        "targetID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TargetID",
+          "example": 3
+        },
+        "time": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "Time",
+          "example": 3600
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    }
+  }
+}

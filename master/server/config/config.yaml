@@ -14,5 +14,5 @@ kubernetes:
         checkTaskTime: 10
         maxClientRetryNum: 10
         maxStartTime: 3600
-        requestTimeout: 2
+        requestTimeout: 60
         initCleanup: false

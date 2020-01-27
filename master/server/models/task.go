@@ -1,23 +1,45 @@
 package models
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
+// swagger:model
 type Task struct {
-	ID             uint64 `gorm:"primary_key" json:"id"`
-	Name           string `json:"name"`
-	Image          string `json:"image"`
-	DeploymentID   uint64 `json:"deploymentid"`
-	Time           uint64 `json:"time"`
-	FuzzCycleTime  uint64 `json:"fuzzCycleTime"`
-	FuzzerID       uint64 `json:"fuzzerID"`
-	CorpusID       uint64 `json:"corpusID"`
-	TargetID       uint64 `json:"targetID"`
-	Status         string `json:"status"`
-	ErrorMsg       string `json:"errorMsg"`
-	StatusUpdateAt int64  `json:"-"`
-	StartedAt      int64  `json:"startedAt"`
+	// example: 1
+	ID uint64 `gorm:"primary_key" json:"id"`
+
+	// example: test
+	Name string `json:"name"`
+
+	// example: test-image
+	Image string `json:"image"`
+
+	// example: 1
+	DeploymentID uint64 `json:"deploymentid"`
+
+	// example: 60
+	Time uint64 `json:"time"`
+
+	// example: 60
+	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
+
+	// example: 1
+	FuzzerID uint64 `json:"fuzzerID"`
+
+	// example: 2
+	CorpusID uint64 `json:"corpusID"`
+
+	// example: 3
+	TargetID uint64 `json:"targetID"`
+
+	// example: TaskRunning
+	Status string `json:"status"`
+
+	// example: pull image error
+	ErrorMsg string `json:"errorMsg"`
+
+	// example: 1579996805
+	StatusUpdateAt int64 `json:"-"`
+
+	// example: 1579996805
+	StartedAt int64 `json:"startedAt"`
 }
 
 const (
@@ -113,66 +135,4 @@ func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
 
 func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
-}
-
-func GetObjectByTaskIDAndID(obj interface{}, taskid uint64, id uint64) error {
-	return DB.Where("task_id = ? AND id = ?", taskid, id).Error
-}
-
-type TaskCrash struct {
-	ID            uint64 `gorm:"primary_key;auto_increment:false" json:"id"`
-	TaskID        uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
-	Path          string `json:"-"`
-	ReproduceAble bool   `json:"reproduceAble"`
-}
-
-type TaskFuzzResult struct {
-	ID           uint64 `gorm:"primary_key" json:"id"`
-	Command      string `json:"command"`
-	TimeExecuted int    `json:"timeExecuted"`
-	TaskID       uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
-	UpdateAt     int64  `json:"updateAt"`
-}
-
-type TaskFuzzResultStat struct {
-	Key              string `json:"key"`
-	Value            string `json:"value"`
-	TaskFuzzResultID uint64 `json:"taskid" sql:"type:bigint REFERENCES task_fuzz_result(id) ON DELETE CASCADE"`
-}
-
-func InsertTaskFuzzResultStat(id uint64, stats map[string]string) error {
-	for k, v := range stats {
-		taskFuzzResultStat := TaskFuzzResultStat{
-			TaskFuzzResultID: id,
-			Key:              k,
-			Value:            v,
-		}
-		if err := DB.Create(&taskFuzzResultStat).Error; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func GetTaskFuzzResultStat(id uint64) (map[string]string, error) {
-	var taskFuzzResultStat []TaskFuzzResultStat
-	if err := DB.Where("task_fuzz_result_id = ?", id).Find(&taskFuzzResultStat).Error; err != nil {
-		return nil, err
-	}
-	stats := make(map[string]string)
-	for _, v := range taskFuzzResultStat {
-		stats[v.Key] = v.Value
-	}
-	return stats, nil
-}
-
-func GetLastestFuzzResultByTaskID(taskid uint64) (*TaskFuzzResult, error) {
-	var taskFuzzResult TaskFuzzResult
-	if err := DB.Where("task_id = ?", taskid).Order("update_at desc").First(&taskFuzzResult).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return &taskFuzzResult, nil
-		}
-		return nil, err
-	}
-	return &taskFuzzResult, nil
 }

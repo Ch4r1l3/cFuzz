@@ -10,7 +10,31 @@ import (
 
 type TaskCrashController struct{}
 
-func (tcc *TaskCrashController) List(c *gin.Context, taskID uint64) {
+// List all crashes by taskID
+func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
+	// swagger:operation GET /task/{taskID}/crash taskCrash listTaskCrash
+	// list all crash
+	//
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: taskID
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/TaskCrash"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var crashes []models.TaskCrash
 	err := models.GetObjectsByTaskID(&crashes, taskID)
 	if err != nil {
@@ -20,14 +44,43 @@ func (tcc *TaskCrashController) List(c *gin.Context, taskID uint64) {
 	c.JSON(http.StatusOK, crashes)
 }
 
-func (tcc *TaskCrashController) Download(c *gin.Context, taskID uint64, crashID uint64) {
+// Download task crash
+func (tcc *TaskCrashController) Download(c *gin.Context) {
+	// swagger:operation GET /crash/{id} taskCrash downloadCrash
+	// download crash by id
+	//
+	// ---
+	// produces:
+	// - application/octet-stream
+	//
+	// parameters:
+	// - name: id
+	//   description: id of crash
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: file
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
+	var req UriIDReq
+	err := c.ShouldBindUri(&req)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
 	var crash models.TaskCrash
-	err := models.GetObjectByTaskIDAndID(&crash, taskID, crashID)
+	err = models.GetObjectByID(&crash, req.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=crash%d", crashID))
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=crash%d", req.ID))
 	c.Writer.Header().Add("Content-Type", "application/octet-stream")
 	c.File(crash.Path)
 }

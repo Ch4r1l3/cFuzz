@@ -68,7 +68,7 @@ func initCrashesMap() error {
 		if _, ok := crashesMap[crash.TaskID]; !ok {
 			crashesMap[crash.TaskID] = make(map[uint64]bool)
 		}
-		crashesMap[crash.TaskID][crash.ID] = true
+		crashesMap[crash.TaskID][crash.BotCrashID] = true
 	}
 	return nil
 }
@@ -135,9 +135,9 @@ func checkSingleTask(taskID uint64) {
 		Err = err
 		return
 	}
-	if clientTask.Status != botmodels.TASK_RUNNING {
+	if clientTask.Status != botmodels.TaskRunning {
 		logger.Logger.Debug("client status is not running", "status", clientTask.Status)
-		if clientTask.Status == botmodels.TASK_ERROR {
+		if clientTask.Status == botmodels.TaskError {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit")
 		} else {
@@ -174,9 +174,10 @@ func checkSingleTask(taskID uint64) {
 					logger.Logger.Error("request save file error", "reason", err.Error())
 				}
 				taskCrash := models.TaskCrash{
-					ID:     crash.ID,
-					TaskID: taskID,
-					Path:   savePath,
+					BotCrashID:    crash.ID,
+					TaskID:        taskID,
+					Path:          savePath,
+					ReproduceAble: crash.ReproduceAble,
 				}
 				if err := models.DB.Create(&taskCrash).Error; err != nil {
 					Err = err

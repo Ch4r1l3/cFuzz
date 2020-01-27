@@ -10,36 +10,108 @@ import (
 	"time"
 )
 
+// swagger:model
 type TaskCreateReq struct {
-	Name          string            `json:"name" binding:"required"`
-	Image         string            `json:"image"`
-	DeploymentID  uint64            `json:"deploymentid"`
-	Time          uint64            `json:"time" binding:"required"`
-	FuzzCycleTime uint64            `json:"fuzzCycleTime" binding:"required"`
-	FuzzerID      uint64            `json:"fuzzerID"`
-	CorpusID      uint64            `json:"corpusID"`
-	TargetID      uint64            `json:"targetID"`
-	Environments  []string          `json:"environments"`
-	Arguments     map[string]string `json:"arguments"`
+	// example: test
+	// required: true
+	Name string `json:"name" binding:"required"`
+
+	// example: afl-image
+	Image string `json:"image"`
+
+	// example: 1
+	DeploymentID uint64 `json:"deploymentid"`
+
+	// example: 3600
+	// required: true
+	Time uint64 `json:"time" binding:"required"`
+
+	// example: 60
+	// required: true
+	FuzzCycleTime uint64 `json:"fuzzCycleTime" binding:"required"`
+
+	// example: 1
+	FuzzerID uint64 `json:"fuzzerID"`
+
+	// example: 2
+	CorpusID uint64 `json:"corpusID"`
+
+	// example: 3
+	TargetID uint64 `json:"targetID"`
+
+	// example: ["AFL_FUZZ=1", "ASAN=1"]
+	Environments []string `json:"environments"`
+
+	// example: {"MEMORY_LIMIT": "100"}
+	Arguments map[string]string `json:"arguments"`
 }
 
+// swagger:model
 type TaskUpdateReq struct {
-	Name          string            `json:"name"`
-	Image         string            `json:"image"`
-	DeploymentID  uint64            `json:"deploymentid"`
-	Time          uint64            `json:"time"`
-	FuzzCycleTime uint64            `json:"fuzzCycleTime"`
-	FuzzerID      uint64            `json:"fuzzerID"`
-	CorpusID      uint64            `json:"corpusID"`
-	TargetID      uint64            `json:"targetID"`
-	Environments  []string          `json:"environments"`
-	Arguments     map[string]string `json:"arguments"`
-	Status        string            `json:"status"`
+	// example: test
+	Name string `json:"name"`
+
+	// example: afl-image
+	Image string `json:"image"`
+
+	// example: 1
+	DeploymentID uint64 `json:"deploymentid"`
+
+	// example: 3600
+	Time uint64 `json:"time"`
+
+	// example: 60
+	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
+
+	// example: 1
+	FuzzerID uint64 `json:"fuzzerID"`
+
+	// example: 2
+	CorpusID uint64 `json:"corpusID"`
+
+	// example: 3
+	TargetID uint64 `json:"targetID"`
+
+	// example: ["AFL_FUZZ=1", "ASAN=1"]
+	Environments []string `json:"environments"`
+
+	// example: {"MEMORY_LIMIT": "100"}
+	Arguments map[string]string `json:"arguments"`
+}
+
+// swagger:model
+type TaskResp struct {
+	models.Task
+
+	// example: ["AFL_FUZZ=1", "ASAN=1"]
+	Environments []string `json:"environments"`
+
+	// example: {"MEMORY_LIMIT": "100"}
+	Arguments map[string]string `json:"arguments"`
 }
 
 type TaskController struct{}
 
+// list tasks
 func (tc *TaskController) List(c *gin.Context) {
+	// swagger:operation GET /task task listTask
+	// list tasks
+	//
+	// list tasks
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/TaskResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	tasks := []models.Task{}
 	err := models.GetObjects(&tasks)
 	if err != nil {
@@ -58,27 +130,39 @@ func (tc *TaskController) List(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
-		results = append(results, map[string]interface{}{
-			"id":            task.ID,
-			"deploymentid":  task.DeploymentID,
-			"name":          task.Name,
-			"image":         task.Image,
-			"time":          task.Time,
-			"fuzzCycleTime": task.FuzzCycleTime,
-			"fuzzerID":      task.FuzzerID,
-			"corpusID":      task.CorpusID,
-			"targetID":      task.TargetID,
-			"status":        task.Status,
-			"errorMsg":      task.ErrorMsg,
-			"startedAt":     task.StartedAt,
-			"environments":  environments,
-			"arguments":     arguments,
+		results = append(results, TaskResp{
+			Task:         task,
+			Environments: environments,
+			Arguments:    arguments,
 		})
 	}
 	c.JSON(http.StatusOK, results)
 }
 
+// retrieve task
 func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
+	// swagger:operation GET /task/{id} task retrieveTask
+	// retrieve task
+	//
+	// retrieve task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var task models.Task
 	err := models.GetObjectByID(&task, id)
 	if err != nil {
@@ -95,26 +179,41 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		utils.DBError(c)
 		return
 	}
-	result := map[string]interface{}{
-		"id":            task.ID,
-		"deploymentid":  task.DeploymentID,
-		"name":          task.Name,
-		"image":         task.Image,
-		"time":          task.Time,
-		"fuzzCycleTime": task.FuzzCycleTime,
-		"fuzzerID":      task.FuzzerID,
-		"corpusID":      task.CorpusID,
-		"targetID":      task.TargetID,
-		"status":        task.Status,
-		"errorMsg":      task.ErrorMsg,
-		"startedAt":     task.StartedAt,
-		"environments":  environments,
-		"arguments":     arguments,
-	}
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, TaskResp{
+		Task:         task,
+		Environments: environments,
+		Arguments:    arguments,
+	})
 }
 
+// create task
 func (tc *TaskController) Create(c *gin.Context) {
+	// swagger:operation POST /task task createTask
+	// create task
+	//
+	// create task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: taskCreateReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/TaskCreateReq"
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/TaskResp"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var req TaskCreateReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -185,7 +284,29 @@ func (tc *TaskController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, task)
 }
 
+// start task
 func (tc *TaskController) Start(c *gin.Context) {
+	// swagger:operation POST /task/{id}/start task startTask
+	// start task
+	//
+	// start task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '204':
+	//     description: start task success
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
@@ -272,7 +393,29 @@ func (tc *TaskController) Start(c *gin.Context) {
 	c.JSON(http.StatusNoContent, "")
 }
 
+// stop task
 func (tc *TaskController) Stop(c *gin.Context) {
+	// swagger:operation POST /task/{id}/stop task stopTask
+	// stop task
+	//
+	// stop task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '204':
+	//     description: stop task success
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
@@ -302,7 +445,37 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	return
 }
 
+// update task
 func (tc *TaskController) Update(c *gin.Context) {
+	// swagger:operation PUT /task/{id} task updateTask
+	// update task
+	//
+	// update task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: taskUpdateReq
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/TaskUpdateReq"
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '204':
+	//      description: update task success
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
@@ -407,7 +580,29 @@ func (tc *TaskController) Update(c *gin.Context) {
 	c.JSON(http.StatusNoContent, "")
 }
 
+// delete task
 func (tc *TaskController) Destroy(c *gin.Context) {
+	// swagger:operation DELETE /task/{id} task deleteTask
+	// delete task
+	//
+	// delete task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '204':
+	//      description: update task success
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {

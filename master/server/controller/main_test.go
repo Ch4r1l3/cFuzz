@@ -53,6 +53,9 @@ func prepareRouter() {
 	r.PUT("/task/:id", taskController.Update)
 	r.DELETE("/task/:id", taskController.Destroy)
 
+	taskCrashController := new(TaskCrashController)
+	r.GET("/crash/:id", taskCrashController.Download)
+
 	storageItemController := new(StorageItemController)
 	r.GET("/storage_item", storageItemController.List)
 	r.GET("/storage_item/:type", storageItemController.ListByType)
@@ -62,7 +65,6 @@ func prepareRouter() {
 
 	r.GET("/task/:path1", TaskGetHandler)
 	r.GET("/task/:path1/:path2", TaskGetHandler)
-	r.GET("/task/:path1/:path2/:path3", TaskGetHandler)
 }
 
 func prepareConfig() {

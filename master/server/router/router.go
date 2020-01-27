@@ -27,6 +27,9 @@ func InitRouter() *gin.Engine {
 	r.PUT("/task/:id", taskController.Update)
 	r.DELETE("/task/:id", taskController.Destroy)
 
+	taskCrashController := new(controller.TaskCrashController)
+	r.GET("/crash/:id", taskCrashController.Download)
+
 	storageItemController := new(controller.StorageItemController)
 	r.GET("/storage_item", storageItemController.List)
 	r.GET("/storage_item/:type", storageItemController.ListByType)
@@ -36,7 +39,6 @@ func InitRouter() *gin.Engine {
 
 	r.GET("/task/:path1", controller.TaskGetHandler)
 	r.GET("/task/:path1/:path2", controller.TaskGetHandler)
-	r.GET("/task/:path1/:path2/:path3", controller.TaskGetHandler)
 
 	return r
 }

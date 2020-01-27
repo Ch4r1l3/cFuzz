@@ -1,13 +1,24 @@
 package models
 
+// item that record some file info
+// swagger:model
 type StorageItem struct {
-	ID            uint64 `gorm:"primary_key" json:"id"`
-	Name          string `json:"name"`
-	Path          string `json:"-"`
-	Type          string `json:"type"`
-	ExistsInImage bool   `json:"existsInImage"`
+	// example: 1
+	ID uint64 `gorm:"primary_key" json:"id"`
+
+	// example: afl
+	Name string `json:"name"`
+
+	Path string `json:"-"`
+
+	// example: fuzzer
+	Type string `json:"type"`
+
+	// example: true
+	ExistsInImage bool `json:"existsInImage"`
 }
 
+// storage item types
 const (
 	Fuzzer = "fuzzer"
 	Target = "target"
