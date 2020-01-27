@@ -13,8 +13,9 @@ type TaskCrashController struct{}
 // List all crashes by taskID
 func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	// swagger:operation GET /task/{taskID}/crash taskCrash listTaskCrash
-	// list all crash
+	// list all crashes
 	//
+	// list all crashes
 	// ---
 	// produces:
 	// - application/json
@@ -49,6 +50,7 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	// swagger:operation GET /crash/{id} taskCrash downloadCrash
 	// download crash by id
 	//
+	// download crash by id
 	// ---
 	// produces:
 	// - application/octet-stream

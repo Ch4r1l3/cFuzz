@@ -10,6 +10,7 @@
         "tags": [
           "taskCrash"
         ],
+        "summary": "download crash by id",
         "operationId": "downloadCrash",
         "parameters": [
           {
@@ -43,6 +44,7 @@
         "tags": [
           "deployment"
         ],
+        "summary": "list all deployment",
         "operationId": "listDeployment",
         "responses": {
           "200": {
@@ -68,6 +70,7 @@
         "tags": [
           "deployment"
         ],
+        "summary": "create deployment",
         "operationId": "createDeployment",
         "parameters": [
           {
@@ -107,6 +110,7 @@
         "tags": [
           "deployment"
         ],
+        "summary": "update deployment",
         "operationId": "updateDeployment",
         "parameters": [
           {
@@ -150,6 +154,7 @@
         "tags": [
           "deployment"
         ],
+        "summary": "delete deployment",
         "operationId": "deleteDeployment",
         "parameters": [
           {
@@ -180,13 +185,14 @@
     },
     "/storage_item": {
       "get": {
-        "description": "List StorageItem",
+        "description": "list storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "list storageItem",
         "operationId": "listStorageItem",
         "responses": {
           "200": {
@@ -202,13 +208,14 @@
         }
       },
       "post": {
-        "description": "Create StorageItem",
+        "description": "create storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "create storageItem",
         "operationId": "createStorageItem",
         "parameters": [
           {
@@ -251,13 +258,14 @@
     },
     "/storage_item/exist": {
       "post": {
-        "description": "Create Exist StorageItem",
+        "description": "create exist storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "create exist storageItem",
         "operationId": "createExistStorageItem",
         "parameters": [
           {
@@ -290,13 +298,14 @@
     },
     "/storage_item/{id}": {
       "delete": {
-        "description": "Delete StorageItem",
+        "description": "delete storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "delete storageItem",
         "operationId": "deleteStorageItem",
         "parameters": [
           {
@@ -332,13 +341,14 @@
     },
     "/storage_item/{type}": {
       "get": {
-        "description": "List StorageItem By Type",
+        "description": "list storageItem by type",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "list storageItem by type",
         "operationId": "listStorageItemByType",
         "parameters": [
           {
@@ -605,13 +615,14 @@
     },
     "/task/{taskID}/crash": {
       "get": {
-        "description": "list all crash",
+        "description": "list all crashes",
         "produces": [
           "application/json"
         ],
         "tags": [
           "taskCrash"
         ],
+        "summary": "list all crashes",
         "operationId": "listTaskCrash",
         "parameters": [
           {
@@ -647,6 +658,7 @@
         "tags": [
           "taskResult"
         ],
+        "summary": "retrieve task result",
         "operationId": "retrieveTaskResult",
         "parameters": [
           {

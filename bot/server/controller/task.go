@@ -45,8 +45,9 @@ type TaskIDReq struct {
 // Retrieve Task
 func (tc *TaskController) Retrieve(c *gin.Context) {
 	// swagger:operation GET /task task retrieveTask
-	// Retrieve Task
+	// retrieve task
 	//
+	// retrieve task
 	// ---
 	// produces:
 	// - application/json
@@ -90,8 +91,9 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 // Create Task
 func (tc *TaskController) Create(c *gin.Context) {
 	// swagger:operation POST /task task createTask
-	// Retrieve Task
+	// retrieve task
 	//
+	// retrieve task
 	// ---
 	// produces:
 	// - application/json
@@ -189,8 +191,9 @@ func (tc *TaskController) Create(c *gin.Context) {
 // Stop Fuzz
 func (tc *TaskController) StopFuzz(c *gin.Context) {
 	// swagger:operation POST /task/stop task stopTask
-	// Stop Task
+	// stop task
 	//
+	// stop task
 	// ---
 	// produces:
 	// - application/json
@@ -219,8 +222,9 @@ func (tc *TaskController) StopFuzz(c *gin.Context) {
 // Start Fuzz
 func (tc *TaskController) StartFuzz(c *gin.Context) {
 	// swagger:operation POST /task/start task startTask
-	// Start Task
+	// start task
 	//
+	// start task
 	// ---
 	// produces:
 	// - application/json
@@ -278,8 +282,9 @@ func (tc *TaskController) StartFuzz(c *gin.Context) {
 // Delete Task
 func (tc *TaskController) Destroy(c *gin.Context) {
 	// swagger:operation DELETE /task task deleteTask
-	// Delete Task
+	// delete task
 	//
+	// delete task
 	// ---
 	// produces:
 	// - application/json

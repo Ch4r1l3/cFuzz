@@ -22,6 +22,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 	// swagger:operation GET /task/{taskID}/result taskResult retrieveTaskResult
 	// retrieve task result
 	//
+	// retrieve task result
 	// ---
 	// produces:
 	// - application/json

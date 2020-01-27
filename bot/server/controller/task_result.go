@@ -12,6 +12,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context) {
 	// swagger:operation GET /task/result taskResult listTaskResult
 	// get task result
 	//
+	// get task result
 	// ---
 	// produces:
 	// - application/json

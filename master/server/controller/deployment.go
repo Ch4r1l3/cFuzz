@@ -24,6 +24,7 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	// swagger:operation GET /deployment deployment listDeployment
 	// list all deployment
 	//
+	// list all deployment
 	// ---
 	// produces:
 	// - application/json
@@ -52,6 +53,7 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	// swagger:operation POST /deployment deployment createDeployment
 	// create deployment
 	//
+	// create deployment
 	// ---
 	// produces:
 	// - application/json
@@ -97,6 +99,7 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	// swagger:operation PUT /deployment/{id} deployment updateDeployment
 	// update deployment
 	//
+	// update deployment
 	// ---
 	// produces:
 	// - application/json
@@ -154,6 +157,7 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 	// swagger:operation DELETE /deployment/{id} deployment deleteDeployment
 	// delete deployment
 	//
+	// delete deployment
 	// ---
 	// produces:
 	// - application/json

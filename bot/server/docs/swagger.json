@@ -3,13 +3,14 @@
   "paths": {
     "/storage_item": {
       "get": {
-        "description": "List StorageItem",
+        "description": "list storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "list storageItem",
         "operationId": "listStorageItem",
         "responses": {
           "200": {
@@ -28,7 +29,7 @@
         }
       },
       "post": {
-        "description": "Create StorageItem",
+        "description": "create storageItem",
         "consumes": [
           "multipart/form-data"
         ],
@@ -38,6 +39,7 @@
         "tags": [
           "storageItem"
         ],
+        "summary": "create storageItem",
         "operationId": "createStorageItem",
         "parameters": [
           {
@@ -80,13 +82,14 @@
     },
     "/storage_item/exist": {
       "post": {
-        "description": "Create Exist StorageItem",
+        "description": "create exist storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "create exist storageItem",
         "operationId": "createExistStorageItem",
         "parameters": [
           {
@@ -119,13 +122,14 @@
     },
     "/storage_item/{id}": {
       "get": {
-        "description": "Retrieve StorageItem",
+        "description": "retrieve storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "retrieve storageItem",
         "operationId": "retrieveStorageItem",
         "parameters": [
           {
@@ -155,13 +159,14 @@
         }
       },
       "delete": {
-        "description": "Delete StorageItem",
+        "description": "delete storageItem",
         "produces": [
           "application/json"
         ],
         "tags": [
           "storageItem"
         ],
+        "summary": "delete storageItem",
         "operationId": "deleteStorageItem",
         "parameters": [
           {
@@ -194,13 +199,14 @@
     },
     "/task": {
       "get": {
-        "description": "Retrieve Task",
+        "description": "retrieve task",
         "produces": [
           "application/json"
         ],
         "tags": [
           "task"
         ],
+        "summary": "retrieve task",
         "operationId": "retrieveTask",
         "responses": {
           "200": {
@@ -221,13 +227,14 @@
         }
       },
       "post": {
-        "description": "Retrieve Task",
+        "description": "retrieve task",
         "produces": [
           "application/json"
         ],
         "tags": [
           "task"
         ],
+        "summary": "retrieve task",
         "operationId": "createTask",
         "parameters": [
           {
@@ -258,13 +265,14 @@
         }
       },
       "delete": {
-        "description": "Delete Task",
+        "description": "delete task",
         "produces": [
           "application/json"
         ],
         "tags": [
           "task"
         ],
+        "summary": "delete task",
         "operationId": "deleteTask",
         "responses": {
           "204": {
@@ -287,6 +295,7 @@
         "tags": [
           "taskCrash"
         ],
+        "summary": "list all crash",
         "operationId": "listTaskCrash",
         "responses": {
           "200": {
@@ -314,6 +323,7 @@
         "tags": [
           "taskCrash"
         ],
+        "summary": "download crash by id",
         "operationId": "downloadTaskCrash",
         "parameters": [
           {
@@ -347,6 +357,7 @@
         "tags": [
           "taskResult"
         ],
+        "summary": "get task result",
         "operationId": "listTaskResult",
         "responses": {
           "200": {
@@ -364,13 +375,14 @@
     },
     "/task/start": {
       "post": {
-        "description": "Start Task",
+        "description": "start task",
         "produces": [
           "application/json"
         ],
         "tags": [
           "task"
         ],
+        "summary": "start task",
         "operationId": "startTask",
         "responses": {
           "204": {
@@ -391,13 +403,14 @@
     },
     "/task/stop": {
       "post": {
-        "description": "Stop Task",
+        "description": "stop task",
         "produces": [
           "application/json"
         ],
         "tags": [
           "task"
         ],
+        "summary": "stop task",
         "operationId": "stopTask",
         "responses": {
           "204": {

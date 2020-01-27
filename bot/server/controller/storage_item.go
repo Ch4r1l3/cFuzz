@@ -36,8 +36,9 @@ type StorageItemExistReq struct {
 // List StorageItem
 func (sic *StorageItemController) List(c *gin.Context) {
 	// swagger:operation GET /storage_item storageItem listStorageItem
-	// List StorageItem
+	// list storageItem
 	//
+	// list storageItem
 	// ---
 	// produces:
 	// - application/json
@@ -63,8 +64,9 @@ func (sic *StorageItemController) List(c *gin.Context) {
 // Retrieve StorageItem
 func (sic *StorageItemController) Retrieve(c *gin.Context) {
 	// swagger:operation GET /storage_item/{id} storageItem retrieveStorageItem
-	// Retrieve StorageItem
+	// retrieve storageItem
 	//
+	// retrieve storageItem
 	// ---
 	// produces:
 	// - application/json
@@ -112,8 +114,9 @@ func (sic *StorageItemController) Retrieve(c *gin.Context) {
 // Create Exist StorageItem
 func (sic *StorageItemController) CreateExist(c *gin.Context) {
 	// swagger:operation POST /storage_item/exist storageItem createExistStorageItem
-	// Create Exist StorageItem
+	// create exist storageItem
 	//
+	// create exist storageItem
 	// ---
 	// produces:
 	// - application/json
@@ -177,8 +180,9 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 // Create StorageItem
 func (sic *StorageItemController) Create(c *gin.Context) {
 	// swagger:operation POST /storage_item storageItem createStorageItem
-	// Create StorageItem
+	// create storageItem
 	//
+	// create storageItem
 	// ---
 	// produces:
 	// - application/json
@@ -330,8 +334,9 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 // Destroy StorageItem
 func (sic *StorageItemController) Destroy(c *gin.Context) {
 	// swagger:operation DELETE /storage_item/{id} storageItem deleteStorageItem
-	// Delete StorageItem
+	// delete storageItem
 	//
+	// delete storageItem
 	// ---
 	// produces:
 	// - application/json

@@ -15,6 +15,7 @@ func (tcc *TaskCrashController) List(c *gin.Context) {
 	// swagger:operation GET /task/crash taskCrash listTaskCrash
 	// list all crash
 	//
+	// list all crash
 	// ---
 	// produces:
 	// - application/json
@@ -41,6 +42,7 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	// swagger:operation GET /task/crash/{id} taskCrash downloadTaskCrash
 	// download crash by id
 	//
+	// download crash by id
 	// ---
 	// produces:
 	// - application/octet-stream
