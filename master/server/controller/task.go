@@ -102,6 +102,14 @@ func (tc *TaskController) List(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
+	//
 	// responses:
 	//   '200':
 	//      schema:
@@ -112,8 +120,15 @@ func (tc *TaskController) List(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	tasks := []models.Task{}
-	err := models.GetObjects(&tasks)
+	var tasks []models.Task
+	var err error
+	if !c.GetBool("pagination") {
+		err = models.GetObjects(&tasks)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		err = models.GetObjectsPagination(&tasks, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return

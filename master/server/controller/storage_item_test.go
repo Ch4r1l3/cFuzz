@@ -47,6 +47,7 @@ func TestStorageItem1(t *testing.T) {
 		Status(http.StatusBadRequest)
 
 	e.GET("/storage_item").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
+	e.GET("/storage_item").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
 	obj := e.GET("/storage_item").Expect().
 		Status(http.StatusOK).JSON().Array().First().Object()
 	obj.ValueEqual("name", "afl")

@@ -25,6 +25,12 @@ func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	//   in: path
 	//   required: true
 	//   type: integer
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
 	//
 	// responses:
 	//   '200':
@@ -37,7 +43,14 @@ func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var crashes []models.TaskCrash
-	err := models.GetObjectsByTaskID(&crashes, taskID)
+	var err error
+	if !c.GetBool("pagination") {
+		err = models.GetObjectsByTaskID(&crashes, taskID)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		err = models.GetObjectsByTaskIDPagination(&crashes, taskID, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return

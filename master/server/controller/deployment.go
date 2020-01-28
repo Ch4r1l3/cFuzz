@@ -29,6 +29,14 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
+	//
 	// responses:
 	//   '200':
 	//      schema:
@@ -39,8 +47,15 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	deployments := []models.Deployment{}
-	err := models.GetObjects(&deployments)
+	var err error
+	var deployments []models.Deployment
+	if !c.GetBool("pagination") {
+		err = models.GetObjects(&deployments)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		err = models.GetObjectsPagination(&deployments, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return

@@ -34,6 +34,14 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
+	//
 	// responses:
 	//   '200':
 	//      schema:
@@ -42,8 +50,16 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
+	var err error
+
 	var storageItems []models.StorageItem
-	err := models.GetObjects(&storageItems)
+	if !c.GetBool("pagination") {
+		err = models.GetObjects(&storageItems)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		err = models.GetObjectsPagination(&storageItems, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -66,6 +82,12 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	//   in: path
 	//   required: true
 	//   type: string
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
 	//
 	// responses:
 	//   '200':
@@ -79,6 +101,7 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var req StorageItemTypeReq
+	var err error
 	if err := c.ShouldBindUri(&req); err != nil {
 		utils.BadRequest(c)
 		return
@@ -87,7 +110,14 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	storageItems, err := models.GetStorageItemsByType(req.Type)
+	var storageItems []models.StorageItem
+	if !c.GetBool("pagination") {
+		storageItems, err = models.GetStorageItemsByType(req.Type)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		storageItems, err = models.GetStorageItemsByTypePagination(req.Type, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return

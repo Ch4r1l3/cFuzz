@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
+	"github.com/Ch4r1l3/cFuzz/master/server/middleware"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/gin-gonic/gin"
@@ -40,13 +41,13 @@ func prepareRouter() {
 	gin.SetMode("debug")
 
 	deploymentController := new(DeploymentController)
-	r.GET("/deployment", deploymentController.List)
+	r.GET("/deployment", middleware.Pagination, deploymentController.List)
 	r.POST("/deployment", deploymentController.Create)
 	r.PUT("/deployment/:id", deploymentController.Update)
 	r.DELETE("/deployment/:id", deploymentController.Destroy)
 
 	taskController := new(TaskController)
-	r.GET("/task", taskController.List)
+	r.GET("/task", middleware.Pagination, taskController.List)
 	r.POST("/task", taskController.Create)
 	r.POST("/task/:id/start", taskController.Start)
 	r.POST("/task/:id/stop", taskController.Stop)
@@ -57,14 +58,14 @@ func prepareRouter() {
 	r.GET("/crash/:id", taskCrashController.Download)
 
 	storageItemController := new(StorageItemController)
-	r.GET("/storage_item", storageItemController.List)
-	r.GET("/storage_item/:type", storageItemController.ListByType)
+	r.GET("/storage_item", middleware.Pagination, storageItemController.List)
+	r.GET("/storage_item/:type", middleware.Pagination, storageItemController.ListByType)
 	r.POST("/storage_item", storageItemController.Create)
 	r.POST("/storage_item/exist", storageItemController.CreateExist)
 	r.DELETE("/storage_item/:id", storageItemController.Destroy)
 
 	r.GET("/task/:path1", TaskGetHandler)
-	r.GET("/task/:path1/:path2", TaskGetHandler)
+	r.GET("/task/:path1/:path2", middleware.Pagination, TaskGetHandler)
 }
 
 func prepareConfig() {

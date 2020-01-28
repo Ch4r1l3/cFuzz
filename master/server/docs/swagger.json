@@ -46,6 +46,18 @@
         ],
         "summary": "list all deployment",
         "operationId": "listDeployment",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "schema": {
@@ -194,6 +206,18 @@
         ],
         "summary": "list storageItem",
         "operationId": "listStorageItem",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "schema": {
@@ -356,6 +380,16 @@
             "name": "type",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -388,6 +422,18 @@
         ],
         "summary": "list tasks",
         "operationId": "listTask",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "schema": {

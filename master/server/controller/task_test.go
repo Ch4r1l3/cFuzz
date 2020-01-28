@@ -171,6 +171,7 @@ func TestTask3(t *testing.T) {
 	}
 	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusNoContent)
 
+	e.GET("/task").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
 	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
 	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)

@@ -46,7 +46,15 @@ func IsStorageItemExistsByNameAndType(name string, mtype string) bool {
 
 func GetStorageItemsByType(mtype string) ([]StorageItem, error) {
 	var storageItems []StorageItem
-	if err := DB.Where("type = ?", mtype).Find(&storageItems).Error; err != nil {
+	if err := DB.Where("type = ?", mtype).Order("id").Find(&storageItems).Error; err != nil {
+		return nil, err
+	}
+	return storageItems, nil
+}
+
+func GetStorageItemsByTypePagination(mtype string, offset int, limit int) ([]StorageItem, error) {
+	var storageItems []StorageItem
+	if err := DB.Where("type = ?", mtype).Order("id").Offset(offset).Limit(limit).Find(&storageItems).Error; err != nil {
 		return nil, err
 	}
 	return storageItems, nil

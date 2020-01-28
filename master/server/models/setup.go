@@ -13,7 +13,11 @@ func InsertObject(obj interface{}) error {
 }
 
 func GetObjects(objs interface{}) error {
-	return DB.Find(objs).Error
+	return DB.Order("id").Find(objs).Error
+}
+
+func GetObjectsPagination(objs interface{}, offset int, limit int) error {
+	return DB.Order("id").Offset(offset).Limit(limit).Find(objs).Error
 }
 
 func GetObjectByID(obj interface{}, id uint64) error {

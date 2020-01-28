@@ -47,6 +47,7 @@ func TestDeployment2(t *testing.T) {
 	}
 	e.POST("/deployment").WithJSON(postdata1).Expect().Status(http.StatusOK)
 	e.GET("/deployment").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
+	e.GET("/deployment").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
 	obj := e.GET("/deployment").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	obj.Value("name").Equal("test1")
 	obj.Value("content").Equal("111")
