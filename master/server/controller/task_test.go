@@ -17,7 +17,7 @@ func TestTaskList(t *testing.T) {
 	server := httptest.NewServer(r)
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
-	e.GET("/task").Expect().Status(http.StatusOK)
+	e.GET("/api/task").Expect().Status(http.StatusOK)
 }
 
 func TestTask1(t *testing.T) {
@@ -28,7 +28,7 @@ func TestTask1(t *testing.T) {
 		"name":    "test",
 		"content": "11123",
 	}
-	deploymentID := int(e.POST("/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	deploymentID := int(e.POST("/api/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	err := ioutil.WriteFile("./fuzzer_test", []byte("afl"), 0755)
 	if err != nil {
 		t.Fatal(err)
@@ -37,7 +37,7 @@ func TestTask1(t *testing.T) {
 		os.RemoveAll("./fuzzer_test")
 	}()
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData := map[string]interface{}{
 		"name":          "test",
@@ -52,9 +52,9 @@ func TestTask1(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
-	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
+	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentid").NotEqual(0)
@@ -66,9 +66,9 @@ func TestTask1(t *testing.T) {
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
 	obj.Value("status").NotEqual("")
 	obj.Value("startedAt").Equal(0)
-	e.DELETE("/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask2(t *testing.T) {
@@ -79,7 +79,7 @@ func TestTask2(t *testing.T) {
 		"name":    "test",
 		"content": "11123",
 	}
-	deploymentID := int(e.POST("/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	deploymentID := int(e.POST("/api/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	err := ioutil.WriteFile("./fuzzer_test", []byte("afl"), 0755)
 	if err != nil {
 		t.Fatal(err)
@@ -88,7 +88,7 @@ func TestTask2(t *testing.T) {
 		os.RemoveAll("./fuzzer_test")
 	}()
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "fuzzer_test").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -121,23 +121,23 @@ func TestTask2(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusBadRequest)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusBadRequest)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData5).Expect().Status(http.StatusNoContent)
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData6).Expect().Status(http.StatusNoContent)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData2).Expect().Status(http.StatusBadRequest)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData3).Expect().Status(http.StatusBadRequest)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusBadRequest)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData5).Expect().Status(http.StatusNoContent)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData6).Expect().Status(http.StatusNoContent)
 
-	e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("environments").Array().Elements("2", "3")
+	e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("environments").Array().Elements("2", "3")
 
-	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("arguments").Object()
+	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("arguments").Object()
 	obj.Value("a3").Equal("a4")
 	obj.Value("a4").Equal("a5")
 
-	e.DELETE("/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask3(t *testing.T) {
@@ -145,7 +145,7 @@ func TestTask3(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -160,27 +160,27 @@ func TestTask3(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
-	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
-	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
+	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusBadRequest)
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	taskPostData4 := map[string]interface{}{
 		"targetID": targetID,
 		"corpusID": corpusID,
 	}
-	e.PUT("/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusNoContent)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusNoContent)
 
-	e.GET("/task").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
+	e.GET("/api/task").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
-	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(5) * time.Second)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask4(t *testing.T) {
@@ -188,9 +188,9 @@ func TestTask4(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -207,16 +207,16 @@ func TestTask4(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*5) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
-	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
 	<-time.After(time.Duration(5) * time.Second)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask5(t *testing.T) {
@@ -224,9 +224,9 @@ func TestTask5(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -243,22 +243,22 @@ func TestTask5(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
-	obj := e.GET("/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
+	e.GET("/api/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
+	obj := e.GET("/api/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
 	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats", "id", "taskid")
 	obj.Value("command").NotEqual("")
 	obj.Value("timeExecuted").NotEqual(0)
 	obj.Value("updateAt").NotEqual(0)
 	obj.Value("stats").NotNull()
-	e.POST("/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(5) * time.Second)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask6(t *testing.T) {
@@ -266,9 +266,9 @@ func TestTask6(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -285,16 +285,16 @@ func TestTask6(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").Equal("failed to create deployment")
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").Equal("failed to create deployment")
 	<-time.After(time.Duration(5) * time.Second)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask7(t *testing.T) {
@@ -302,9 +302,9 @@ func TestTask7(t *testing.T) {
 	defer server.Close()
 	e := httpexpect.New(t, server.URL)
 
-	fuzzerID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	targetID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	corpusID := int(e.POST("/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
@@ -321,12 +321,12 @@ func TestTask7(t *testing.T) {
 		},
 	}
 
-	taskID := int(e.POST("/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
-	e.POST("/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusNoContent)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*2) * time.Second)
-	e.GET("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	<-time.After(time.Duration(5) * time.Second)
-	e.DELETE("/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
