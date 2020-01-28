@@ -45,7 +45,9 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	// responses:
 	//   '200':
 	//      schema:
-	//        "$ref": "#/definitions/StorageItem"
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/StorageItem"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"

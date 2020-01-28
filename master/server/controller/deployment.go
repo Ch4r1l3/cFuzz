@@ -17,6 +17,15 @@ type DeploymentReq struct {
 	Content string `json:"content"`
 }
 
+// swagger:model
+type DeploymentSim struct {
+	// example: 1
+	ID uint64 `json:"id"`
+
+	// example: test-image
+	Name string `json:"name"`
+}
+
 type DeploymentController struct{}
 
 // List Deployment
@@ -61,6 +70,42 @@ func (dc *DeploymentController) List(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, deployments)
+}
+
+// Summary Of Deployment
+func (dc *DeploymentController) Summary(c *gin.Context) {
+	// swagger:operation GET /deployment/summary deployment summaryDeployment
+	// summary deployment
+	//
+	// summary deployment, list all id, name of deployment, and total count of deployment
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/DeploymentSim"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
+	var deployments []models.Deployment
+	err := models.GetObjects(&deployments)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	deploymentSims := []DeploymentSim{}
+	for _, deployment := range deployments {
+		deploymentSims = append(deploymentSims, DeploymentSim{
+			ID:   deployment.ID,
+			Name: deployment.Name,
+		})
+	}
+	c.JSON(http.StatusOK, deploymentSims)
 }
 
 // Create Deployment

@@ -113,6 +113,34 @@
         }
       }
     },
+    "/deployment/summary": {
+      "get": {
+        "description": "summary deployment, list all id, name of deployment, and total count of deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "summary": "summary deployment",
+        "operationId": "summaryDeployment",
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DeploymentSim"
+              }
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
     "/deployment/{id}": {
       "put": {
         "description": "update deployment",
@@ -221,7 +249,10 @@
         "responses": {
           "200": {
             "schema": {
-              "$ref": "#/definitions/StorageItem"
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/StorageItem"
+              }
             }
           },
           "500": {
@@ -676,6 +707,16 @@
             "name": "taskID",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -762,6 +803,23 @@
           "type": "string",
           "x-go-name": "Content",
           "example": "123"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name",
+          "example": "test-image"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "DeploymentSim": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
         },
         "name": {
           "type": "string",

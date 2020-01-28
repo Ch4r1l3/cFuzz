@@ -16,6 +16,7 @@ func InitRouter() *gin.Engine {
 
 	deploymentController := new(controller.DeploymentController)
 	r.GET("/deployment", middleware.Pagination, deploymentController.List)
+	r.GET("/deployment/summary", deploymentController.Summary)
 	r.POST("/deployment", deploymentController.Create)
 	r.PUT("/deployment/:id", deploymentController.Update)
 	r.DELETE("/deployment/:id", deploymentController.Destroy)
