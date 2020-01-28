@@ -36,3 +36,19 @@ func TaskGetHandler(c *gin.Context) {
 		utils.NotFound(c)
 	}
 }
+
+func DeploymentGetHandler(c *gin.Context) {
+	p1 := c.Param("path1")
+	deploymentController := new(DeploymentController)
+	if p1 == "simplist" {
+		deploymentController.SimpList(c)
+	} else {
+		n, err := strconv.ParseUint(p1, 10, 64)
+		if err != nil {
+			utils.BadRequest(c)
+			return
+		}
+		deploymentController.Retrieve(c, n)
+
+	}
+}

@@ -16,10 +16,10 @@ func InitRouter() *gin.Engine {
 	{
 		deploymentController := new(controller.DeploymentController)
 		api.GET("/deployment", middleware.Pagination, deploymentController.List)
-		api.GET("/deployment/simplist", deploymentController.SimpList)
 		api.POST("/deployment", deploymentController.Create)
 		api.PUT("/deployment/:id", deploymentController.Update)
 		api.DELETE("/deployment/:id", deploymentController.Destroy)
+		api.GET("/deployment/:path1", controller.DeploymentGetHandler)
 
 		taskController := new(controller.TaskController)
 		api.GET("/task", middleware.Pagination, taskController.List)

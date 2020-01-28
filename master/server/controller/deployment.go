@@ -109,7 +109,7 @@ func (dc *DeploymentController) SimpList(c *gin.Context) {
 }
 
 // Retrieve Deployment
-func (dc *DeploymentController) Retrieve(c *gin.Context) {
+func (dc *DeploymentController) Retrieve(c *gin.Context, id uint64) {
 	// swagger:operation GET /deployment/{id} deployment retrieveDeployment
 	// retrieve deployment
 	//
@@ -136,14 +136,8 @@ func (dc *DeploymentController) Retrieve(c *gin.Context) {
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
-	if err != nil {
-		utils.BadRequest(c)
-		return
-	}
 	var deployment models.Deployment
-	err = models.GetObjectByID(&deployment, uriReq.ID)
+	err := models.GetObjectByID(&deployment, id)
 	if err != nil {
 		utils.DBError(c)
 		return
