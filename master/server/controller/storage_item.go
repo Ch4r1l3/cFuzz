@@ -146,7 +146,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 	//     "$ref": "#/definitions/StorageItemExistReq"
 	//
 	// responses:
-	//   '200':
+	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
 	//   '403':
@@ -176,7 +176,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, storageItem)
+	c.JSON(http.StatusCreated, storageItem)
 }
 
 // Create StorageItem
@@ -204,7 +204,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	//   type: file
 	//
 	// responses:
-	//   '200':
+	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
 	//   '403':
@@ -248,7 +248,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, storageItem)
+	c.JSON(http.StatusCreated, storageItem)
 }
 
 // Delete StorageItem

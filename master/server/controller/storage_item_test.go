@@ -37,7 +37,7 @@ func TestStorageItem1(t *testing.T) {
 		WithFormField("name", "afl").
 		WithFormField("type", "fuzzer").
 		Expect().
-		Status(http.StatusOK).JSON().Object().Value("id").NotEqual(0)
+		Status(http.StatusCreated).JSON().Object().Value("id").NotEqual(0)
 	e.POST("/api/storage_item").
 		WithMultipart().
 		WithFile("file", "storageItem_test").
@@ -69,7 +69,7 @@ func TestStorageItem2(t *testing.T) {
 	e.POST("/api/storage_item/exist").
 		WithJSON(postdata).
 		Expect().
-		Status(http.StatusOK).JSON().Object().Value("id").NotEqual(0)
+		Status(http.StatusCreated).JSON().Object().Value("id").NotEqual(0)
 
 	e.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
 	obj := e.GET("/api/storage_item").Expect().

@@ -27,7 +27,7 @@ func TestDeployment1(t *testing.T) {
 		"content": "111",
 	}
 	e.POST("/api/deployment").WithJSON(postdata1).Expect().Status(http.StatusBadRequest)
-	e.POST("/api/deployment").WithJSON(postdata2).Expect().Status(http.StatusOK).JSON().Object().Value("id").NotEqual(0)
+	e.POST("/api/deployment").WithJSON(postdata2).Expect().Status(http.StatusCreated).JSON().Object().Value("id").NotEqual(0)
 	obj := e.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	id := int(obj.Value("id").Number().Raw())
 	e.DELETE("/api/deployment/" + strconv.Itoa(id)).Expect().Status(http.StatusNoContent)
@@ -45,14 +45,14 @@ func TestDeployment2(t *testing.T) {
 		"name":    "test2",
 		"content": "222",
 	}
-	e.POST("/api/deployment").WithJSON(postdata1).Expect().Status(http.StatusOK)
+	e.POST("/api/deployment").WithJSON(postdata1).Expect().Status(http.StatusCreated)
 	e.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
 	e.GET("/api/deployment").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
 	obj := e.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	obj.Value("name").Equal("test1")
 	obj.Value("content").Equal("111")
 	id := int(obj.Value("id").Number().Raw())
-	e.PUT("/api/deployment/" + strconv.Itoa(id)).WithJSON(postdata2).Expect().Status(http.StatusNoContent)
+	e.PUT("/api/deployment/" + strconv.Itoa(id)).WithJSON(postdata2).Expect().Status(http.StatusCreated)
 	obj = e.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Array().First().Object()
 	obj.Value("name").Equal("test2")
 	obj.Value("content").Equal("222")

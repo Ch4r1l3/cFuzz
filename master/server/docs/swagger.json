@@ -37,21 +37,25 @@
     },
     "/deployment": {
       "get": {
-        "description": "retrieve deployment",
+        "description": "list all deployment",
         "produces": [
           "application/json"
         ],
         "tags": [
           "deployment"
         ],
-        "summary": "retrieve deployment",
-        "operationId": "retrieveDeployment",
+        "summary": "list all deployment",
+        "operationId": "listDeployment",
         "parameters": [
           {
             "type": "integer",
-            "name": "id",
-            "in": "path",
-            "required": true
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -61,16 +65,6 @@
               "items": {
                 "$ref": "#/definitions/Deployment"
               }
-            }
-          },
-          "403": {
-            "schema": {
-              "$ref": "#/definitions/ErrResp"
-            }
-          },
-          "404": {
-            "schema": {
-              "$ref": "#/definitions/ErrResp"
             }
           },
           "500": {
@@ -101,7 +95,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "schema": {
               "$ref": "#/definitions/Deployment"
             }
@@ -148,6 +142,45 @@
       }
     },
     "/deployment/{id}": {
+      "get": {
+        "description": "retrieve deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "summary": "retrieve deployment",
+        "operationId": "retrieveDeployment",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Deployment"
+              }
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
       "put": {
         "description": "update deployment",
         "produces": [
@@ -175,7 +208,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "201": {
             "schema": {
               "$ref": "#/definitions/Deployment"
             }
@@ -299,7 +332,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "schema": {
               "$ref": "#/definitions/StorageItem"
             }
@@ -339,7 +372,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "schema": {
               "$ref": "#/definitions/StorageItem"
             }
@@ -508,7 +541,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "schema": {
               "$ref": "#/definitions/TaskResp"
             }
@@ -585,7 +618,7 @@
           }
         ],
         "responses": {
-          "204": {
+          "201": {
             "description": "update task success"
           },
           "403": {
@@ -642,7 +675,7 @@
         "summary": "start task",
         "operationId": "startTask",
         "responses": {
-          "204": {
+          "202": {
             "description": "start task success"
           },
           "403": {
@@ -675,7 +708,7 @@
         "summary": "stop task",
         "operationId": "stopTask",
         "responses": {
-          "204": {
+          "202": {
             "description": "stop task success"
           },
           "403": {

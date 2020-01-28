@@ -219,7 +219,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	//     "$ref": "#/definitions/TaskCreateReq"
 	//
 	// responses:
-	//   '200':
+	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/TaskResp"
 	//   '403':
@@ -296,7 +296,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, task)
+	c.JSON(http.StatusCreated, task)
 }
 
 // start task
@@ -310,7 +310,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 	// - application/json
 	//
 	// responses:
-	//   '204':
+	//   '202':
 	//     description: start task success
 	//   '403':
 	//      schema:
@@ -405,7 +405,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		Err = err
 		return
 	}
-	c.JSON(http.StatusNoContent, "")
+	c.JSON(http.StatusAccepted, "")
 }
 
 // stop task
@@ -419,7 +419,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	// - application/json
 	//
 	// responses:
-	//   '204':
+	//   '202':
 	//     description: stop task success
 	//   '403':
 	//      schema:
@@ -456,7 +456,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
 	}
-	c.JSON(http.StatusNoContent, "")
+	c.JSON(http.StatusAccepted, "")
 	return
 }
 
@@ -482,7 +482,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	//   type: integer
 	//
 	// responses:
-	//   '204':
+	//   '201':
 	//      description: update task success
 	//   '403':
 	//      schema:
@@ -592,7 +592,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusNoContent, "")
+	c.JSON(http.StatusCreated, "")
 }
 
 // delete task

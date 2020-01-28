@@ -169,7 +169,7 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	//     "$ref": "#/definitions/DeploymentReq"
 	//
 	// responses:
-	//   '200':
+	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/Deployment"
 	//   '403':
@@ -194,7 +194,7 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, deployment)
+	c.JSON(http.StatusCreated, deployment)
 }
 
 // Update Deployment
@@ -219,7 +219,7 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	//     "$ref": "#/definitions/DeploymentReq"
 	//
 	// responses:
-	//   '204':
+	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/Deployment"
 	//   '403':
@@ -253,7 +253,7 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusNoContent, "")
+	c.JSON(http.StatusCreated, "")
 }
 
 func (dc *DeploymentController) Destroy(c *gin.Context) {
