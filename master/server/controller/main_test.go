@@ -44,7 +44,7 @@ func prepareRouter() {
 	{
 		deploymentController := new(DeploymentController)
 		api.GET("/deployment", middleware.Pagination, deploymentController.List)
-		api.GET("/deployment/summary", deploymentController.Summary)
+		api.GET("/deployment/simplist", deploymentController.SimpList)
 		api.POST("/deployment", deploymentController.Create)
 		api.PUT("/deployment/:id", deploymentController.Update)
 		api.DELETE("/deployment/:id", deploymentController.Destroy)

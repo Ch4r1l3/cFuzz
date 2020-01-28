@@ -37,25 +37,21 @@
     },
     "/deployment": {
       "get": {
-        "description": "list all deployment",
+        "description": "retrieve deployment",
         "produces": [
           "application/json"
         ],
         "tags": [
           "deployment"
         ],
-        "summary": "list all deployment",
-        "operationId": "listDeployment",
+        "summary": "retrieve deployment",
+        "operationId": "retrieveDeployment",
         "parameters": [
           {
             "type": "integer",
-            "name": "offset",
-            "in": "query"
-          },
-          {
-            "type": "integer",
-            "name": "limit",
-            "in": "query"
+            "name": "id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -65,6 +61,16 @@
               "items": {
                 "$ref": "#/definitions/Deployment"
               }
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "500": {
@@ -113,23 +119,23 @@
         }
       }
     },
-    "/deployment/summary": {
+    "/deployment/simplist": {
       "get": {
-        "description": "summary deployment, list all id, name of deployment, and total count of deployment",
+        "description": "simplification deployment, list all id, name of deployment",
         "produces": [
           "application/json"
         ],
         "tags": [
           "deployment"
         ],
-        "summary": "summary deployment",
-        "operationId": "summaryDeployment",
+        "summary": "simplification list of deployment",
+        "operationId": "simlistDeployment",
         "responses": {
           "200": {
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/DeploymentSim"
+                "$ref": "#/definitions/DeploymentSimp"
               }
             }
           },
@@ -812,7 +818,7 @@
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
-    "DeploymentSim": {
+    "DeploymentSimp": {
       "type": "object",
       "properties": {
         "id": {

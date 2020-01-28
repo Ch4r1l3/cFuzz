@@ -18,7 +18,7 @@ type DeploymentReq struct {
 }
 
 // swagger:model
-type DeploymentSim struct {
+type DeploymentSimp struct {
 	// example: 1
 	ID uint64 `json:"id"`
 
@@ -72,12 +72,12 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, deployments)
 }
 
-// Summary Of Deployment
-func (dc *DeploymentController) Summary(c *gin.Context) {
-	// swagger:operation GET /deployment/summary deployment summaryDeployment
-	// summary deployment
+// Simplification List Of Deployment
+func (dc *DeploymentController) SimpList(c *gin.Context) {
+	// swagger:operation GET /deployment/simplist deployment simlistDeployment
+	// simplification list of deployment
 	//
-	// summary deployment, list all id, name of deployment, and total count of deployment
+	// simplification deployment, list all id, name of deployment
 	// ---
 	// produces:
 	// - application/json
@@ -87,7 +87,7 @@ func (dc *DeploymentController) Summary(c *gin.Context) {
 	//      schema:
 	//        type: array
 	//        items:
-	//          "$ref": "#/definitions/DeploymentSim"
+	//          "$ref": "#/definitions/DeploymentSimp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -98,14 +98,57 @@ func (dc *DeploymentController) Summary(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	deploymentSims := []DeploymentSim{}
+	deploymentSimps := []DeploymentSimp{}
 	for _, deployment := range deployments {
-		deploymentSims = append(deploymentSims, DeploymentSim{
+		deploymentSimps = append(deploymentSimps, DeploymentSimp{
 			ID:   deployment.ID,
 			Name: deployment.Name,
 		})
 	}
-	c.JSON(http.StatusOK, deploymentSims)
+	c.JSON(http.StatusOK, deploymentSimps)
+}
+
+// Retrieve Deployment
+func (dc *DeploymentController) Retrieve(c *gin.Context) {
+	// swagger:operation GET /deployment/{id} deployment retrieveDeployment
+	// retrieve deployment
+	//
+	// retrieve deployment
+	// ---
+	// produces:
+	// - application/json
+	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        type: array
+	//        items:
+	//          "$ref": "#/definitions/Deployment"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	var uriReq UriIDReq
+	err := c.ShouldBindUri(&uriReq)
+	if err != nil {
+		utils.BadRequest(c)
+		return
+	}
+	var deployment models.Deployment
+	err = models.GetObjectByID(&deployment, uriReq.ID)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	c.JSON(http.StatusOK, deployment)
 }
 
 // Create Deployment
