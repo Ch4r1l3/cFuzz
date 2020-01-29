@@ -113,6 +113,31 @@
         }
       }
     },
+    "/deployment/count": {
+      "get": {
+        "description": "count of deployment",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "deployment"
+        ],
+        "summary": "count of deployment",
+        "operationId": "countDeployment",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/CountResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
     "/deployment/simplist": {
       "get": {
         "description": "simplification deployment, list all id, name of deployment",
@@ -810,6 +835,18 @@
     }
   },
   "definitions": {
+    "CountResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count",
+          "example": 1
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
     "Deployment": {
       "type": "object",
       "properties": {

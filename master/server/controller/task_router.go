@@ -42,6 +42,8 @@ func DeploymentGetHandler(c *gin.Context) {
 	deploymentController := new(DeploymentController)
 	if p1 == "simplist" {
 		deploymentController.SimpList(c)
+	} else if p1 == "count" {
+		deploymentController.Count(c)
 	} else {
 		n, err := strconv.ParseUint(p1, 10, 64)
 		if err != nil {

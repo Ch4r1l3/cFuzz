@@ -16,6 +16,12 @@ func GetObjects(objs interface{}) error {
 	return DB.Order("id").Find(objs).Error
 }
 
+func GetCount(objs interface{}) (int, error) {
+	var count int
+	err := DB.Find(objs).Count(&count).Error
+	return count, err
+}
+
 func GetObjectsPagination(objs interface{}, offset int, limit int) error {
 	return DB.Order("id").Offset(offset).Limit(limit).Find(objs).Error
 }

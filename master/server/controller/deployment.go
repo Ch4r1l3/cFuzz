@@ -72,6 +72,32 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, deployments)
 }
 
+// Count of Deployment
+func (dc *DeploymentController) Count(c *gin.Context) {
+	// swagger:operation GET /deployment/count deployment countDeployment
+	// count of deployment
+	//
+	// count of deployment
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/CountResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	count, err := models.GetCount(&models.Deployment{})
+	if err != nil {
+		utils.DBError(c)
+	}
+	c.JSON(http.StatusOK, CountResp{
+		Count: count,
+	})
+}
+
 // Simplification List Of Deployment
 func (dc *DeploymentController) SimpList(c *gin.Context) {
 	// swagger:operation GET /deployment/simplist deployment simlistDeployment
