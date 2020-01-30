@@ -20,7 +20,7 @@ type TaskCreateReq struct {
 	Image string `json:"image"`
 
 	// example: 1
-	DeploymentID uint64 `json:"deploymentid"`
+	DeploymentID uint64 `json:"deploymentID"`
 
 	// example: 3600
 	// required: true
@@ -55,7 +55,7 @@ type TaskUpdateReq struct {
 	Image string `json:"image"`
 
 	// example: 1
-	DeploymentID uint64 `json:"deploymentid"`
+	DeploymentID uint64 `json:"deploymentID"`
 
 	// example: 3600
 	Time uint64 `json:"time"`
@@ -152,6 +152,33 @@ func (tc *TaskController) List(c *gin.Context) {
 		})
 	}
 	c.JSON(http.StatusOK, results)
+}
+
+// count task
+func (tc *TaskController) Count(c *gin.Context) {
+	// swagger:operation GET /task/count task countTask
+	// count of task
+	//
+	// count of task
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/CountResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	count, err := models.GetCount(&models.Task{})
+	if err != nil {
+		utils.DBError(c)
+	}
+	c.JSON(http.StatusOK, CountResp{
+		Count: count,
+	})
+
 }
 
 // retrieve task

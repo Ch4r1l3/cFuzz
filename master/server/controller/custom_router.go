@@ -10,13 +10,17 @@ func TaskGetHandler(c *gin.Context) {
 	p1 := c.Param("path1")
 	p2 := c.Param("path2")
 	if p1 != "" && p2 == "" {
-		n, err := strconv.ParseUint(p1, 10, 64)
-		if err != nil {
-			utils.BadRequest(c)
-			return
-		}
 		task := new(TaskController)
-		task.Retrieve(c, n)
+		if p1 == "count" {
+			task.Count(c)
+		} else {
+			n, err := strconv.ParseUint(p1, 10, 64)
+			if err != nil {
+				utils.BadRequest(c)
+				return
+			}
+			task.Retrieve(c, n)
+		}
 	} else if p1 != "" && p2 != "" {
 		n, err := strconv.ParseUint(p1, 10, 64)
 		if err != nil {

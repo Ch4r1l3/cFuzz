@@ -41,7 +41,7 @@ func TestTask1(t *testing.T) {
 
 	taskPostData := map[string]interface{}{
 		"name":          "test",
-		"deploymentid":  deploymentID,
+		"deploymentID":  deploymentID,
 		"time":          100,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -55,9 +55,9 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentid", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
+	obj.Keys().ContainsOnly("id", "deploymentID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
 	obj.Value("id").NotEqual(0)
-	obj.Value("deploymentid").NotEqual(0)
+	obj.Value("deploymentID").NotEqual(0)
 	obj.Value("time").NotEqual(0)
 	obj.Value("fuzzCycleTime").NotEqual(0)
 	obj.Value("fuzzerID").NotEqual(0)
@@ -92,7 +92,7 @@ func TestTask2(t *testing.T) {
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"deploymentid":  deploymentID,
+		"deploymentID":  deploymentID,
 		"time":          100,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -103,7 +103,7 @@ func TestTask2(t *testing.T) {
 		},
 	}
 	taskPostData2 := map[string]interface{}{
-		"deploymentid": -1,
+		"deploymentID": -1,
 	}
 	taskPostData3 := map[string]interface{}{
 		"fuzzerID": -1,

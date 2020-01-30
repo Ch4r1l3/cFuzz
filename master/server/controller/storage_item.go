@@ -11,7 +11,7 @@ import (
 type StorageItemController struct{}
 
 type StorageItemTypeReq struct {
-	Type string `json:"type" binding:"required"`
+	Type string `uri:"type" binding:"required"`
 }
 
 // swagger:model
@@ -61,6 +61,11 @@ func (sic *StorageItemController) List(c *gin.Context) {
 		offset := c.GetInt("offset")
 		limit := c.GetInt("limit")
 		err = models.GetObjectsPagination(&storageItems, offset, limit)
+	}
+	for i, _ := range storageItems {
+		if !storageItems[i].ExistsInImage {
+			storageItems[i].Path = ""
+		}
 	}
 	if err != nil {
 		utils.DBError(c)
@@ -120,12 +125,16 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 		limit := c.GetInt("limit")
 		storageItems, err = models.GetStorageItemsByTypePagination(req.Type, offset, limit)
 	}
+	for i, _ := range storageItems {
+		if !storageItems[i].ExistsInImage {
+			storageItems[i].Path = ""
+		}
+	}
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, storageItems)
-
 }
 
 // Create Exist StorageItem

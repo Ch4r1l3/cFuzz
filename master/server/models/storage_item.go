@@ -9,7 +9,7 @@ type StorageItem struct {
 	// example: afl
 	Name string `json:"name"`
 
-	Path string `json:"-"`
+	Path string `json:"path"`
 
 	// example: fuzzer
 	Type string `json:"type"`

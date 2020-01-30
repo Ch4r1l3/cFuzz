@@ -12,7 +12,7 @@ type Task struct {
 	Image string `json:"image"`
 
 	// example: 1
-	DeploymentID uint64 `json:"deploymentid"`
+	DeploymentID uint64 `json:"deploymentID"`
 
 	// example: 60
 	Time uint64 `json:"time"`

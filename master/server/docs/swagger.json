@@ -584,6 +584,31 @@
         }
       }
     },
+    "/task/count": {
+      "get": {
+        "description": "count of task",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "task"
+        ],
+        "summary": "count of task",
+        "operationId": "countTask",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/CountResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
     "/task/{id}": {
       "get": {
         "description": "retrieve task",
@@ -936,6 +961,10 @@
           "x-go-name": "Name",
           "example": "afl"
         },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
         "type": {
           "type": "string",
           "x-go-name": "Type",
@@ -974,7 +1003,7 @@
           "x-go-name": "CorpusID",
           "example": 2
         },
-        "deploymentid": {
+        "deploymentID": {
           "type": "integer",
           "format": "uint64",
           "x-go-name": "DeploymentID",
@@ -1063,7 +1092,7 @@
           "x-go-name": "CorpusID",
           "example": 2
         },
-        "deploymentid": {
+        "deploymentID": {
           "type": "integer",
           "format": "uint64",
           "x-go-name": "DeploymentID",
@@ -1171,7 +1200,7 @@
           "x-go-name": "CorpusID",
           "example": 2
         },
-        "deploymentid": {
+        "deploymentID": {
           "type": "integer",
           "format": "uint64",
           "x-go-name": "DeploymentID",
@@ -1311,7 +1340,7 @@
           "x-go-name": "CorpusID",
           "example": 2
         },
-        "deploymentid": {
+        "deploymentID": {
           "type": "integer",
           "format": "uint64",
           "x-go-name": "DeploymentID",

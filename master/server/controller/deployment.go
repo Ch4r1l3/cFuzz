@@ -119,7 +119,14 @@ func (dc *DeploymentController) SimpList(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
-	err := models.GetObjects(&deployments)
+	var err error
+	if !c.GetBool("pagination") {
+		err = models.GetObjects(&deployments)
+	} else {
+		offset := c.GetInt("offset")
+		limit := c.GetInt("limit")
+		err = models.GetObjectsPagination(&deployments, offset, limit)
+	}
 	if err != nil {
 		utils.DBError(c)
 		return

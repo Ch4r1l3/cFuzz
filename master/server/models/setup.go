@@ -18,7 +18,7 @@ func GetObjects(objs interface{}) error {
 
 func GetCount(objs interface{}) (int, error) {
 	var count int
-	err := DB.Find(objs).Count(&count).Error
+	err := DB.Model(objs).Count(&count).Error
 	return count, err
 }
 
