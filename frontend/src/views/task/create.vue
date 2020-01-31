@@ -1,14 +1,14 @@
 <template>
   <div class="app-container">
-    <task-detail />
+    <task-create-edit />
   </div>
 </template>
 
 <script>
-import TaskDetail from './components/TaskDetail'
+import TaskCreateEdit from './components/TaskCreateEdit'
 export default {
   name: 'CreateTask',
-  components: { TaskDetail }
+  components: { TaskCreateEdit }
 }
 </script>
 

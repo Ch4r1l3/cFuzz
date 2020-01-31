@@ -14,6 +14,11 @@
         fit
         highlight-current-row
       >
+        <el-table-column type="expand">
+          <template :id="'deploy'+scope.row.id" slot-scope="scope">
+            <deployment-expand :deploy-id="scope.row.id" />
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="ID" width="95">
           <template slot-scope="scope">
             {{ scope.row.id }}
@@ -68,8 +73,10 @@
 import { getCount, getSimpListPagination, deleteItem } from '@/api/deployment'
 import { pageSize } from '@/settings'
 import { getOffset } from '@/utils'
+import DeploymentExpand from '@/components/DeploymentExpand'
 
 export default {
+  components: { DeploymentExpand },
   data() {
     return {
       listLoading: true,
@@ -89,6 +96,9 @@ export default {
       this.listLoading = true
       const offset = getOffset(this.currentPage, pageSize)
       getSimpListPagination(offset, pageSize).then((data) => {
+        data.forEach((item, index) => {
+          data[index].content = ''
+        })
         this.items = data
         getCount().then((res) => {
           this.count = res.count
@@ -100,8 +110,6 @@ export default {
       deleteItem(item).then(() => {
         this.$message('delete success')
         this.fetchData()
-      }).catch((error) => {
-        this.$message.error(error)
       })
     },
     handleCurrentChange(val) {

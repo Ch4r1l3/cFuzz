@@ -14,6 +14,24 @@
         fit
         highlight-current-row
       >
+        <el-table-column type="expand">
+          <template slot-scope="scope">
+            <el-form label-position="left">
+              <el-form-item label="Type">
+                <el-tag :type="scope.row.type | typeFilter">
+                  {{ scope.row.type }}
+                </el-tag>
+              </el-form-item>
+              <el-form-item label="Exist in Image">
+                <i v-if="scope.row.existsInImage" class="el-icon-check" />
+                <i v-else class="el-icon-close" />
+              </el-form-item>
+              <el-form-item v-if="scope.row.existsInImage" label="Path">
+                {{ scope.row.path }}
+              </el-form-item>
+            </el-form>
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="ID" width="95">
           <template slot-scope="scope">
             {{ scope.row.id }}
@@ -24,24 +42,11 @@
             {{ scope.row.name }}
           </template>
         </el-table-column>
-        <el-table-column label="Path" width="100" align="center">
-          <template slot-scope="scope">
-            <el-tooltip v-if="scope.row.existsInImage" class="item" effect="dark" :content="scope.row.path" placement="top">
-              <i class="el-icon-more-outline" />
-            </el-tooltip>
-          </template>
-        </el-table-column>
         <el-table-column label="Type" width="85" align="center">
           <template slot-scope="scope">
             <el-tag :type="scope.row.type | typeFilter">
               {{ scope.row.type }}
             </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="Exist in Image" width="115" align="center">
-          <template slot-scope="scope">
-            <i v-if="scope.row.existsInImage" class="el-icon-check" />
-            <i v-else class="el-icon-close" />
           </template>
         </el-table-column>
         <el-table-column label="Delete" width="110" align="center">
@@ -85,7 +90,7 @@ export default {
     typeFilter(type) {
       const typeMap = {
         fuzzer: 'success',
-        target: 'info',
+        target: '',
         corpus: 'danger'
       }
       return typeMap[type]
@@ -120,8 +125,6 @@ export default {
       deleteItem(item).then(() => {
         this.$message('delete success')
         this.fetchData()
-      }).catch((error) => {
-        this.$message.error(error)
       })
     },
     handleCurrentChange(val) {

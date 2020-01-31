@@ -12,6 +12,8 @@ import App from './App'
 import store from './store'
 import router from './router'
 
+import 'codemirror/theme/monokai.css'
+
 var VueCodeMirror = require('vue-codemirror-lite')
 Vue.use(VueCodeMirror)
 

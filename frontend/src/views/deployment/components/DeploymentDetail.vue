@@ -6,7 +6,7 @@
           <el-input v-model="deployment.name" />
         </el-form-item>
         <el-form-item label="Content">
-          <codemirror v-model="deployment.content" />
+          <codemirror v-model="deployment.content" :options="{ theme: 'monokai', mode: 'text/x-yaml', lineNumbers: true }" />
         </el-form-item>
         <el-form-item>
           <el-button v-if="isEdit" v-loading="loading" type="primary" @click="edit">Edit</el-button>
@@ -52,11 +52,6 @@ export default {
       getItem(id).then((data) => {
         this.deployment = data
         this.loading = false
-      }).catch(error => {
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     create() {
@@ -69,15 +64,10 @@ export default {
       }
       this.loading = true
       createItem(this.deployment).then(() => {
-        this.loading = false
         this.$message('create success')
         this.routerBack()
-      }).catch((error) => {
+      }).finally(() => {
         this.loading = false
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     edit() {
@@ -90,15 +80,10 @@ export default {
       }
       this.loading = true
       editItem(this.deployment).then(() => {
-        this.loading = false
         this.$message('edit success')
         this.routerBack()
-      }).catch((error) => {
+      }).finally(() => {
         this.loading = false
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     }
   }
@@ -108,6 +93,9 @@ export default {
 <style scoped>
 .line{
   text-align: center;
+}
+.el-form-item__content .CodeMirror {
+    line-height: 25px;
 }
 </style>
 

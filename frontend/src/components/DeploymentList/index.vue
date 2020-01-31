@@ -11,6 +11,11 @@
         max-height="300"
         style="width: 100%"
       >
+        <el-table-column type="expand">
+          <template :id="'deploy'+scope.row.id" slot-scope="scope">
+            <deployment-expand :deploy-id="scope.row.id" />
+          </template>
+        </el-table-column>
         <el-table-column align="center" label="ID" width="95">
           <template slot-scope="scope">
             {{ scope.row.id }}
@@ -46,9 +51,11 @@
 import { getCount, getSimpListPagination } from '@/api/deployment'
 import { pageSize } from '@/settings'
 import { getOffset } from '@/utils'
+import DeploymentExpand from '@/components/DeploymentExpand'
 
 export default {
   name: 'DeploymentList',
+  components: { DeploymentExpand },
   data() {
     return {
       listLoading: true,

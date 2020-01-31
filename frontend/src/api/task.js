@@ -43,3 +43,31 @@ export function deleteItem(item) {
     method: 'delete'
   })
 }
+
+export function startItem(item) {
+  return request({
+    url: `/api/task/${item.id}/start`,
+    method: 'post'
+  })
+}
+
+export function stopItem(item) {
+  return request({
+    url: `/api/task/${item.id}/stop`,
+    method: 'post'
+  })
+}
+
+export function getCrashes(item) {
+  return request({
+    url: `/api/task/${item.id}/crash`,
+    method: 'get'
+  })
+}
+
+export function getResult(item) {
+  return request({
+    url: `/api/task/${item.id}/result`,
+    method: 'get'
+  })
+}

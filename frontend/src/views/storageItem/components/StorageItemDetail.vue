@@ -82,11 +82,6 @@ export default {
       getItem(id).then((data) => {
         this.storageItem = data
         this.loading = false
-      }).catch(error => {
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     create() {
@@ -94,8 +89,6 @@ export default {
         createItem(this.storageItem).then(() => {
           this.$message('create susscess')
           this.routerBack()
-        }).catch((error) => {
-          this.$message.error(error)
         })
       } else {
         if (this.storageItem.name.length === 0) {
@@ -118,15 +111,10 @@ export default {
       }
       this.loading = true
       editItem(this.storageItem).then(() => {
-        this.loading = false
         this.$message('edit success')
         this.routerBack()
-      }).catch((error) => {
+      }).finally(() => {
         this.loading = false
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     uploadSuccess() {

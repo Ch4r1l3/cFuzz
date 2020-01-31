@@ -1,0 +1,35 @@
+export function getServerItem(item) {
+  const temp = Object.assign({}, item)
+  var tempArguement = {}
+  temp.arguments.forEach((arguement) => {
+    tempArguement[arguement.key] = arguement.value
+  })
+  var tempEnvironment = []
+  temp.environments.forEach((environment) => {
+    tempEnvironment.push(environment.key + '=' + environment.value)
+  })
+  temp.arguments = tempArguement
+  temp.environments = tempEnvironment
+  temp.deploymentID = Number(temp.deploymentID)
+  temp.fuzzerID = Number(temp.fuzzerID)
+  temp.corpusID = Number(temp.corpusID)
+  temp.targetID = Number(temp.targetID)
+  return temp
+}
+
+export function parseServerItem(item) {
+  var tempArguement = []
+  Object.keys(item.arguments).forEach((key) => {
+    tempArguement.push({ 'key': key, 'value': item.arguments[key] })
+  })
+  var tempEnvironment = []
+  item.environments.forEach((val) => {
+    const index = val.indexOf('=')
+    if (index !== -1) {
+      tempEnvironment.push({ 'key': val.substring(0, index), 'value': val.substring(index + 1) })
+    }
+  })
+  item.arguments = tempArguement
+  item.environments = tempEnvironment
+  return item
+}

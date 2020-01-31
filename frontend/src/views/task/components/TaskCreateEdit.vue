@@ -6,7 +6,7 @@
           <el-input v-model="task.name" />
         </el-form-item>
         <el-form-item label="Time (second)">
-          <el-input-number v-model="task.time" :min="1" />
+          <el-input-number v-model="task.time" :min="1" type="number" />
         </el-form-item>
         <el-form-item label="UseDeployment">
           <el-switch v-model="useDeployment" />
@@ -15,7 +15,7 @@
           <el-input v-model="task.image" />
         </el-form-item>
         <el-form-item v-else label="Deployment ID">
-          <el-input v-model="task.deploymentID" placeholder="input Deployment ID" class="id-input">
+          <el-input v-model="task.deploymentID" placeholder="input Deployment ID" class="id-input" type="number">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="deployDialogVisible=true"> Choose </el-button>
           </el-input>
         </el-form-item>
@@ -23,17 +23,17 @@
           <el-input-number v-model="task.fuzzCycleTime" :min="1" />
         </el-form-item>
         <el-form-item label="Fuzzer ID">
-          <el-input v-model="task.fuzzerID" placeholder="input Fuzzer ID" class="id-input">
+          <el-input v-model="task.fuzzerID" placeholder="input Fuzzer ID" class="id-input" type="number">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.fuzzer = true"> Choose </el-button>
           </el-input>
         </el-form-item>
         <el-form-item label="Corpus ID">
-          <el-input v-model="task.corpusID" placeholder="input Corpus ID" class="id-input">
+          <el-input v-model="task.corpusID" placeholder="input Corpus ID" class="id-input" type="number">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.corpus = true"> Choose </el-button>
           </el-input>
         </el-form-item>
         <el-form-item label="Target ID">
-          <el-input v-model="task.targetID" placeholder="input Target ID" class="id-input">
+          <el-input v-model="task.targetID" placeholder="input Target ID" class="id-input" type="number">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.target = true"> Choose </el-button>
           </el-input>
         </el-form-item>
@@ -98,8 +98,9 @@
 import { getItem, createItem, editItem } from '@/api/task'
 import DeploymentList from '@/components/DeploymentList'
 import StorageItemList from '@/components/StorageItemList'
+import { getServerItem, parseServerItem } from '@/utils/task'
 export default {
-  name: 'TaskDetail',
+  name: 'TaskCreateEdit',
   components: { DeploymentList, StorageItemList },
   props: {
     isEdit: {
@@ -144,13 +145,9 @@ export default {
     get(id) {
       this.loading = true
       getItem(id).then((data) => {
-        this.task = data
+        this.task = parseServerItem(data)
+        this.useDeployment = this.task.deploymentID !== 0
         this.loading = false
-      }).catch(error => {
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     create() {
@@ -162,16 +159,17 @@ export default {
         return
       }
       this.loading = true
-      createItem(this.task).then(() => {
-        this.loading = false
+      const temp = getServerItem(this.task)
+      if (this.useDeployment) {
+        temp.image = ''
+      } else {
+        temp.deploymentID = 0
+      }
+      createItem(temp).then(() => {
         this.$message('create success')
         this.routerBack()
-      }).catch((error) => {
+      }).finally(() => {
         this.loading = false
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     edit() {
@@ -183,16 +181,17 @@ export default {
         return
       }
       this.loading = true
-      editItem(this.task).then(() => {
-        this.loading = false
+      const temp = getServerItem(this.task)
+      if (this.useDeployment) {
+        temp.image = ''
+      } else {
+        temp.deploymentID = 0
+      }
+      editItem(temp).then(() => {
         this.$message('edit success')
         this.routerBack()
-      }).catch((error) => {
+      }).finally(() => {
         this.loading = false
-        this.$message({
-          message: error,
-          type: 'warning'
-        })
       })
     },
     addArgument() {
