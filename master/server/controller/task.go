@@ -280,6 +280,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 	} else {
 		if !models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
 			utils.BadRequestWithMsg(c, "deployment not exists")
+			return
 		}
 		task.DeploymentID = req.DeploymentID
 	}
@@ -399,7 +400,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		}
 	} else if task.DeploymentID != 0 {
 		var tempDeployment models.Deployment
-		if err = models.GetObjectByID(&tempDeployment, task.ID); err != nil {
+		if err = models.GetObjectByID(&tempDeployment, task.DeploymentID); err != nil {
 			Err = err
 			utils.BadRequestWithMsg(c, "deployment not exists")
 			return
@@ -521,7 +522,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var task models.Task
@@ -532,7 +533,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	var req TaskUpdateReq
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 
@@ -561,7 +562,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 				return
 			}
 		} else {
-			utils.BadRequest(c)
+			utils.BadRequestWithMsg(c, "deployment id not exist")
 			return
 		}
 	}
@@ -573,7 +574,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 			var storageItem models.StorageItem
 			err = models.GetObjectByID(&storageItem, ids[i])
 			if err != nil {
-				utils.BadRequest(c)
+				utils.BadRequestWithMsg(c, types[i]+" not exist")
 				return
 			}
 			if storageItem.Type != types[i] {
