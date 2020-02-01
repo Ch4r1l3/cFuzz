@@ -143,6 +143,7 @@ export default {
   },
   methods: {
     fetchData() {
+      this.items = []
       this.listLoading = true
       const offset = getOffset(this.currentPage, pageSize)
       getItemsPagination(offset, pageSize).then((data) => {

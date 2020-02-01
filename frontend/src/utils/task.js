@@ -33,3 +33,16 @@ export function parseServerItem(item) {
   item.environments = tempEnvironment
   return item
 }
+
+export function parseServerStats(item) {
+  var stats = []
+  Object.keys(item).forEach((key) => {
+    if (key !== 'stats' && key !== 'id' && key !== 'taskid') {
+      stats.push({ 'key': key, 'value': item[key] })
+    }
+  })
+  Object.keys(item.stats).forEach((key) => {
+    stats.push({ 'key': key, 'value': item.stats[key] })
+  })
+  return stats
+}

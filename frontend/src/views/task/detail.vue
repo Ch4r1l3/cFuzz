@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row>
       <el-page-header @back="routerBack" />
-      <el-form ref="form" :model="task" label-width="120px" style="margin-top: 30px">
+      <el-form id="detail-form" ref="form" :model="task" label-width="120px" style="margin-top: 30px">
         <el-form-item label="ID:">
           {{ task.id }}
         </el-form-item>
@@ -41,8 +41,10 @@
         <el-form-item v-if="task.startedAt !== 0" label="Started At:">
           {{ getTimeString(task.startedAt) }}
         </el-form-item>
+      </el-form>
+      <el-form id="detail-tables" :model="task" label-position="top" label-width="120px">
         <el-form-item v-if="task.arguments.length!==0" label="Arguments:">
-          <el-table :data="task.arguments">
+          <el-table :data="task.arguments" :max-height="300">
             <el-table-column label="Key" align="center">
               <template v-slot:default="env">
                 {{ env.row.key }}
@@ -56,7 +58,7 @@
           </el-table>
         </el-form-item>
         <el-form-item v-if="task.environments.length!==0" label="Environments:">
-          <el-table :data="task.environments">
+          <el-table :data="task.environments" :max-height="300">
             <el-table-column label="Key" align="center">
               <template v-slot:default="env">
                 {{ env.row.key }}
@@ -69,14 +71,48 @@
             </el-table-column>
           </el-table>
         </el-form-item>
+        <el-form-item v-if="crashes.length !== 0" id="detail-crash" label="Crashes:">
+          <el-table :data="crashes" :max-height="300">
+            <el-table-column label="ID" align="center">
+              <template v-slot:default="crash">
+                {{ crash.row.id }}
+              </template>
+            </el-table-column>
+            <el-table-column label="ReproduceAble" align="center">
+              <template v-slot:default="crash">
+                {{ crash.row.reproduceAble }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Action" align="center">
+              <template v-slot:default="crash">
+                <el-link :href="`api/crash/${crash.row.id}`" target="_blank">Download</el-link>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+        <el-form-item v-if="stats.length !== 0" id="detail-stats" label="Stats:">
+          <el-table :data="stats" :max-height="300">
+            <el-table-column label="Key" align="center">
+              <template v-slot:default="stat">
+                {{ stat.row.key }}
+              </template>
+            </el-table-column>
+            <el-table-column label="Value" align="center">
+              <template v-slot:default="stat">
+                {{ stat.row.value }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+
       </el-form>
     </el-row>
   </div>
 </template>
 
 <script>
-import { getItem } from '@/api/task'
-import { parseServerItem } from '@/utils/task'
+import { getItem, getCrashes, getResult, downloadCrash } from '@/api/task'
+import { parseServerItem, parseServerStats } from '@/utils/task'
 export default {
   filters: {
     statusFilter(status) {
@@ -107,8 +143,7 @@ export default {
         targetID: 0
       },
       crashes: [],
-      stats: [],
-      loading: false
+      stats: []
     }
   },
   created() {
@@ -120,24 +155,56 @@ export default {
       this.$router.back(-1)
     },
     get(id) {
-      this.loading = true
-      getItem(id).then((data) => {
-        this.task = parseServerItem(data)
-        this.useDeployment = this.task.deploymentID !== 0
-        this.loading = false
+      this.$nextTick(() => {
+        const loading1 = this.$loading({
+          lock: true,
+          fullscreen: false,
+          target: '#detail-form'
+        })
+        getItem(id).then((data) => {
+          this.task = parseServerItem(data)
+          this.useDeployment = this.task.deploymentID !== 0
+        }).finally(() => {
+          loading1.close()
+        })
+        const loading2 = this.$loading({
+          lock: true,
+          fullscreen: false,
+          target: '#detail-crash'
+        })
+        getCrashes(id).then((res) => {
+          this.crashes = res
+        }).finally(() => {
+          loading2.close()
+        })
+        const loading3 = this.$loading({
+          lock: true,
+          fullscreen: false,
+          target: '#detail-stats'
+        })
+        getResult(id).then((res) => {
+          this.stats = parseServerStats(res)
+        }).finally(() => {
+          loading3.close()
+        })
       })
     },
     getTimeString(val) {
       var t = new Date(val * 1000)
       return t.toLocaleString()
+    },
+    downloadCrash(item) {
+      downloadCrash(item.id)
     }
   }
 }
 </script>
 
-<style scoped>
-.line{
-  text-align: center;
+<style>
+#detail-tables label{
+    width: 120px;
+    padding: 0 12px 0 0;
+    text-align: right;
 }
 </style>
 

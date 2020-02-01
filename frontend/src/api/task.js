@@ -58,16 +58,23 @@ export function stopItem(item) {
   })
 }
 
-export function getCrashes(item) {
+export function getCrashes(id) {
   return request({
-    url: `/api/task/${item.id}/crash`,
+    url: `/api/task/${id}/crash`,
     method: 'get'
   })
 }
 
-export function getResult(item) {
+export function getResult(id) {
   return request({
-    url: `/api/task/${item.id}/result`,
+    url: `/api/task/${id}/result`,
+    method: 'get'
+  })
+}
+
+export function downloadCrash(id) {
+  return request({
+    url: `/api/crash/${id}`,
     method: 'get'
   })
 }
