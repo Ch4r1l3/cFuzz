@@ -4,3 +4,4 @@
 *~
 *.db
 /master/server/controller/crashes
+/master/server/crashes

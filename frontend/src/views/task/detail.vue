@@ -85,7 +85,7 @@
             </el-table-column>
             <el-table-column label="Action" align="center">
               <template v-slot:default="crash">
-                <el-link :href="`api/crash/${crash.row.id}`" target="_blank">Download</el-link>
+                <el-link :href="`api/crash/${crash.row.id}`" target="_blank" type="primary">Download</el-link>
               </template>
             </el-table-column>
           </el-table>

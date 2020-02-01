@@ -83,6 +83,9 @@ type TaskUpdateReq struct {
 type TaskResp struct {
 	models.Task
 
+	// example: 1
+	CrashNum int `json:"crashNum"`
+
 	// example: ["AFL_FUZZ=1", "ASAN=1"]
 	Environments []string `json:"environments"`
 
@@ -145,8 +148,14 @@ func (tc *TaskController) List(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
+		crashNum, err := models.GetCountByTaskID(&models.TaskCrash{}, task.ID)
+		if err != nil {
+			utils.DBError(c)
+			return
+		}
 		results = append(results, TaskResp{
 			Task:         task,
+			CrashNum:     crashNum,
 			Environments: environments,
 			Arguments:    arguments,
 		})
@@ -221,8 +230,14 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		utils.DBError(c)
 		return
 	}
+	crashNum, err := models.GetCountByTaskID(&models.TaskCrash{}, task.ID)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
 	c.JSON(http.StatusOK, TaskResp{
 		Task:         task,
+		CrashNum:     crashNum,
 		Environments: environments,
 		Arguments:    arguments,
 	})

@@ -38,6 +38,11 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="Crash Num" width="110" align="center">
+          <template slot-scope="scope">
+            {{ scope.row.crashNum }}
+          </template>
+        </el-table-column>
         <el-table-column label="Edit" width="95" align="center">
           <template v-if="scope.row.status === 'TaskCreated'" slot-scope="scope">
             <router-link :to="'/task/edit/'+scope.row.id">

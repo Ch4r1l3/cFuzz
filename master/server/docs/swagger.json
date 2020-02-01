@@ -1200,6 +1200,12 @@
           "x-go-name": "CorpusID",
           "example": 2
         },
+        "crashNum": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "CrashNum",
+          "example": 1
+        },
         "deploymentID": {
           "type": "integer",
           "format": "uint64",

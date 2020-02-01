@@ -137,6 +137,12 @@ func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
 
+func GetCountByTaskID(obj interface{}, taskid uint64) (int, error) {
+	var count int
+	err := DB.Model(obj).Where("task_id = ?", taskid).Count(&count).Error
+	return count, err
+}
+
 func GetObjectsByTaskIDPagination(obj interface{}, taskid uint64, offset int, limit int) error {
 	return DB.Where("task_id = ?", taskid).Offset(offset).Limit(limit).Find(obj).Error
 }
