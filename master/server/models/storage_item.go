@@ -16,6 +16,10 @@ type StorageItem struct {
 
 	// example: true
 	ExistsInImage bool `json:"existsInImage"`
+
+	// if upload file is zip and type is not corpus, this field specefiy the path of file like target
+	// example: test/target
+	RelPath string `json:"relPath"`
 }
 
 // storage item types

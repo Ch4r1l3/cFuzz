@@ -35,6 +35,9 @@
             <div class="el-upload__text">drag file here, or <em>choose file</em></div>
           </el-upload>
         </el-form-item>
+        <el-form-item v-if="showRelPath" label="RelPath">
+          <el-input v-model="storageItem.relPath" placeholder="if upload file is zip, enter the relative path of file in zip, like abc/bcd"/>
+        </el-form-item>
         <el-form-item>
           <el-button v-if="isEdit" v-loading="loading" type="primary" @click="edit">Edit</el-button>
           <el-button v-else v-loading="loading" type="primary" @click="create">Create</el-button>
@@ -75,7 +78,8 @@ export default {
         name: '',
         type: '',
         existsInImage: true,
-        path: ''
+        path: '',
+        relPath: ''
       },
       loading: false,
       fileList: [],
@@ -93,6 +97,11 @@ export default {
           { validator: checkFile, trigger: 'change' }
         ]
       }
+    }
+  },
+  computed: {
+    showRelPath: function() {
+      return !this.storageItem.existsInImage && this.storageItem.type && this.storageItem.type !== 'corpus'
     }
   },
   created() {

@@ -354,6 +354,12 @@
             "name": "file",
             "in": "formData",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "if upload file is zip and type is not corpus, this field specefiy the path of file like target",
+            "name": "relPath",
+            "in": "formData"
           }
         ],
         "responses": {
@@ -964,6 +970,12 @@
         "path": {
           "type": "string",
           "x-go-name": "Path"
+        },
+        "relPath": {
+          "description": "if upload file is zip and type is not corpus, this field specefiy the path of file like target",
+          "type": "string",
+          "x-go-name": "RelPath",
+          "example": "test/target"
         },
         "type": {
           "type": "string",

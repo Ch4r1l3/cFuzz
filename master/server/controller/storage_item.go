@@ -211,6 +211,11 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	//   in: formData
 	//   required: true
 	//   type: file
+	// - name: relPath
+	//   description: if upload file is zip and type is not corpus, this field specefiy the path of file like target
+	//   in: formData
+	//   required: false
+	//   type: string
 	//
 	// responses:
 	//   '201':
@@ -247,9 +252,10 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		return
 	}
 	storageItem := models.StorageItem{
-		Name: name,
-		Path: tempFile,
-		Type: mtype,
+		Name:    name,
+		Path:    tempFile,
+		Type:    mtype,
+		RelPath: c.PostForm("relPath"),
 	}
 	err = models.InsertObject(&storageItem)
 	if err != nil {

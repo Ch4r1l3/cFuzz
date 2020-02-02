@@ -29,6 +29,9 @@
               <el-form-item v-if="scope.row.existsInImage" label="Path">
                 {{ scope.row.path }}
               </el-form-item>
+              <el-form-item v-if="scope.row.relPath" label="Relative Path of File in Zip">
+                {{ scope.row.relPath }}
+              </el-form-item>
             </el-form>
           </template>
         </el-table-column>

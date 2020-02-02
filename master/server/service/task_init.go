@@ -90,7 +90,8 @@ func initDeployTask(deploy *appsv1.Deployment) {
 			botids = append(botids, resp.ID)
 		} else {
 			form := map[string]string{
-				"type": types[i],
+				"type":    types[i],
+				"relPath": storageItem.RelPath,
 			}
 			result, err := requestProxyPostWithFile(uint64(taskID), []string{"storage_item"}, form, storageItem.Path)
 			if err != nil {

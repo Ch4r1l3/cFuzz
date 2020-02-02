@@ -6,15 +6,20 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 func SaveTempFile(c *gin.Context, formName string, tempFilePrefix string) (string, error) {
-	file, _, err := c.Request.FormFile(formName)
+	file, header, err := c.Request.FormFile(formName)
 	if err != nil {
-		BadRequest(c)
+		BadRequestWithMsg(c, "please upload file")
 		return "", err
 	}
-	tempFile, err := ioutil.TempFile(config.ServerConf.TempPath, tempFilePrefix)
+	prefix := tempFilePrefix
+	if strings.HasSuffix(header.Filename, ".zip") {
+		prefix += ".*.zip"
+	}
+	tempFile, err := ioutil.TempFile(config.ServerConf.TempPath, prefix)
 	if err != nil {
 		InternalErrorWithMsg(c, "error create temp file")
 		return "", err
