@@ -362,7 +362,7 @@
         "responses": {
           "200": {
             "schema": {
-              "$ref": "#/definitions/TaskFuzzResult"
+              "$ref": "#/definitions/TaskResultResp"
             }
           },
           "500": {
@@ -626,6 +626,39 @@
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/bot/server/models"
+    },
+    "TaskResultResp": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "x-go-name": "Command",
+          "example": "/afl/afl-fuzz -i xxx -o xxx ./test"
+        },
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Stats",
+          "example": {
+            "cycles_done": "60"
+          }
+        },
+        "timeExecuted": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "TimeExecuted",
+          "example": 60
+        },
+        "updateAt": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "UpdateAt",
+          "example": 1579996805
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/bot/server/controller"
     }
   }
 }

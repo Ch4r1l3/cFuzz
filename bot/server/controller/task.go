@@ -215,7 +215,7 @@ func (tc *TaskController) StopFuzz(c *gin.Context) {
 		models.DB.Model(task).Update("Status", models.TaskStopped)
 		c.JSON(http.StatusNoContent, "")
 	} else {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, "task is not running")
 	}
 }
 
@@ -275,7 +275,7 @@ func (tc *TaskController) StartFuzz(c *gin.Context) {
 		models.DB.Model(task).Update("Status", models.TaskRunning)
 		c.JSON(http.StatusNoContent, "")
 	} else {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, "task status is not created")
 	}
 }
 

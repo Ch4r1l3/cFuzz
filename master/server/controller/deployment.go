@@ -209,7 +209,7 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	var req DeploymentReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	deployment := models.Deployment{
@@ -259,13 +259,13 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var req DeploymentReq
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var deployment models.Deployment
@@ -313,7 +313,7 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	err = models.DeleteObjectByID(models.Deployment{}, uriReq.ID)

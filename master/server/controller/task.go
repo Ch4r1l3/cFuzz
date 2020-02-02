@@ -368,7 +368,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var task models.Task
@@ -477,7 +477,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var task models.Task
@@ -664,7 +664,7 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	var task models.Task

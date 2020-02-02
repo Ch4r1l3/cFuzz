@@ -55,7 +55,7 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt")
+	obj.Keys().ContainsOnly("id", "deploymentID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt", "crashNum")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentID").NotEqual(0)
 	obj.Value("time").NotEqual(0)
@@ -373,7 +373,7 @@ func TestTask8(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*8) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
 	obj := e.GET("/api/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
 	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats", "id", "taskid")

@@ -64,7 +64,7 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 
 	var req TaskIDReq
 	if err := c.ShouldBindUri(&req); err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	crash, err := models.GetCrashByID(req.ID)

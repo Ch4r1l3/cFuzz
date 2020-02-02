@@ -16,7 +16,7 @@ func TaskGetHandler(c *gin.Context) {
 		} else {
 			n, err := strconv.ParseUint(p1, 10, 64)
 			if err != nil {
-				utils.BadRequest(c)
+				utils.BadRequestWithMsg(c, err.Error())
 				return
 			}
 			task.Retrieve(c, n)
@@ -24,7 +24,7 @@ func TaskGetHandler(c *gin.Context) {
 	} else if p1 != "" && p2 != "" {
 		n, err := strconv.ParseUint(p1, 10, 64)
 		if err != nil {
-			utils.BadRequest(c)
+			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
 		if p2 == "crash" {
@@ -51,7 +51,7 @@ func DeploymentGetHandler(c *gin.Context) {
 	} else {
 		n, err := strconv.ParseUint(p1, 10, 64)
 		if err != nil {
-			utils.BadRequest(c)
+			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
 		deploymentController.Retrieve(c, n)

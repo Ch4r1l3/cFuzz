@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/jinzhu/gorm"
 	"time"
 )
 
@@ -49,10 +50,16 @@ func CreateFuzzResult(command []string, stats map[string]string, timeExecuted in
 func GetFuzzResult() (*TaskFuzzResult, map[string]string, error) {
 	var result TaskFuzzResult
 	if err := DB.First(&result).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil
+		}
 		return nil, nil, err
 	}
 	resultStats := []TaskFuzzResultStat{}
 	if err := DB.Find(&resultStats).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil, nil
+		}
 		return nil, nil, err
 	}
 	stats := make(map[string]string)

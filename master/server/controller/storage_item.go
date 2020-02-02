@@ -110,7 +110,7 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	var req StorageItemTypeReq
 	var err error
 	if err := c.ShouldBindUri(&req); err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	if !models.IsStorageItemTypeValid(req.Type) {
@@ -167,7 +167,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 
 	var req StorageItemExistReq
 	if err := c.ShouldBind(&req); err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	if !models.IsStorageItemTypeValid(req.Type) {
@@ -293,7 +293,7 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	var req UriIDReq
 	err := c.ShouldBindUri(&req)
 	if err != nil {
-		utils.BadRequest(c)
+		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
 	if !models.IsObjectExistsByID(&models.StorageItem{}, req.ID) {
