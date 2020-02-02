@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"io"
@@ -14,17 +15,36 @@ import (
 	"time"
 )
 
-func bytes2interface(data []byte) (interface{}, error) {
+func parseResp(data []byte) error {
+	if !json.Valid(data) {
+		if len(data) > 2 {
+			return errors.New(string(data))
+		}
+		return nil
+	}
 	var temp interface{}
 	if err := json.Unmarshal(data, &temp); err != nil {
-		return nil, err
+		return err
 	}
-	return temp, nil
+	mobj, ok := temp.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	v, ok := mobj["error"]
+	if ok {
+		t, ok := v.(string)
+		if ok {
+			return errors.New(t)
+		} else {
+			return errors.New("parse bot response error")
+		}
+	}
+	return nil
 }
 
 func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	urls := append([]string{"proxy"}, url...)
-	result := ClientSet.
+	bytesData, err := ClientSet.
 		CoreV1().
 		RESTClient().
 		Get().
@@ -32,11 +52,11 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 		Resource("services").
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
-		Suffix(urls...).Do()
-
-	bytesData, _ := result.Raw()
-	err := result.Error()
-	return bytesData, err
+		Suffix(urls...).DoRaw()
+	if err != nil {
+		return nil, err
+	}
+	return bytesData, parseResp(bytesData)
 }
 
 func requestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
@@ -114,17 +134,18 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		request = client.Post()
 	}
 	urls := append([]string{"proxy"}, url...)
-	result := request.
+	bytesData, err := request.
 		Namespace(config.KubernetesConf.Namespace).
 		Resource("services").
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
 		Suffix(urls...).
 		Body(bytes).
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)*time.Second).
-		SetHeader("Content-Type", "application/json").Do()
-	bytesData, _ := result.Raw()
-	err = result.Error()
-	return bytesData, err
+		SetHeader("Content-Type", "application/json").DoRaw()
+	if err != nil {
+		return bytesData, err
+	}
+	return bytesData, parseResp(bytesData)
 }
 
 func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
@@ -163,7 +184,7 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		request = client.Post()
 	}
 	urls := append([]string{"proxy"}, url...)
-	result := request.
+	bytesData, err := request.
 		Namespace(config.KubernetesConf.Namespace).
 		Resource("services").
 		Name(fmt.Sprintf(ServiceNameFmt, taskID)).
@@ -171,8 +192,9 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		Body(body.Bytes()).
 		SetHeader("Content-Type", writer.FormDataContentType()).
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
-		Do()
-	bytesData, _ := result.Raw()
-	err = result.Error()
-	return bytesData, err
+		DoRaw()
+	if err != nil {
+		return bytesData, err
+	}
+	return bytesData, parseResp(bytesData)
 }
