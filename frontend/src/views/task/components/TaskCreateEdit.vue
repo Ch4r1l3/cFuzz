@@ -1,39 +1,39 @@
 <template>
   <div class="task-container">
     <el-row>
-      <el-form ref="form" :model="task" label-width="120px">
-        <el-form-item label="Name">
+      <el-form ref="form" :rules="rules" :model="task" label-width="120px">
+        <el-form-item label="Name" prop="name">
           <el-input v-model="task.name" />
         </el-form-item>
-        <el-form-item label="Time (second)">
-          <el-input-number v-model="task.time" :min="1" type="number" />
+        <el-form-item label="Time (second)" prop="time">
+          <el-input-number v-model.number="task.time" :min="1" type="number" />
         </el-form-item>
         <el-form-item label="UseDeployment">
           <el-switch v-model="useDeployment" />
         </el-form-item>
-        <el-form-item v-if="!useDeployment" label="Image">
+        <el-form-item v-if="!useDeployment" label="Image" prop="image">
           <el-input v-model="task.image" />
         </el-form-item>
-        <el-form-item v-else label="Deployment ID">
-          <el-input v-model="task.deploymentID" placeholder="input Deployment ID" class="id-input" type="number">
+        <el-form-item v-else label="Deployment ID" prop="deploymentID">
+          <el-input v-model.number="task.deploymentID" placeholder="input Deployment ID" class="id-input">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="deployDialogVisible=true"> Choose </el-button>
           </el-input>
         </el-form-item>
-        <el-form-item label="FuzzCycleTime (second)">
-          <el-input-number v-model="task.fuzzCycleTime" :min="1" />
+        <el-form-item label="FuzzCycleTime (second)" prop="fuzzCycleTime">
+          <el-input-number v-model.number="task.fuzzCycleTime" :min="1" />
         </el-form-item>
-        <el-form-item label="Fuzzer ID">
-          <el-input v-model="task.fuzzerID" placeholder="input Fuzzer ID" class="id-input" type="number">
+        <el-form-item label="Fuzzer ID" prop="fuzzerID">
+          <el-input v-model.number="task.fuzzerID" placeholder="input Fuzzer ID" class="id-input">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.fuzzer = true"> Choose </el-button>
           </el-input>
         </el-form-item>
-        <el-form-item label="Corpus ID">
-          <el-input v-model="task.corpusID" placeholder="input Corpus ID" class="id-input" type="number">
+        <el-form-item label="Corpus ID" prop="corpusID">
+          <el-input v-model.number="task.corpusID" placeholder="input Corpus ID" class="id-input">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.corpus = true"> Choose </el-button>
           </el-input>
         </el-form-item>
-        <el-form-item label="Target ID">
-          <el-input v-model="task.targetID" placeholder="input Target ID" class="id-input" type="number">
+        <el-form-item label="Target ID" prop="targetID">
+          <el-input v-model.number="task.targetID" placeholder="input Target ID" class="id-input">
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.target = true"> Choose </el-button>
           </el-input>
         </el-form-item>
@@ -109,6 +109,24 @@ export default {
     }
   },
   data() {
+    var checkImage = (rule, value, callback) => {
+      if (!this.useDeployment && this.task.image === '') {
+        callback(new Error('image is required'))
+      } else {
+        callback()
+      }
+    }
+    var checkDeployment = (rule, value, callback) => {
+      if (this.useDeployment && !this.task.deploymentID) {
+        callback(new Error('deploymentID is required'))
+      } else if (this.useDeployment && this.task.deploymentID.constructor.name !== 'Number') {
+        callback(new Error('deploymentID is not a number'))
+      } else if (this.useDeployment && this.task.deploymentID <= 0) {
+        callback(new Error('deployment ID should large than zero'))
+      } else {
+        callback()
+      }
+    }
     return {
       task: {
         name: '',
@@ -129,6 +147,35 @@ export default {
         fuzzer: false,
         corpus: false,
         target: false
+      },
+      rules: {
+        name: [
+          { required: true, trigger: 'blur' }
+        ],
+        time: [
+          { type: 'number', required: true, trigger: 'change' }
+        ],
+        image: [
+          { validator: checkImage, trigger: 'change' }
+        ],
+        deploymentID: [
+          { type: 'number', validator: checkDeployment }
+        ],
+        fuzzCycleTime: [
+          { type: 'number', required: true }
+        ],
+        fuzzerID: [
+          { type: 'number', required: true },
+          { type: 'number', min: 1 }
+        ],
+        targetID: [
+          { type: 'number', required: true },
+          { type: 'number', min: 1 }
+        ],
+        corpusID: [
+          { type: 'number', required: true },
+          { type: 'number', min: 1 }
+        ]
       }
     }
   },
@@ -151,47 +198,41 @@ export default {
       })
     },
     create() {
-      if (this.task.name.length === 0) {
-        this.$message({
-          message: 'name cannot be empty',
-          type: 'warning'
-        })
-        return
-      }
-      this.loading = true
-      const temp = getServerItem(this.task)
-      if (this.useDeployment) {
-        temp.image = ''
-      } else {
-        temp.deploymentID = 0
-      }
-      createItem(temp).then(() => {
-        this.$message('create success')
-        this.routerBack()
-      }).finally(() => {
-        this.loading = false
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true
+          const temp = getServerItem(this.task)
+          if (this.useDeployment) {
+            temp.image = ''
+          } else {
+            temp.deploymentID = 0
+          }
+          createItem(temp).then(() => {
+            this.$message('create success')
+            this.routerBack()
+          }).finally(() => {
+            this.loading = false
+          })
+        }
       })
     },
     edit() {
-      if (this.task.name.length === 0) {
-        this.$message({
-          message: 'name cannot be empty',
-          type: 'warning'
-        })
-        return
-      }
-      this.loading = true
-      const temp = getServerItem(this.task)
-      if (this.useDeployment) {
-        temp.image = ''
-      } else {
-        temp.deploymentID = 0
-      }
-      editItem(temp).then(() => {
-        this.$message('edit success')
-        this.routerBack()
-      }).finally(() => {
-        this.loading = false
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true
+          const temp = getServerItem(this.task)
+          if (this.useDeployment) {
+            temp.image = ''
+          } else {
+            temp.deploymentID = 0
+          }
+          editItem(temp).then(() => {
+            this.$message('edit success')
+            this.routerBack()
+          }).finally(() => {
+            this.loading = false
+          })
+        }
       })
     },
     addArgument() {

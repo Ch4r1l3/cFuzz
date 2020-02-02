@@ -1,11 +1,11 @@
 <template>
   <div class="storageItem-container">
     <el-row>
-      <el-form ref="form" :model="storageItem" label-width="120px">
-        <el-form-item label="Name">
+      <el-form ref="form" :rules="rules" :model="storageItem" label-width="120px">
+        <el-form-item label="Name" prop="name">
           <el-input v-model="storageItem.name" />
         </el-form-item>
-        <el-form-item label="Type">
+        <el-form-item label="Type" prop="type">
           <el-select v-model="storageItem.type" placeholder="please select the type">
             <el-option label="Fuzzer" value="fuzzer" />
             <el-option label="Corpus" value="corpus" />
@@ -15,10 +15,10 @@
         <el-form-item v-if="!isEdit" label="Exist In Image">
           <el-switch v-model="storageItem.existsInImage" />
         </el-form-item>
-        <el-form-item v-if="storageItem.existsInImage" label="Path">
+        <el-form-item v-if="storageItem.existsInImage" label="Path" prop="path">
           <el-input v-model="storageItem.path" />
         </el-form-item>
-        <el-form-item v-else>
+        <el-form-item v-else prop="file">
           <el-upload
             ref="upload"
             class="upload-demo"
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import { getItem, createItem, editItem } from '@/api/storageItem'
+import { getItem, createItem } from '@/api/storageItem'
 export default {
   name: 'DeploymentDetail',
   props: {
@@ -56,6 +56,20 @@ export default {
     }
   },
   data() {
+    var checkPath = (rule, value, callback) => {
+      if (this.storageItem.existsInImage && value === '') {
+        callback(new Error('please input the path'))
+      } else {
+        callback()
+      }
+    }
+    var checkFile = (rule, value, callback) => {
+      if (!this.storageItem.existsInImage && this.$refs.upload.uploadFiles.length === 0) {
+        callback(new Error('please upload the file'))
+      } else {
+        callback()
+      }
+    }
     return {
       storageItem: {
         name: '',
@@ -64,7 +78,21 @@ export default {
         path: ''
       },
       loading: false,
-      fileList: []
+      fileList: [],
+      rules: {
+        name: [
+          { required: true, message: 'please input the name', trigger: 'blur' }
+        ],
+        type: [
+          { required: true, message: 'please select the type', trigger: 'change' }
+        ],
+        path: [
+          { validator: checkPath, trigger: 'blur' }
+        ],
+        file: [
+          { validator: checkFile, trigger: 'change' }
+        ]
+      }
     }
   },
   created() {
@@ -85,36 +113,17 @@ export default {
       })
     },
     create() {
-      if (this.storageItem.existsInImage) {
-        createItem(this.storageItem).then(() => {
-          this.$message('create susscess')
-          this.routerBack()
-        })
-      } else {
-        if (this.storageItem.name.length === 0) {
-          this.$message({
-            message: 'name cannot be empty',
-            type: 'warning'
-          })
-          return
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          if (this.storageItem.existsInImage) {
+            createItem(this.storageItem).then(() => {
+              this.$message('create susscess')
+              this.routerBack()
+            })
+          } else {
+            this.$refs.upload.submit()
+          }
         }
-        console.log(this.$refs.upload.submit())
-      }
-    },
-    edit() {
-      if (this.storageItem.name.length === 0) {
-        this.$message({
-          message: 'name cannot be empty',
-          type: 'warning'
-        })
-        return
-      }
-      this.loading = true
-      editItem(this.storageItem).then(() => {
-        this.$message('edit success')
-        this.routerBack()
-      }).finally(() => {
-        this.loading = false
       })
     },
     uploadSuccess() {

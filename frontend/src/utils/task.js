@@ -10,10 +10,6 @@ export function getServerItem(item) {
   })
   temp.arguments = tempArguement
   temp.environments = tempEnvironment
-  temp.deploymentID = Number(temp.deploymentID)
-  temp.fuzzerID = Number(temp.fuzzerID)
-  temp.corpusID = Number(temp.corpusID)
-  temp.targetID = Number(temp.targetID)
   return temp
 }
 

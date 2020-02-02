@@ -1,11 +1,11 @@
 <template>
   <div class="deployment-container">
     <el-row>
-      <el-form ref="form" :model="deployment" label-width="120px">
-        <el-form-item label="Name">
+      <el-form ref="form" :rules="rules" :model="deployment" label-width="120px">
+        <el-form-item label="Name" prop="name">
           <el-input v-model="deployment.name" />
         </el-form-item>
-        <el-form-item label="Content">
+        <el-form-item label="Content" prop="content">
           <codemirror v-model="deployment.content" :options="{ theme: 'monokai', mode: 'text/x-yaml', lineNumbers: true }" />
         </el-form-item>
         <el-form-item>
@@ -34,7 +34,15 @@ export default {
         name: '',
         content: ''
       },
-      loading: false
+      loading: false,
+      rules: {
+        name: [
+          { required: true, message: 'please input the name', trigger: 'blur' }
+        ],
+        content: [
+          { required: true, message: 'please input the content', trigger: 'change' }
+        ]
+      }
     }
   },
   created() {
@@ -55,35 +63,29 @@ export default {
       })
     },
     create() {
-      if (this.deployment.name.length === 0) {
-        this.$message({
-          message: 'name cannot be empty',
-          type: 'warning'
-        })
-        return
-      }
-      this.loading = true
-      createItem(this.deployment).then(() => {
-        this.$message('create success')
-        this.routerBack()
-      }).finally(() => {
-        this.loading = false
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true
+          createItem(this.deployment).then(() => {
+            this.$message('create success')
+            this.routerBack()
+          }).finally(() => {
+            this.loading = false
+          })
+        }
       })
     },
     edit() {
-      if (this.deployment.name.length === 0) {
-        this.$message({
-          message: 'name cannot be empty',
-          type: 'warning'
-        })
-        return
-      }
-      this.loading = true
-      editItem(this.deployment).then(() => {
-        this.$message('edit success')
-        this.routerBack()
-      }).finally(() => {
-        this.loading = false
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true
+          editItem(this.deployment).then(() => {
+            this.$message('edit success')
+            this.routerBack()
+          }).finally(() => {
+            this.loading = false
+          })
+        }
       })
     }
   }
