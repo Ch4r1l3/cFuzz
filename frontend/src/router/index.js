@@ -42,13 +42,42 @@ export const constantRoutes = [
   {
     path: '/',
     component: Layout,
-    redirect: '/dashboard',
-    children: [{
-      path: 'dashboard',
-      name: 'Dashboard',
-      component: () => import('@/views/dashboard/index'),
-      meta: { title: 'Dashboard', icon: 'dashboard' }
-    }]
+    redirect: '/task'
+  },
+  {
+    path: '/task',
+    component: Layout,
+    redirect: '/task/list',
+    children: [
+      {
+        path: 'list',
+        name: 'listTask',
+        component: () => import('@/views/task/list'),
+        meta: { title: 'Task', icon: 'table' }
+      },
+      {
+        path: 'create',
+        name: 'createTask',
+        component: () => import('@/views/task/create'),
+        meta: { title: 'Create' },
+        hidden: true
+      },
+      {
+        path: 'edit/:id(\\d+)',
+        name: 'editTask',
+        component: () => import('@/views/task/edit'),
+        meta: { title: 'Edit' },
+        hidden: true
+      },
+      {
+        path: 'detail/:id(\\d+)',
+        name: 'taskDetail',
+        component: () => import('@/views/task/detail'),
+        meta: { title: 'Detail' },
+        hidden: true
+      }
+
+    ]
   },
 
   {
@@ -108,48 +137,12 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/task',
-    component: Layout,
-    redirect: '/task/list',
-    children: [
-      {
-        path: 'list',
-        name: 'listTask',
-        component: () => import('@/views/task/list'),
-        meta: { title: 'Task', icon: 'table' }
-      },
-      {
-        path: 'create',
-        name: 'createTask',
-        component: () => import('@/views/task/create'),
-        meta: { title: 'Create' },
-        hidden: true
-      },
-      {
-        path: 'edit/:id(\\d+)',
-        name: 'editTask',
-        component: () => import('@/views/task/edit'),
-        meta: { title: 'Edit' },
-        hidden: true
-      },
-      {
-        path: 'detail/:id(\\d+)',
-        name: 'taskDetail',
-        component: () => import('@/views/task/detail'),
-        meta: { title: 'Detail' },
-        hidden: true
-      }
-
-    ]
-  },
-
-  {
     path: 'external-link',
     component: Layout,
     children: [
       {
         path: encodeURI('http://petstore.swagger.io/?url=' + docUrl),
-        meta: { title: 'External Link', icon: 'link' }
+        meta: { title: 'Api Document', icon: 'link' }
       }
     ]
   },
