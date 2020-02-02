@@ -1,6 +1,6 @@
 module.exports = {
 
-  title: 'Vue Admin Template',
+  title: 'cFuzz',
 
   /**
    * @type {boolean} true | false
