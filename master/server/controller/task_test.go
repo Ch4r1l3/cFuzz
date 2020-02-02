@@ -388,3 +388,54 @@ func TestTask8(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
+
+func TestTask9(t *testing.T) {
+	server := httptest.NewServer(r)
+	defer server.Close()
+	e := httpexpect.New(t, server.URL)
+
+	fuzzerData := map[string]string{
+		"name": "f1",
+		"type": "fuzzer",
+		"path": "/cfuzz/test/afl",
+	}
+	targetData := map[string]string{
+		"name": "t1",
+		"type": "target",
+		"path": "/cfuzz/test_data/test",
+	}
+	corpusData := map[string]string{
+		"name": "c1",
+		"type": "corpus",
+		"path": "/cfuzz/test_data/corpus",
+	}
+
+	fuzzerID := int(e.POST("/api/storage_item/exist").WithJSON(fuzzerData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	targetID := int(e.POST("/api/storage_item/exist").WithJSON(targetData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item/exist").WithJSON(corpusData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+
+	taskPostData1 := map[string]interface{}{
+		"name":          "test",
+		"image":         "ch4r1l3/cfuzz:test-exist",
+		"time":          config.KubernetesConf.CheckTaskTime * 8,
+		"fuzzCycleTime": 60,
+		"fuzzerID":      fuzzerID,
+		"targetID":      targetID,
+		"corpusID":      corpusID,
+		"environments":  []string{"123", "2333"},
+		"arguments": map[string]string{
+			"a1": "a2",
+			"a2": "a3",
+		},
+	}
+
+	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
+	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").NotEqual("")
+	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+}

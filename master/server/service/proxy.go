@@ -54,6 +54,10 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
 		Suffix(urls...).DoRaw()
 	if err != nil {
+		terr := parseResp(bytesData)
+		if terr != nil {
+			return bytesData, terr
+		}
 		return nil, err
 	}
 	return bytesData, parseResp(bytesData)
@@ -143,6 +147,10 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout)*time.Second).
 		SetHeader("Content-Type", "application/json").DoRaw()
 	if err != nil {
+		terr := parseResp(bytesData)
+		if terr != nil {
+			return bytesData, terr
+		}
 		return bytesData, err
 	}
 	return bytesData, parseResp(bytesData)
@@ -194,6 +202,10 @@ func requestProxyPostPutWithFile(method string, taskID uint64, url []string, for
 		Timeout(time.Duration(config.KubernetesConf.RequestTimeout) * time.Second).
 		DoRaw()
 	if err != nil {
+		terr := parseResp(bytesData)
+		if terr != nil {
+			return bytesData, terr
+		}
 		return bytesData, err
 	}
 	return bytesData, parseResp(bytesData)
