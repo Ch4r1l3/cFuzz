@@ -373,7 +373,7 @@ func TestTask8(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*8) * time.Second)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*7) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID) + "/crash").Expect().Status(http.StatusOK).JSON().Array().Length().NotEqual(0)
 	obj := e.GET("/api/task/" + strconv.Itoa(taskID) + "/result").Expect().Status(http.StatusOK).JSON().Object()
 	obj.Keys().ContainsOnly("command", "timeExecuted", "updateAt", "stats", "id", "taskid")
@@ -431,7 +431,7 @@ func TestTask9(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3) * time.Second)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*2) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").NotEqual("")
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
@@ -447,7 +447,7 @@ func TestTask10(t *testing.T) {
 
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test.zip").WithFormField("relPath", "test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
-	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpuscc").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",

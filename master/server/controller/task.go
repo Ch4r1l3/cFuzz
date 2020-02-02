@@ -5,6 +5,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
 	"time"
@@ -217,6 +218,10 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 	var task models.Task
 	err := models.GetObjectByID(&task, id)
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}
@@ -352,6 +357,12 @@ func (tc *TaskController) Start(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
 	// responses:
 	//   '202':
 	//     description: start task success
@@ -373,7 +384,11 @@ func (tc *TaskController) Start(c *gin.Context) {
 	}
 	var task models.Task
 	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		utils.NotFound(c)
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
+		utils.DBError(c)
 		return
 	}
 	if task.Status != models.TaskCreated {
@@ -461,6 +476,12 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: id
+	//   in: path
+	//   required: true
+	//   type: integer
+	//
 	// responses:
 	//   '202':
 	//     description: stop task success
@@ -482,7 +503,11 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	}
 	var task models.Task
 	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		utils.NotFound(c)
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
+		utils.DBError(c)
 		return
 	}
 	if task.Status != models.TaskStarted && task.Status != models.TaskInitializing && task.Status != models.TaskRunning {
@@ -530,6 +555,9 @@ func (tc *TaskController) Update(c *gin.Context) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -542,7 +570,11 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 	var task models.Task
 	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		utils.NotFound(c)
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
+		utils.DBError(c)
 		return
 	}
 	var req TaskUpdateReq
@@ -660,6 +692,9 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 
 	var uriReq UriIDReq
 	err := c.ShouldBindUri(&uriReq)
@@ -669,7 +704,11 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	}
 	var task models.Task
 	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		utils.NotFound(c)
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
+		utils.DBError(c)
 		return
 	}
 	if err := models.DeleteTask(uriReq.ID); err != nil {

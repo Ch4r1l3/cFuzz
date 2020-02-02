@@ -5,6 +5,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"net/http"
 )
 
@@ -82,6 +83,12 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 
 	var req UriIDReq
 	err := c.ShouldBindUri(&req)
@@ -92,6 +99,10 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	var crash models.TaskCrash
 	err = models.GetObjectByID(&crash, req.ID)
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}

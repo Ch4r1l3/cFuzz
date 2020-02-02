@@ -31,6 +31,16 @@
             "schema": {
               "$ref": "#/definitions/ErrResp"
             }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
           }
         }
       }
@@ -199,6 +209,11 @@
               "$ref": "#/definitions/ErrResp"
             }
           },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "500": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -243,6 +258,11 @@
               "$ref": "#/definitions/ErrResp"
             }
           },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "500": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -275,6 +295,11 @@
             }
           },
           "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "404": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
             }
@@ -682,6 +707,11 @@
               "$ref": "#/definitions/ErrResp"
             }
           },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "500": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -715,6 +745,11 @@
             "schema": {
               "$ref": "#/definitions/ErrResp"
             }
+          },
+          "404": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
           }
         }
       }
@@ -730,6 +765,14 @@
         ],
         "summary": "start task",
         "operationId": "startTask",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "202": {
             "description": "start task success"
@@ -763,6 +806,14 @@
         ],
         "summary": "stop task",
         "operationId": "stopTask",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
           "202": {
             "description": "stop task success"
@@ -1076,6 +1127,29 @@
           "format": "uint64",
           "x-go-name": "Time",
           "example": 60
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "TaskCrash": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID",
+          "example": 1
+        },
+        "reproduceAble": {
+          "type": "boolean",
+          "x-go-name": "ReproduceAble",
+          "example": true
+        },
+        "taskid": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "TaskID",
+          "example": 1
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"

@@ -4,6 +4,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"net/http"
 )
 
@@ -166,12 +167,19 @@ func (dc *DeploymentController) Retrieve(c *gin.Context, id uint64) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 	var deployment models.Deployment
 	err := models.GetObjectByID(&deployment, id)
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}
@@ -252,6 +260,9 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -271,6 +282,10 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	var deployment models.Deployment
 	err = models.GetObjectByID(&deployment, uriReq.ID)
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}
@@ -305,6 +320,9 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
+	//   '404':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -318,6 +336,10 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 	}
 	err = models.DeleteObjectByID(models.Deployment{}, uriReq.ID)
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}

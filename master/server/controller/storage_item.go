@@ -4,6 +4,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"net/http"
 	"os"
 )
@@ -243,10 +244,10 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	if models.IsStorageItemExistsByNameAndType(name, mtype) {
-		utils.BadRequestWithMsg(c, "storageItem name exists")
-		return
-	}
+	// if models.IsStorageItemExistsByNameAndType(name, mtype) {
+	// 	utils.BadRequestWithMsg(c, "storageItem name exists")
+	// 	return
+	// }
 	var tempFile string
 	if tempFile, err = utils.SaveTempFile(c, "file", "storageItem"); err != nil {
 		return
@@ -302,12 +303,12 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	if !models.IsObjectExistsByID(&models.StorageItem{}, req.ID) {
-		utils.NotFound(c)
-		return
-	}
 	var storageItem models.StorageItem
 	if err = models.GetObjectByID(&storageItem, req.ID); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
 		utils.DBError(c)
 		return
 	}
