@@ -63,6 +63,11 @@ func GenerateDeploymentByYaml(content string, taskID uint64) (*appsv1.Deployment
 		deployment.ObjectMeta.Labels = make(map[string]string)
 	}
 	deployment.ObjectMeta.Labels[LabelName] = fmt.Sprintf("%d", taskID)
+	if deployment.Spec.Selector == nil {
+		deployment.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: map[string]string{},
+		}
+	}
 	if deployment.Spec.Selector.MatchLabels == nil {
 		deployment.Spec.Selector.MatchLabels = make(map[string]string)
 	}
@@ -71,6 +76,7 @@ func GenerateDeploymentByYaml(content string, taskID uint64) (*appsv1.Deployment
 		deployment.Spec.Template.ObjectMeta.Labels = make(map[string]string)
 	}
 	deployment.Spec.Template.ObjectMeta.Labels[LabelName] = fmt.Sprintf("%d", taskID)
+	deployment.ObjectMeta.Name = fmt.Sprintf(DeployNameFmt, taskID)
 	return deployment, nil
 }
 
