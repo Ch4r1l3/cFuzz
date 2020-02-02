@@ -4,6 +4,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/controller"
 	"github.com/Ch4r1l3/cFuzz/master/server/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,6 +42,12 @@ func InitRouter() *gin.Engine {
 
 		api.GET("/task/:path1", controller.TaskGetHandler)
 		api.GET("/task/:path1/:path2", middleware.Pagination, controller.TaskGetHandler)
+
+		docs := api.Group("docs")
+		docs.Use(cors.Default())
+		{
+			docs.StaticFile("/swagger.json", "./docs/swagger.json")
+		}
 	}
 
 	return r

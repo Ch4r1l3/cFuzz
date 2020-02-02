@@ -29,6 +29,8 @@ import Layout from '@/layout'
  * constantRoutes
  * all roles can be accessed
  */
+const docUrl = location.protocol.concat('//').concat(location.host).concat('/api/docs/swagger.json')
+
 export const constantRoutes = [
 
   {
@@ -146,7 +148,7 @@ export const constantRoutes = [
     component: Layout,
     children: [
       {
-        path: 'https://panjiachen.github.io/vue-element-admin-site/#/',
+        path: encodeURI('http://petstore.swagger.io/?url=' + docUrl),
         meta: { title: 'External Link', icon: 'link' }
       }
     ]

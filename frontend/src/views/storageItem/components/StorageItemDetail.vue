@@ -36,7 +36,7 @@
           </el-upload>
         </el-form-item>
         <el-form-item v-if="showRelPath" label="RelPath">
-          <el-input v-model="storageItem.relPath" placeholder="if upload file is zip, enter the relative path of file in zip, like abc/bcd"/>
+          <el-input v-model="storageItem.relPath" placeholder="if upload file is zip, enter the relative path of file in zip, like abc/bcd" />
         </el-form-item>
         <el-form-item>
           <el-button v-if="isEdit" v-loading="loading" type="primary" @click="edit">Edit</el-button>

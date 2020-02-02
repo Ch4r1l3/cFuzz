@@ -6,6 +6,7 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
+	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-cmd/cmd v1.1.0
 	github.com/golang/protobuf v1.3.2
