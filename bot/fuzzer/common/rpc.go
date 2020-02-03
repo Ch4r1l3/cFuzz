@@ -30,12 +30,6 @@ func (f *FuzzerRPCClient) Reproduce(args ReproduceArg) (ReproduceResult, error) 
 	return resp, err
 }
 
-func (f *FuzzerRPCClient) MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error) {
-	var resp MinimizeCorpusResult
-	err := f.client.Call("Plugin.MinimizeCorpus", args, &resp)
-	return resp, err
-}
-
 func (f *FuzzerRPCClient) Clean() error {
 	var resp string
 	f.client.Call("Plugin.Clean", new(interface{}), &resp)
@@ -67,12 +61,6 @@ func (f *FuzzerRPCServer) Fuzz(args FuzzArg, resp *FuzzResult) error {
 
 func (f *FuzzerRPCServer) Reproduce(args ReproduceArg, resp *ReproduceResult) error {
 	v, err := f.Impl.Reproduce(args)
-	*resp = v
-	return err
-}
-
-func (f *FuzzerRPCServer) MinimizeCorpus(args MinimizeCorpusArg, resp *MinimizeCorpusResult) error {
-	v, err := f.Impl.MinimizeCorpus(args)
 	*resp = v
 	return err
 }

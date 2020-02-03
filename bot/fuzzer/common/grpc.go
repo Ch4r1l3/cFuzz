@@ -74,26 +74,6 @@ func (f *FuzzerGRPCClient) Reproduce(args ReproduceArg) (ReproduceResult, error)
 	return result, errors.New(resp.Error)
 }
 
-func (f *FuzzerGRPCClient) MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error) {
-	resp, err := f.client.MinimizeCorpus(context.Background(), &proto.MinimizeCorpusArg{
-		InputDir:  args.InputDir,
-		OutputDir: args.OutputDir,
-		MaxTime:   int32(args.MaxTime),
-	})
-	if err != nil {
-		return MinimizeCorpusResult{}, err
-	}
-	result := MinimizeCorpusResult{
-		Command:      resp.Command,
-		Stats:        resp.Stats,
-		TimeExecuted: int(resp.TimeExecuted),
-	}
-	if resp.Error == "" {
-		return result, nil
-	}
-	return result, errors.New(resp.Error)
-}
-
 func (f *FuzzerGRPCClient) Clean() error {
 	resp, err := f.client.Clean(context.Background(), &proto.Empty{})
 	if err != nil {
@@ -162,24 +142,6 @@ func (f *FuzzerGRPCServer) Reproduce(ctx context.Context, args *proto.ReproduceA
 		ReturnCode:   int32(resp.ReturnCode),
 		TimeExecuted: int32(resp.TimeExecuted),
 		Output:       resp.Output,
-		Error:        errMsg,
-	}, nil
-}
-
-func (f *FuzzerGRPCServer) MinimizeCorpus(ctx context.Context, args *proto.MinimizeCorpusArg) (*proto.MinimizeCorpusResult, error) {
-	resp, err := f.Impl.MinimizeCorpus(MinimizeCorpusArg{
-		InputDir:  args.InputDir,
-		OutputDir: args.OutputDir,
-		MaxTime:   int(args.MaxTime),
-	})
-	var errMsg string
-	if err != nil {
-		errMsg = err.Error()
-	}
-	return &proto.MinimizeCorpusResult{
-		Command:      resp.Command,
-		Stats:        resp.Stats,
-		TimeExecuted: int32(resp.TimeExecuted),
 		Error:        errMsg,
 	}, nil
 }

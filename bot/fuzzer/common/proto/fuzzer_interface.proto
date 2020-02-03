@@ -48,25 +48,11 @@ message ReproduceResult {
 	string error = 5;
 }
 
-message MinimizeCorpusArg {
-	string inputDir = 1;
-	string outputDir = 2;
-	int32 maxTime = 3;
-}
-
-message MinimizeCorpusResult {
-	repeated string command = 1;
-	map<string, string> stats = 2;
-	int32 timeExecuted = 3;
-	string error = 4;
-}
- 
 message Empty {}
  
 service Fuzzer {
     rpc Prepare(PrepareArg) returns (ErrorResponse);
     rpc Fuzz(FuzzArg) returns (FuzzResult);
     rpc Reproduce(ReproduceArg) returns (ReproduceResult);
-    rpc MinimizeCorpus(MinimizeCorpusArg) returns (MinimizeCorpusResult);
     rpc Clean(Empty) returns (ErrorResponse);
 }

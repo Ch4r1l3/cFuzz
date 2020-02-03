@@ -44,23 +44,10 @@ type ReproduceResult struct {
 	Output       []string
 }
 
-type MinimizeCorpusArg struct {
-	InputDir  string //Path of the corpus to be minimized
-	OutputDir string
-	MaxTime   int
-}
-
-type MinimizeCorpusResult struct {
-	Command      []string
-	Stats        map[string]string
-	TimeExecuted int
-}
-
 type Fuzzer interface {
 	Prepare(args PrepareArg) error
 	Fuzz(args FuzzArg) (FuzzResult, error)
 	Reproduce(args ReproduceArg) (ReproduceResult, error)
-	MinimizeCorpus(args MinimizeCorpusArg) (MinimizeCorpusResult, error)
 	Clean() error
 }
 
