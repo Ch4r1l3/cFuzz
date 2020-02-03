@@ -14,5 +14,5 @@ module.exports = {
    */
   sidebarLogo: false,
 
-  pageSize: 25
+  pageSize: 10
 }

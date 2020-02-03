@@ -1,14 +1,22 @@
 <template>
-  <div class="app-container">
+  <div class="task-container">
+    <el-row :gutter="20">
+      <el-col :span="5">
+        <el-input v-model="searchName" placeholder="name" />
+      </el-col>
+      <el-col :span="6">
+        <el-button @click="search">Serach</el-button>
+      </el-col>
+    </el-row>
     <el-row>
       <el-table
         v-loading="listLoading"
-        :data="showItems"
+        :data="items"
         element-loading-text="Loading"
         border
         fit
         highlight-current-row
-        max-height="300"
+        max-height="320"
         style="width: 100%"
       >
         <el-table-column type="expand">
@@ -48,7 +56,7 @@
         :current-page="currentPage"
         :page-size="pageSize"
         layout="total, prev, pager, next, jumper"
-        :total="items.length"
+        :total="count"
         @current-change="handleCurrentChange"
       />
     </el-row>
@@ -56,9 +64,8 @@
 </template>
 
 <script>
-import { getItemsByType } from '@/api/storageItem'
+import { getItemsByTypeCombine } from '@/api/storageItem'
 import { getOffset } from '@/utils'
-import { pageSize } from '@/settings'
 
 export default {
   name: 'StorageItemList',
@@ -73,13 +80,9 @@ export default {
       listLoading: true,
       items: [],
       currentPage: 1,
-      pageSize: pageSize
-    }
-  },
-  computed: {
-    showItems: function() {
-      const offset = getOffset(this.currentPage, pageSize)
-      return this.items.slice(offset, offset + pageSize)
+      pageSize: 4,
+      count: 0,
+      searchName: ''
     }
   },
   created() {
@@ -88,8 +91,10 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      getItemsByType(this.storageItemType).then((data) => {
-        this.items = data
+      const offset = getOffset(this.currentPage, this.pageSize)
+      getItemsByTypeCombine(this.storageItemType, offset, this.pageSize, this.searchName).then((data) => {
+        this.items = data.data
+        this.count = data.count
         this.listLoading = false
       })
     },
@@ -98,6 +103,10 @@ export default {
     },
     handleCurrentChange(val) {
       this.currentPage = val
+      this.fetchData()
+    },
+    search() {
+      this.fetchData()
     }
   }
 }

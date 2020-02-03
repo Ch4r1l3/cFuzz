@@ -56,10 +56,24 @@ func GetStorageItemsByType(mtype string) ([]StorageItem, error) {
 	return storageItems, nil
 }
 
-func GetStorageItemsByTypePagination(mtype string, offset int, limit int) ([]StorageItem, error) {
+func GetStorageItemsByTypeCombine(mtype string, offset int, limit int, name string) ([]StorageItem, int, error) {
 	var storageItems []StorageItem
-	if err := DB.Where("type = ?", mtype).Order("id").Offset(offset).Limit(limit).Find(&storageItems).Error; err != nil {
-		return nil, err
+	var count int
+	t := DB.Order("id")
+	if name != "" {
+		if err := DB.Model(&storageItems).Where("type = ? AND name LIKE ?", mtype, "%"+name+"%").Count(&count).Error; err != nil {
+			return nil, 0, err
+		}
+		t = t.Where("type = ? AND name LIKE ?", mtype, "%"+name+"%")
+	} else {
+		if err := DB.Model(&storageItems).Where("type = ?", mtype).Count(&count).Error; err != nil {
+			return nil, 0, err
+		}
+		t = t.Where("type = ?", mtype)
 	}
-	return storageItems, nil
+	if offset >= 0 && limit >= 0 {
+		t = t.Offset(offset).Limit(limit)
+	}
+	err := t.Find(&storageItems).Error
+	return storageItems, count, err
 }

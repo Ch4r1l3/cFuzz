@@ -1,15 +1,8 @@
 import request from '@/utils/request'
 
-export function getCount() {
+export function getItemsCombine(offset, limit, name) {
   return request({
-    url: '/api/task/count',
-    method: 'get'
-  })
-}
-
-export function getItemsPagination(offset, limit) {
-  return request({
-    url: `/api/task?offset=${offset}&limit=${limit}`,
+    url: `/api/task?offset=${offset}&limit=${limit}&name=${name}`,
     method: 'get'
   })
 }
@@ -68,13 +61,6 @@ export function getCrashes(id) {
 export function getResult(id) {
   return request({
     url: `/api/task/${id}/result`,
-    method: 'get'
-  })
-}
-
-export function downloadCrash(id) {
-  return request({
-    url: `/api/crash/${id}`,
     method: 'get'
   })
 }

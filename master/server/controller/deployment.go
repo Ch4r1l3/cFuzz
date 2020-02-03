@@ -19,12 +19,9 @@ type DeploymentReq struct {
 }
 
 // swagger:model
-type DeploymentSimp struct {
-	// example: 1
-	ID uint64 `json:"id"`
-
-	// example: test-image
-	Name string `json:"name"`
+type DeploymentCombine struct {
+	Data []models.Deployment `json:"data"`
+	CountResp
 }
 
 type DeploymentController struct{}
@@ -46,31 +43,33 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	// - name: limit
 	//   in: query
 	//   type: integer
+	// - name: name
+	//   in: query
+	//   type: string
 	//
 	// responses:
 	//   '200':
 	//      schema:
-	//        type: array
-	//        items:
-	//          "$ref": "#/definitions/Deployment"
+	//        "$ref": "#/definitions/DeploymentCombine"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var err error
 	var deployments []models.Deployment
-	if !c.GetBool("pagination") {
-		err = models.GetObjects(&deployments)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		err = models.GetObjectsPagination(&deployments, offset, limit)
-	}
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	count, err := models.GetObjectCombine(&deployments, offset, limit, name)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, deployments)
+	c.JSON(http.StatusOK, DeploymentCombine{
+		Data: deployments,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
 }
 
 // Count of Deployment
@@ -109,37 +108,44 @@ func (dc *DeploymentController) SimpList(c *gin.Context) {
 	// produces:
 	// - application/json
 	//
+	// parameters:
+	// - name: offset
+	//   in: query
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   type: integer
+	// - name: name
+	//   in: query
+	//   type: string
+	//
 	// responses:
 	//   '200':
 	//      schema:
-	//        type: array
-	//        items:
-	//          "$ref": "#/definitions/DeploymentSimp"
+	//        "$ref": "#/definitions/DeploymentCombine"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
-	var err error
-	if !c.GetBool("pagination") {
-		err = models.GetObjects(&deployments)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		err = models.GetObjectsPagination(&deployments, offset, limit)
-	}
+
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	count, err := models.GetObjectCombine(&deployments, offset, limit, name)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	deploymentSimps := []DeploymentSimp{}
-	for _, deployment := range deployments {
-		deploymentSimps = append(deploymentSimps, DeploymentSimp{
-			ID:   deployment.ID,
-			Name: deployment.Name,
-		})
+	for i, _ := range deployments {
+		deployments[i].Content = ""
 	}
-	c.JSON(http.StatusOK, deploymentSimps)
+	c.JSON(http.StatusOK, DeploymentCombine{
+		Data: deployments,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
 }
 
 // Retrieve Deployment

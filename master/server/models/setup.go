@@ -22,8 +22,20 @@ func GetCount(objs interface{}) (int, error) {
 	return count, err
 }
 
-func GetObjectsPagination(objs interface{}, offset int, limit int) error {
-	return DB.Order("id").Offset(offset).Limit(limit).Find(objs).Error
+func GetObjectCombine(objs interface{}, offset int, limit int, name string) (int, error) {
+	var count int
+	err := DB.Model(objs).Where("name LIKE ?", "%"+name+"%").Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	t := DB.Order("id")
+	if name != "" {
+		t = t.Where("name LIKE ?", "%"+name+"%")
+	}
+	if limit >= 0 && offset >= 0 {
+		t = t.Offset(offset).Limit(limit)
+	}
+	return count, t.Find(objs).Error
 }
 
 func GetObjectByID(obj interface{}, id uint64) error {

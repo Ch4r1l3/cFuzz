@@ -25,6 +25,12 @@ type StorageItemExistReq struct {
 	Type string `json:"type" binding:"required"`
 }
 
+// swagger:model
+type StorageItemCombine struct {
+	Data []models.StorageItem `json:"data"`
+	CountResp
+}
+
 // List StorageItems
 func (sic *StorageItemController) List(c *gin.Context) {
 	// swagger:operation GET /storage_item storageItem listStorageItem
@@ -42,6 +48,9 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	// - name: limit
 	//   in: query
 	//   type: integer
+	// - name: name
+	//   in: query
+	//   type: string
 	//
 	// responses:
 	//   '200':
@@ -53,16 +62,13 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var err error
-
 	var storageItems []models.StorageItem
-	if !c.GetBool("pagination") {
-		err = models.GetObjects(&storageItems)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		err = models.GetObjectsPagination(&storageItems, offset, limit)
-	}
+
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	count, err := models.GetObjectCombine(&storageItems, offset, limit, name)
+
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
@@ -72,11 +78,42 @@ func (sic *StorageItemController) List(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, storageItems)
+	c.JSON(http.StatusOK, StorageItemCombine{
+		Data: storageItems,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
+}
+
+// Count of StorageItem
+func (dc *StorageItemController) Count(c *gin.Context) {
+	// swagger:operation GET /storage_item/count storageItem countStorageItem
+	// count of storageItem
+	//
+	// count of storageItem
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      schema:
+	//        "$ref": "#/definitions/CountResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	count, err := models.GetCount(&models.StorageItem{})
+	if err != nil {
+		utils.DBError(c)
+	}
+	c.JSON(http.StatusOK, CountResp{
+		Count: count,
+	})
 }
 
 // List StorageItem By Type
-func (sic *StorageItemController) ListByType(c *gin.Context) {
+func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
 	// swagger:operation GET /storage_item/{type} storageItem listStorageItemByType
 	// list storageItem by type
 	//
@@ -96,6 +133,9 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	// - name: limit
 	//   in: query
 	//   type: integer
+	// - name: name
+	//   in: query
+	//   type: integer
 	//
 	// responses:
 	//   '200':
@@ -108,24 +148,15 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var req StorageItemTypeReq
-	var err error
-	if err := c.ShouldBindUri(&req); err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
-	if !models.IsStorageItemTypeValid(req.Type) {
+	if !models.IsStorageItemTypeValid(mtype) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
 	var storageItems []models.StorageItem
-	if !c.GetBool("pagination") {
-		storageItems, err = models.GetStorageItemsByType(req.Type)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		storageItems, err = models.GetStorageItemsByTypePagination(req.Type, offset, limit)
-	}
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	storageItems, count, err := models.GetStorageItemsByTypeCombine(mtype, offset, limit, name)
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
@@ -135,7 +166,12 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, storageItems)
+	c.JSON(http.StatusOK, StorageItemCombine{
+		Data: storageItems,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
 }
 
 // Create Exist StorageItem
@@ -173,6 +209,10 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 	}
 	if !models.IsStorageItemTypeValid(req.Type) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
+		return
+	}
+	if models.IsStorageItemExistsByNameAndType(req.Name, req.Type) {
+		utils.BadRequestWithMsg(c, "storageItem name exists")
 		return
 	}
 	storageItem := models.StorageItem{
@@ -244,10 +284,10 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	// if models.IsStorageItemExistsByNameAndType(name, mtype) {
-	// 	utils.BadRequestWithMsg(c, "storageItem name exists")
-	// 	return
-	// }
+	if models.IsStorageItemExistsByNameAndType(name, mtype) {
+		utils.BadRequestWithMsg(c, "storageItem name exists")
+		return
+	}
 	var tempFile string
 	if tempFile, err = utils.SaveTempFile(c, "file", "storageItem"); err != nil {
 		return

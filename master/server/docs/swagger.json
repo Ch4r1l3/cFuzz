@@ -66,6 +66,11 @@
             "type": "integer",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name",
+            "in": "query"
           }
         ],
         "responses": {
@@ -159,6 +164,23 @@
         ],
         "summary": "simplification list of deployment",
         "operationId": "simlistDeployment",
+        "parameters": [
+          {
+            "type": "integer",
+            "name": "offset",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "schema": {
@@ -332,6 +354,11 @@
           {
             "type": "integer",
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name",
             "in": "query"
           }
         ],
@@ -557,6 +584,11 @@
           {
             "type": "integer",
             "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "name",
             "in": "query"
           }
         ],

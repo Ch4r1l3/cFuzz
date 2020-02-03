@@ -1,14 +1,22 @@
 <template>
   <div class="app-container">
-    <el-row>
-      <router-link to="/storageItem/create">
-        <el-button type="primary">Create</el-button>
-      </router-link>
+    <el-row :gutter="20">
+      <el-col :span="2">
+        <router-link to="/storageItem/create">
+          <el-button type="primary">Create</el-button>
+        </router-link>
+      </el-col>
+      <el-col :span="5">
+        <el-input v-model="searchName" placeholder="name" />
+      </el-col>
+      <el-col :span="6">
+        <el-button @click="search">Serach</el-button>
+      </el-col>
     </el-row>
     <el-row>
       <el-table
         v-loading="listLoading"
-        :data="showItems"
+        :data="items"
         element-loading-text="Loading"
         border
         fit
@@ -76,7 +84,7 @@
         :current-page="currentPage"
         :page-size="pageSize"
         layout="total, prev, pager, next, jumper"
-        :total="items.length"
+        :total="count"
         @current-change="handleCurrentChange"
       />
     </el-row>
@@ -84,7 +92,7 @@
 </template>
 
 <script>
-import { getItems, deleteItem } from '@/api/storageItem'
+import { getItemsCombine, deleteItem } from '@/api/storageItem'
 import { getOffset } from '@/utils'
 import { pageSize } from '@/settings'
 
@@ -104,13 +112,9 @@ export default {
       listLoading: true,
       items: [],
       currentPage: 1,
-      pageSize: pageSize
-    }
-  },
-  computed: {
-    showItems: function() {
-      const offset = getOffset(this.currentPage, pageSize)
-      return this.items.slice(offset, offset + pageSize)
+      pageSize: pageSize,
+      searchName: '',
+      count: 0
     }
   },
   created() {
@@ -119,19 +123,29 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      getItems().then((data) => {
-        this.items = data
+      const offset = getOffset(this.currentPage, pageSize)
+      getItemsCombine(offset, pageSize, this.searchName).then((data) => {
+        this.items = data.data
+        this.count = data.count
         this.listLoading = false
       })
     },
     deleteStorageItem(item) {
       deleteItem(item).then(() => {
         this.$message('delete success')
+        if (this.items.length === 1 && this.currentPage > 1) {
+          this.currentPage -= 1
+        }
         this.fetchData()
       })
     },
     handleCurrentChange(val) {
       this.currentPage = val
+      this.fetchData()
+    },
+    search() {
+      this.currentPage = 1
+      this.fetchData()
     }
   }
 }

@@ -41,6 +41,16 @@ func TaskGetHandler(c *gin.Context) {
 	}
 }
 
+func StorageItemGetHandler(c *gin.Context) {
+	p1 := c.Param("path1")
+	storageItemController := new(StorageItemController)
+	if p1 == "count" {
+		storageItemController.Count(c)
+	} else {
+		storageItemController.ListByType(c, p1)
+	}
+}
+
 func DeploymentGetHandler(c *gin.Context) {
 	p1 := c.Param("path1")
 	deploymentController := new(DeploymentController)

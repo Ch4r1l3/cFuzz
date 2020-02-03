@@ -46,10 +46,14 @@ func TestStorageItem1(t *testing.T) {
 		Expect().
 		Status(http.StatusBadRequest)
 
-	e.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
-	e.GET("/api/storage_item").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
+	e.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	e.GET("/api/storage_item").WithQuery("offset", 0).WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
+	e.GET("/api/storage_item").WithQuery("offset", 0).WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Object().Value("count").Equal(1)
+	e.GET("/api/storage_item").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	e.GET("/api/storage_item/fuzzer").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	e.GET("/api/storage_item/fuzzer").WithQuery("name", "a").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	obj := e.GET("/api/storage_item").Expect().
-		Status(http.StatusOK).JSON().Array().First().Object()
+		Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
 	obj.ValueEqual("name", "afl")
 	obj.ValueEqual("type", "fuzzer")
 	id := int(obj.Value("id").Number().Raw())
@@ -71,9 +75,9 @@ func TestStorageItem2(t *testing.T) {
 		Expect().
 		Status(http.StatusCreated).JSON().Object().Value("id").NotEqual(0)
 
-	e.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(1)
+	e.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	obj := e.GET("/api/storage_item").Expect().
-		Status(http.StatusOK).JSON().Array().First().Object()
+		Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
 	obj.ValueEqual("name", "afl")
 	obj.ValueEqual("type", "fuzzer")
 	obj.ValueEqual("existsInImage", true)

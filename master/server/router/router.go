@@ -35,10 +35,10 @@ func InitRouter() *gin.Engine {
 
 		storageItemController := new(controller.StorageItemController)
 		api.GET("/storage_item", middleware.Pagination, storageItemController.List)
-		api.GET("/storage_item/:type", middleware.Pagination, storageItemController.ListByType)
 		api.POST("/storage_item", storageItemController.Create)
 		api.POST("/storage_item/exist", storageItemController.CreateExist)
 		api.DELETE("/storage_item/:id", storageItemController.Destroy)
+		api.GET("/storage_item/:path1", middleware.Pagination, controller.StorageItemGetHandler)
 
 		api.GET("/task/:path1", controller.TaskGetHandler)
 		api.GET("/task/:path1/:path2", middleware.Pagination, controller.TaskGetHandler)

@@ -54,7 +54,7 @@ func TestTask1(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
-	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object()
+	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
 	obj.Keys().ContainsOnly("id", "deploymentID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt", "crashNum")
 	obj.Value("id").NotEqual(0)
 	obj.Value("deploymentID").NotEqual(0)
@@ -66,6 +66,12 @@ func TestTask1(t *testing.T) {
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
 	obj.Value("status").NotEqual("")
 	obj.Value("startedAt").Equal(0)
+	e.GET("/api/task").WithQuery("name", "t").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	e.GET("/api/task").WithQuery("name", "a").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
+	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 0).WithQuery("limit", 0).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
+	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
+	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 0).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 0).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
 	e.DELETE("/api/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
@@ -129,9 +135,9 @@ func TestTask2(t *testing.T) {
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData5).Expect().Status(http.StatusCreated)
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData6).Expect().Status(http.StatusCreated)
 
-	e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("environments").Array().Elements("2", "3")
+	e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object().Value("environments").Array().Elements("2", "3")
 
-	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Array().First().Object().Value("arguments").Object()
+	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object().Value("arguments").Object()
 	obj.Value("a3").Equal("a4")
 	obj.Value("a4").Equal("a5")
 
@@ -171,7 +177,7 @@ func TestTask3(t *testing.T) {
 	}
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusCreated)
 
-	e.GET("/api/task").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Array().Length().Equal(0)
+	e.GET("/api/task").WithQuery("limit", "0").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)

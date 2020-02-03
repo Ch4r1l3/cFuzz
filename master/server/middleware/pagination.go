@@ -12,11 +12,9 @@ func Pagination(c *gin.Context) {
 	}
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil {
-		c.Next()
-		return
+		limit = -1
 	}
 	c.Set("offset", offset)
 	c.Set("limit", limit)
-	c.Set("pagination", true)
 	c.Next()
 }

@@ -1,9 +1,17 @@
 <template>
   <div class="app-container">
-    <el-row>
-      <router-link to="/task/create">
-        <el-button type="primary">Create</el-button>
-      </router-link>
+    <el-row :gutter="20">
+      <el-col :span="2">
+        <router-link to="/task/create">
+          <el-button type="primary">Create</el-button>
+        </router-link>
+      </el-col>
+      <el-col :span="5">
+        <el-input v-model="searchName" placeholder="name" />
+      </el-col>
+      <el-col :span="6">
+        <el-button @click="search">Serach</el-button>
+      </el-col>
     </el-row>
     <el-row>
       <el-table
@@ -113,7 +121,7 @@
 </template>
 
 <script>
-import { getCount, getItemsPagination, deleteItem, startItem, stopItem } from '@/api/task'
+import { getItemsCombine, deleteItem, startItem, stopItem } from '@/api/task'
 import { pageSize } from '@/settings'
 import { getOffset } from '@/utils'
 import { parseServerItem } from '@/utils/task'
@@ -138,7 +146,8 @@ export default {
       items: [],
       count: 0,
       currentPage: 1,
-      pageSize: pageSize
+      pageSize: pageSize,
+      searchName: ''
     }
   },
   computed: {
@@ -151,20 +160,21 @@ export default {
       this.items = []
       this.listLoading = true
       const offset = getOffset(this.currentPage, pageSize)
-      getItemsPagination(offset, pageSize).then((data) => {
-        data.forEach((item) => {
+      getItemsCombine(offset, pageSize, this.searchName).then((data) => {
+        data.data.forEach((item) => {
           item.loading = false
           this.items.push(parseServerItem(item))
         })
-        getCount().then((res) => {
-          this.count = res.count
-          this.listLoading = false
-        })
+        this.count = data.count
+        this.listLoading = false
       })
     },
     deleteTask(item) {
       deleteItem(item).then(() => {
         this.$message('delete success')
+        if (this.items.length === 1 && this.currentPage > 1) {
+          this.currentPage -= 1
+        }
         this.fetchData()
       })
     },
@@ -185,6 +195,7 @@ export default {
     },
     handleCurrentChange(val) {
       this.currentPage = val
+      this.fetchData()
     },
     getTimeString(val) {
       var t = new Date(val * 1000)
@@ -195,6 +206,10 @@ export default {
     },
     expandHandle(item) {
       this.$router.push({ name: 'taskDetail', params: { id: item.id }})
+    },
+    search() {
+      this.currentPage = 1
+      this.fetchData()
     }
   }
 }

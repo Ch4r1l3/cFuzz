@@ -94,6 +94,11 @@ type TaskResp struct {
 	Arguments map[string]string `json:"arguments"`
 }
 
+type TaskRespCombine struct {
+	Data []TaskResp `json:"data"`
+	CountResp
+}
+
 type TaskController struct{}
 
 // list tasks
@@ -113,6 +118,9 @@ func (tc *TaskController) List(c *gin.Context) {
 	// - name: limit
 	//   in: query
 	//   type: integer
+	// - name: name
+	//   in: query
+	//   type: string
 	//
 	// responses:
 	//   '200':
@@ -125,19 +133,16 @@ func (tc *TaskController) List(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var tasks []models.Task
-	var err error
-	if !c.GetBool("pagination") {
-		err = models.GetObjects(&tasks)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		err = models.GetObjectsPagination(&tasks, offset, limit)
-	}
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	count, err := models.GetObjectCombine(&tasks, offset, limit, name)
+
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	results := []interface{}{}
+	results := []TaskResp{}
 	for _, task := range tasks {
 		environments, err := models.GetEnvironments(task.ID)
 		if err != nil {
@@ -161,7 +166,12 @@ func (tc *TaskController) List(c *gin.Context) {
 			Arguments:    arguments,
 		})
 	}
-	c.JSON(http.StatusOK, results)
+	c.JSON(http.StatusOK, TaskRespCombine{
+		Data: results,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
 }
 
 // count task

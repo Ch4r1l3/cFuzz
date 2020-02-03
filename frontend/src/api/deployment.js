@@ -1,22 +1,8 @@
 import request from '@/utils/request'
 
-export function getSimpList() {
+export function getSimpListCombine(offset, limit, name) {
   return request({
-    url: '/api/deployment/simplist',
-    method: 'get'
-  })
-}
-
-export function getCount() {
-  return request({
-    url: '/api/deployment/count',
-    method: 'get'
-  })
-}
-
-export function getSimpListPagination(offset, limit) {
-  return request({
-    url: `/api/deployment/simplist?offset=${offset}&limit=${limit}`,
+    url: `/api/deployment/simplist?offset=${offset}&limit=${limit}&name=${name}`,
     method: 'get'
   })
 }

@@ -1,8 +1,8 @@
 import request from '@/utils/request'
 
-export function getItems() {
+export function getItemsCombine(offset, limit, name) {
   return request({
-    url: '/api/storage_item',
+    url: `/api/storage_item?offset=${offset}&limit=${limit}&name=${name}`,
     method: 'get'
   })
 }
@@ -10,6 +10,13 @@ export function getItems() {
 export function getItemsByType(type) {
   return request({
     url: `/api/storage_item/${type}`,
+    method: 'get'
+  })
+}
+
+export function getItemsByTypeCombine(type, offset, limit, name) {
+  return request({
+    url: `/api/storage_item/${type}?offset=${offset}&limit=${limit}&name=${name}`,
     method: 'get'
   })
 }
