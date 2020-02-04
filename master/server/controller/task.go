@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -292,7 +293,8 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	if req.Image == "" && req.DeploymentID == 0 {
+	image := strings.TrimSpace(req.Image)
+	if image == "" && req.DeploymentID == 0 {
 		utils.BadRequestWithMsg(c, "image and deployment is empty")
 		return
 	}
@@ -306,7 +308,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		Status:        models.TaskCreated,
 	}
 	if req.Image != "" {
-		task.Image = req.Image
+		task.Image = image
 	} else {
 		if !models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
 			utils.BadRequestWithMsg(c, "deployment not exists")

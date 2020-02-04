@@ -178,6 +178,7 @@ func checkSingleTask(taskID uint64) {
 					TaskID:        taskID,
 					Path:          savePath,
 					ReproduceAble: crash.ReproduceAble,
+					FileName:      crash.FileName,
 				}
 				if err := models.DB.Create(&taskCrash).Error; err != nil {
 					Err = err

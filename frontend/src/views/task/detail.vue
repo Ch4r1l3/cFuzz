@@ -78,6 +78,11 @@
                 {{ crash.row.id }}
               </template>
             </el-table-column>
+            <el-table-column label="fileName" align="center">
+              <template v-slot:default="crash">
+                {{ crash.row.fileName }}
+              </template>
+            </el-table-column>
             <el-table-column label="ReproduceAble" align="center">
               <template v-slot:default="crash">
                 {{ crash.row.reproduceAble }}

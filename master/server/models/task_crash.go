@@ -16,4 +16,7 @@ type TaskCrash struct {
 
 	// example: true
 	ReproduceAble bool `json:"reproduceAble"`
+
+	// example: xxxxx
+	FileName string `json:"fileName"`
 }

@@ -13,6 +13,7 @@ type clientTaskGetResp struct {
 
 type clientCrashGetResp struct {
 	ID            uint64 `json:"id" binding:"required"`
+	FileName      string `json:"fileName" binding:"required"`
 	ReproduceAble bool   `json:"reproduceAble" binding:"required"`
 }
 
