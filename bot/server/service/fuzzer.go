@@ -26,10 +26,8 @@ func handleFuzzResult(fuzzResult fuzzer.FuzzResult, reproduceResult map[string]f
 			reproduceAble := false
 			if v, ok := reproduceResult[c.InputPath]; ok && v.ReturnCode != 0 {
 				reproduceAble = true
-
 			}
-			models.CreateCrash(c.InputPath, reproduceAble)
-
+			models.CreateCrash(c.InputPath, reproduceAble, c.FileName)
 		}
 	}
 	err := models.CreateFuzzResult(fuzzResult.Command, fuzzResult.Stats, fuzzResult.TimeExecuted)
@@ -113,6 +111,15 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 			fuzzArg := fuzzer.FuzzArg{
 				MaxTime: fuzzMaxTime,
 			}
+			fuzzChan := make(chan struct{})
+			ticker := time.NewTicker(time.Duration(fuzzMaxTime) * time.Second)
+			defer ticker.Stop()
+			go func() {
+				for {
+					fuzzChan <- struct{}{}
+					<-ticker.C
+				}
+			}()
 
 			for {
 				select {
@@ -123,7 +130,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				case <-controlChan:
 					return
 
-				default:
+				case <-fuzzChan:
 					fuzzResult, err := fuzzerPlugin.Fuzz(fuzzArg)
 					if err != nil {
 						Err = err

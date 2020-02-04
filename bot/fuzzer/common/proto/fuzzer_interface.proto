@@ -6,46 +6,47 @@ message ErrorResponse {
 }
 
 message StringMap {
-	string key = 1;
-	string value = 2;
+    string key = 1;
+    string value = 2;
 }
 
 message PrepareArg {
-	string corpusDir = 1;
-	string targetPath = 2;
-	map<string, string> arguments = 3;
-	repeated string environments = 4;
+    string corpusDir = 1;
+    string targetPath = 2;
+    map<string, string> arguments = 3;
+    repeated string environments = 4;
 }
 
 message FuzzArg {
-	int32 maxTime = 1;
+    int32 maxTime = 1;
 }
 
 message Crash {
-	string inputPath = 1;
-	repeated string reproduceArg = 2;
-	repeated string environments = 3;
+    string inputPath = 1;
+    string fileName = 2;
+    repeated string reproduceArg = 3;
+    repeated string environments = 4;
 }
 
 message FuzzResult {
-	repeated string command = 1;
-	repeated Crash crashes = 2;
-	map<string, string> stats = 3;
-	int32 timeExecuted = 4;
-	string error = 5;
+    repeated string command = 1;
+    repeated Crash crashes = 2;
+    map<string, string> stats = 3;
+    int32 timeExecuted = 4;
+    string error = 5;
 }
 
 message ReproduceArg {
-	string inputPath = 1;
-	int32 maxTime = 2;
+    string inputPath = 1;
+    int32 maxTime = 2;
 }
 
 message ReproduceResult {
-    	repeated string command = 1;
-	int32 returnCode = 2;
-	int32 timeExecuted = 3;
-	repeated string output = 4;
-	string error = 5;
+    repeated string command = 1;
+    int32 returnCode = 2;
+    int32 timeExecuted = 3;
+    repeated string output = 4;
+    string error = 5;
 }
 
 message Empty {}

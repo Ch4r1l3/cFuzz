@@ -21,6 +21,7 @@ type FuzzArg struct {
 
 type Crash struct {
 	InputPath    string //Path of the crash file
+	FileName     string // The origin filename, this might different from the filename in inputpath
 	ReproduceArg []string
 	Environments []string
 }

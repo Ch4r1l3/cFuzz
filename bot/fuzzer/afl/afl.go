@@ -133,7 +133,7 @@ func (a *AFL) Fuzz(args fuzzer.FuzzArg) (fuzzer.FuzzResult, error) {
 	programArgs := a.getProgramArg()
 	if programArgs != nil {
 		arguments = append(arguments, programArgs...)
-		reproduceArg = append(reproduceArg, reproduceArg...)
+		reproduceArg = append(reproduceArg, programArgs...)
 	}
 
 	//run afl

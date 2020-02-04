@@ -38,6 +38,7 @@ func (f *FuzzerGRPCClient) Fuzz(args FuzzArg) (FuzzResult, error) {
 	for _, v := range resp.Crashes {
 		crashes = append(crashes, Crash{
 			InputPath:    v.InputPath,
+			FileName:     v.FileName,
 			ReproduceArg: v.ReproduceArg,
 			Environments: v.Environments,
 		})
@@ -111,6 +112,7 @@ func (f *FuzzerGRPCServer) Fuzz(ctx context.Context, args *proto.FuzzArg) (*prot
 	for _, v := range resp.Crashes {
 		crashes = append(crashes, &proto.Crash{
 			InputPath:    v.InputPath,
+			FileName:     v.FileName,
 			ReproduceArg: v.ReproduceArg,
 			Environments: v.Environments,
 		})

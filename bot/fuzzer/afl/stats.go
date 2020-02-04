@@ -47,6 +47,7 @@ func (a *AFL) GetAllCrashes(outDir string) ([]fuzzer.Crash, error) {
 			os.Link(path.Join(crashPath, v.Name()), path.Join(crashStorePath, crashName))
 			crashes = append(crashes, fuzzer.Crash{
 				InputPath: path.Join(crashStorePath, crashName),
+				FileName:  v.Name(),
 			})
 		}
 	}

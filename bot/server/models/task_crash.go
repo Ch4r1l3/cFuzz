@@ -6,6 +6,8 @@ type TaskCrash struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 	// example: /tmp/afl/123
 	Path string `json:"path"`
+	// example: 123
+	FileName string `json:"fileName"`
 	// example: true
 	ReproduceAble bool `json:"reproduceAble"`
 }
@@ -26,9 +28,10 @@ func GetCrashByID(id uint64) (*TaskCrash, error) {
 	return &crash, nil
 }
 
-func CreateCrash(path string, reproduceAble bool) error {
+func CreateCrash(path string, reproduceAble bool, fileName string) error {
 	taskCrash := TaskCrash{
 		Path:          path,
+		FileName:      fileName,
 		ReproduceAble: reproduceAble,
 	}
 	return DB.Save(&taskCrash).Error
