@@ -3,10 +3,9 @@ package service
 import (
 	"github.com/Ch4r1l3/cFuzz/bot/fuzzer/common"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
+	"github.com/Ch4r1l3/cFuzz/bot/server/logger"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
-	hclog "github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"os"
 	"os/exec"
 	"time"
 )
@@ -43,18 +42,12 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 		running = true
 		go func() {
 			var Err error
-			f, err := os.OpenFile(config.ServerConf.TempPath+"/cfuzz.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-			logger := hclog.New(&hclog.LoggerOptions{
-				Name:   "plugin",
-				Output: f,
-				Level:  hclog.Debug,
-			})
 			defer func() {
 				mutex.Lock()
 				running = false
 				if Err != nil {
 					models.DB.Model(&models.Task{}).Update("Status", models.TaskError)
-					logger.Debug("error is !!!!!:" + Err.Error())
+					logger.Logger.Debug("error is !!!!!:" + Err.Error())
 				}
 				mutex.Unlock()
 			}()
@@ -71,7 +64,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				HandshakeConfig:  handshakeConfig,
 				VersionedPlugins: plugins,
 				Cmd:              exec.Command(pluginPath),
-				Logger:           logger,
+				Logger:           logger.Logger,
 				AllowedProtocols: []plugin.Protocol{
 					plugin.ProtocolNetRPC, plugin.ProtocolGRPC,
 				},
@@ -80,14 +73,14 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 
 			fuzzerRpcClient, err := fuzzerClient.Client()
 			if err != nil {
-				logger.Debug(err.Error())
+				logger.Logger.Debug(err.Error())
 				Err = err
 				return
 			}
 
 			fuzzerRaw, err := fuzzerRpcClient.Dispense("fuzzer")
 			if err != nil {
-				logger.Debug(err.Error())
+				logger.Logger.Debug(err.Error())
 				Err = err
 				return
 			}
@@ -103,7 +96,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 
 			err = fuzzerPlugin.Prepare(prepareArg)
 			if err != nil {
-				logger.Debug(err.Error())
+				logger.Logger.Debug(err.Error())
 				Err = err
 				return
 			}
@@ -145,11 +138,11 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 							}
 							tresult, err := fuzzerPlugin.Reproduce(targ)
 							if err != nil {
-								logger.Debug(err.Error())
+								logger.Logger.Debug(err.Error())
 							} else {
 								reproduceResult[c.InputPath] = tresult
 							}
-							logger.Debug("find crash: " + c.InputPath)
+							logger.Logger.Debug("find crash: " + c.InputPath)
 						}
 					}
 					handleFuzzResult(fuzzResult, reproduceResult)

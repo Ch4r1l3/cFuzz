@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
+	"github.com/Ch4r1l3/cFuzz/bot/server/logger"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/bot/server/router"
 	"github.com/Ch4r1l3/cFuzz/bot/server/service"
@@ -11,6 +12,7 @@ import (
 func main() {
 
 	config.Setup()
+	logger.Setup()
 	models.Setup()
 	defer models.DB.Close()
 	service.Setup()

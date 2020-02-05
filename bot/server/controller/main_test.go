@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/bot/server/config"
+	"github.com/Ch4r1l3/cFuzz/bot/server/logger"
 	"github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/bot/server/service"
 	"github.com/gin-gonic/gin"
@@ -122,6 +123,7 @@ func createZipfile(zipfileName string, fileName string, fileContent []byte) erro
 func TestMain(m *testing.M) {
 	prepareConfig()
 	prepareTestDB()
+	logger.Setup()
 	service.Setup()
 	prepareRouter()
 	m.Run()
