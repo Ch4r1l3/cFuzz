@@ -1,5 +1,10 @@
 package models
 
+import (
+	"github.com/Ch4r1l3/cFuzz/utils"
+	"os"
+)
+
 // swagger:model
 type Task struct {
 	// example: 1
@@ -63,6 +68,22 @@ func DeleteTask(taskid uint64) error {
 		return err
 	}
 	if err = DeleteObjectsByTaskID(&TaskArgument{}, taskid); err != nil {
+		return err
+	}
+	if err = DeleteObjectsByTaskID(&TaskFuzzResult{}, taskid); err != nil {
+		return err
+	}
+	// delete crashes
+	var crashes []TaskCrash
+	if err = GetObjectsByTaskID(&crashes, taskid); err != nil {
+		return err
+	}
+	for _, c := range crashes {
+		if utils.IsPathExists(c.Path) {
+			os.RemoveAll(c.Path)
+		}
+	}
+	if err = DeleteObjectsByTaskID(&TaskCrash{}, taskid); err != nil {
 		return err
 	}
 	if err = DeleteObjectByID(&Task{}, taskid); err != nil {
