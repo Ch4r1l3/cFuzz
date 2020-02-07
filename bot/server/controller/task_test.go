@@ -110,7 +110,7 @@ func TestTask2(t *testing.T) {
 		Expect().
 		Status(http.StatusOK)
 	obj := e.GET("/task").Expect().Status(http.StatusOK).JSON().Object()
-	obj.Keys().ContainsOnly("corpusID", "targetID", "fuzzerID", "maxTime", "status", "arguments", "environments", "fuzzCycleTime")
+	obj.Keys().ContainsOnly("corpusID", "targetID", "fuzzerID", "maxTime", "status", "arguments", "environments", "fuzzCycleTime", "errorMsg")
 	obj.Value("fuzzerID").Equal(fuzzerID)
 	obj.Value("targetID").Equal(targetID)
 	obj.Value("corpusID").Equal(corpusID)
@@ -288,6 +288,8 @@ func TestTask4(t *testing.T) {
 	e.POST("/task/start").Expect().Status(http.StatusNoContent)
 
 	<-time.After(time.Duration(10) * time.Second)
+	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
+	e.GET("/task").Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").NotEqual("")
 	e.POST("/task/stop").Expect().Status(http.StatusBadRequest)
 
 	e.DELETE("/task").Expect().Status(http.StatusNoContent)

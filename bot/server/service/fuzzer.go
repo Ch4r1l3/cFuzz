@@ -47,6 +47,7 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				running = false
 				if Err != nil {
 					models.DB.Model(&models.Task{}).Update("Status", models.TaskError)
+					models.DB.Model(&models.Task{}).Update("ErrorMsg", Err.Error())
 					logger.Logger.Debug("error is !!!!!:" + Err.Error())
 				}
 				mutex.Unlock()
@@ -118,36 +119,44 @@ func Fuzz(pluginPath string, targetPath string, corpusDir string, maxTime int, f
 				select {
 
 				case <-time.After(time.Duration(maxTime) * time.Second):
+					fuzzerPlugin.Clean()
 					return
 
 				case <-controlChan:
+					fuzzerPlugin.Clean()
 					return
 
-				case <-fuzzChan:
-					fuzzResult, err := fuzzerPlugin.Fuzz(fuzzArg)
-					if err != nil {
-						Err = err
-						return
-					}
-					reproduceResult := map[string]fuzzer.ReproduceResult{}
-					for _, c := range fuzzResult.Crashes {
-						if _, ok := crashCheckMap[c.InputPath]; !ok {
-							targ := fuzzer.ReproduceArg{
-								InputPath: c.InputPath,
-								MaxTime:   config.ServerConf.DefaultReproduceTime,
-							}
-							tresult, err := fuzzerPlugin.Reproduce(targ)
-							if err != nil {
-								logger.Logger.Debug(err.Error())
-							} else {
-								reproduceResult[c.InputPath] = tresult
-							}
-							logger.Logger.Debug("find crash: " + c.InputPath)
+				default:
+					select {
+					case <-fuzzChan:
+						fuzzResult, err := fuzzerPlugin.Fuzz(fuzzArg)
+						if err != nil {
+							Err = err
+							fuzzerPlugin.Clean()
+							return
 						}
-					}
-					handleFuzzResult(fuzzResult, reproduceResult)
-					//go handleFuzzResult(fuzzResult, reproduceResult)
+						reproduceResult := map[string]fuzzer.ReproduceResult{}
+						for _, c := range fuzzResult.Crashes {
+							if _, ok := crashCheckMap[c.InputPath]; !ok {
+								targ := fuzzer.ReproduceArg{
+									InputPath: c.InputPath,
+									MaxTime:   config.ServerConf.DefaultReproduceTime,
+								}
+								tresult, err := fuzzerPlugin.Reproduce(targ)
+								if err != nil {
+									logger.Logger.Debug(err.Error())
+								} else {
+									reproduceResult[c.InputPath] = tresult
+								}
+								logger.Logger.Debug("find crash: " + c.InputPath)
+							}
+						}
+						handleFuzzResult(fuzzResult, reproduceResult)
+						//go handleFuzzResult(fuzzResult, reproduceResult)
 
+					default:
+						<-time.After(time.Second)
+					}
 				}
 			}
 

@@ -38,6 +38,16 @@ type TaskCreateReq struct {
 	Environments []string `json:"environments"`
 }
 
+type TaskResp struct {
+	models.Task
+
+	// example: {"MEMORY_LIMIT": "1"}
+	Arguments map[string]string `json:"arguments"`
+
+	//example: [ASAN_ON=true, ASAN_AFL=true]
+	Environments []string `json:"environments"`
+}
+
 type TaskIDReq struct {
 	ID uint64 `uri:"id" binding:"required"`
 }
@@ -55,7 +65,7 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 	// responses:
 	//   '200':
 	//      schema:
-	//        "$ref": "#/definitions/TaskCreateReq"
+	//        "$ref": "#/definitions/TaskResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -75,15 +85,10 @@ func (tc *TaskController) Retrieve(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"fuzzerID":      task.FuzzerID,
-		"corpusID":      task.CorpusID,
-		"targetID":      task.TargetID,
-		"maxTime":       task.MaxTime,
-		"fuzzCycleTime": task.FuzzCycleTime,
-		"status":        task.Status,
-		"arguments":     arguments,
-		"environments":  environments,
+	c.JSON(http.StatusOK, TaskResp{
+		Task:         *task,
+		Arguments:    arguments,
+		Environments: environments,
 	})
 
 }

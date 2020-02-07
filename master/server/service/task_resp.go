@@ -7,8 +7,8 @@ type clientStorageItemPostResp struct {
 }
 
 type clientTaskGetResp struct {
-	Status string `json:"status"`
-	Error  string `json:"error"`
+	Status   string `json:"status"`
+	ErrorMsg string `json:"errorMsg"`
 }
 
 type clientCrashGetResp struct {

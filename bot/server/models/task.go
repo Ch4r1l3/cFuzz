@@ -14,6 +14,8 @@ type Task struct {
 	FuzzCycleTime uint64 `json:"fuzzCycleTime"` //the fuzz cycle time
 	// example: 3600
 	MaxTime int `json:"maxTime"` //the total time it runs
+	// example: prepare fuzz error
+	ErrorMsg string `json:"errorMsg"`
 }
 
 //Task Status

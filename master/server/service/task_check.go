@@ -35,6 +35,8 @@ func checkTasks() {
 					go func() {
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped)
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
+						requestProxyGet(task.ID, []string{"task", "stop"})
+						<-time.After(time.Duration(task.FuzzCycleTime) * time.Second)
 						DeleteDeployByTaskID(task.ID)
 						DeleteServiceByTaskID(task.ID)
 					}()
@@ -139,7 +141,7 @@ func checkSingleTask(taskID uint64) {
 		logger.Logger.Debug("client status is not running", "status", clientTask.Status)
 		if clientTask.Status == botmodels.TaskError {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit")
+			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit: "+clientTask.ErrorMsg)
 		} else {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
 		}

@@ -220,6 +220,12 @@ func (a *LibFuzzer) Clean() error {
 			return errors.New("LibFuzzer Clean error :" + err.Error())
 		}
 	}
+	if _, err := os.Stat(a.newCorpusDir); !os.IsNotExist(err) {
+		err = os.RemoveAll(a.newCorpusDir)
+		if err != nil {
+			return errors.New("LibFuzzer Clean error :" + err.Error())
+		}
+	}
 
 	return nil
 }
