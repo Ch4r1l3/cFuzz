@@ -1,18 +1,18 @@
-server: 
-        runMode: debug
-        port: 8889
-        readTimeout: 60
-        writeTimeout: 60
-        tempPath: /tmp
-        crashesPath: ./crashes
-        logToFile: true
-        logFileDir: "/tmp"
-
 kubernetes:
-        configPath: ""
-        namespace: "cfuzz"
-        checkTaskTime: 10
-        maxClientRetryNum: 10
-        maxStartTime: 3600
-        requestTimeout: 60
-        initCleanup: false
+  checktasktime: 10
+  configpath: ""
+  initcleanup: false
+  maxclientretrynum: 10
+  maxstarttime: 3600
+  namespace: cfuzz
+  requesttimeout: 60
+server:
+  runmode: debug
+  port: 8889
+  readtimeout: "60"
+  writetimeout: "60"
+  temppath: /tmp
+  crashespath: ./crashes
+  logtofile: true
+  logfiledir: /tmp
+  signingkey: 2h5x61zNg1

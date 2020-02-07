@@ -1,26 +1,20 @@
 package controller
 
 import (
-	"github.com/gavv/httpexpect"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strconv"
 	"testing"
 )
 
 func TestStorageItemList(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	e.GET("/api/storage_item").Expect().Status(http.StatusOK)
 }
 
 func TestStorageItem1(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	e.GET("/api/storage_item").Expect().Status(http.StatusOK)
 	err := ioutil.WriteFile("./storageItem_test", []byte("afl"), 0755)
 	if err != nil {
@@ -61,9 +55,7 @@ func TestStorageItem1(t *testing.T) {
 }
 
 func TestStorageItem2(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	e.POST("/api/storage_item/exist").Expect().Status(http.StatusBadRequest)
 	postdata := map[string]interface{}{
 		"name": "afl",

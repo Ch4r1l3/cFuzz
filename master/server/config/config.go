@@ -1,9 +1,10 @@
 package config
 
 import (
-	"bytes"
+	//"bytes"
+	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/spf13/viper"
-	"io/ioutil"
+	//"io/ioutil"
 	"log"
 )
 
@@ -16,6 +17,7 @@ type Server struct {
 	CrashesPath  string `mapstructure:"crashesPath"`
 	LogToFile    bool   `mapstructure:"logToFile"`
 	LogFileDir   string `mapstructure:"logFileDir"`
+	SigningKey   string `mapstructure:"signingKey"`
 }
 
 type Kubernetes struct {
@@ -32,13 +34,25 @@ var ServerConf = &Server{}
 var KubernetesConf = &Kubernetes{}
 
 func Setup() {
-	viper.SetConfigType("YAML")
-	data, err := ioutil.ReadFile("config/config.yaml")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./config")
+	viper.SetConfigName("config")
+
+	err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatal("Read 'config.yaml' fail: %v\n", err)
 	}
-
-	viper.ReadConfig(bytes.NewBuffer(data))
 	viper.UnmarshalKey("server", ServerConf)
 	viper.UnmarshalKey("kubernetes", KubernetesConf)
+	if ServerConf.SigningKey == "" {
+		ServerConf.SigningKey, err = utils.RandomString(10)
+		if err != nil {
+			log.Fatal("random string error: %v\n", err)
+		}
+		viper.Set("server", ServerConf)
+		err = viper.WriteConfig()
+		if err != nil {
+			log.Fatal("save signingKey in config error: %v\n", err)
+		}
+	}
 }

@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/ajg/form v1.5.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
 	github.com/gin-contrib/cors v1.3.0
@@ -26,6 +27,7 @@ require (
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
+	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
 	golang.org/x/sys v0.0.0-20191218084908-4a24b4065292 // indirect
 	google.golang.org/genproto v0.0.0-20191216205247-b31c10ee225f // indirect

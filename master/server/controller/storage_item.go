@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"net/http"
 	"os"
 )
@@ -23,6 +23,19 @@ type StorageItemExistReq struct {
 	Path string `json:"path" binding:"required"`
 	// example: fuzzer
 	Type string `json:"type" binding:"required"`
+}
+
+func getStorageItem(c *gin.Context) (*models.StorageItem, error) {
+	var storageItem models.StorageItem
+	err := getObject(c, &storageItem)
+	if err != nil {
+		return nil, err
+	}
+	if storageItem.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return nil, errors.New("no permission")
+	}
+	return &storageItem, nil
 }
 
 // swagger:model
@@ -64,10 +77,16 @@ func (sic *StorageItemController) List(c *gin.Context) {
 
 	var storageItems []models.StorageItem
 
+	var count int
+	var err error
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	count, err := models.GetObjectCombine(&storageItems, offset, limit, name)
+	if c.GetBool("isAdmin") {
+		count, err = models.GetObjectCombine(&storageItems, offset, limit, name)
+	} else {
+		count, err = models.GetObjectCombineByUserID(&storageItems, offset, limit, name, uint64(c.GetInt64("id")))
+	}
 
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
@@ -103,7 +122,13 @@ func (dc *StorageItemController) Count(c *gin.Context) {
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
-	count, err := models.GetCount(&models.StorageItem{})
+	var count int
+	var err error
+	if c.GetBool("isAdmin") {
+		count, err = models.GetCount(&models.StorageItem{})
+	} else {
+		count, err = models.GetCountByUserID(&models.StorageItem{}, uint64(c.GetInt64("id")))
+	}
 	if err != nil {
 		utils.DBError(c)
 	}
@@ -141,6 +166,9 @@ func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
 	//   '200':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -153,10 +181,16 @@ func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
 		return
 	}
 	var storageItems []models.StorageItem
+	var count int
+	var err error
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	storageItems, count, err := models.GetStorageItemsByTypeCombine(mtype, offset, limit, name)
+	if c.GetBool("isAdmin") {
+		storageItems, count, err = models.GetStorageItemsByTypeCombine(mtype, offset, limit, name)
+	} else {
+		storageItems, count, err = models.GetStorageItemsByTypeAndUserIDCombine(mtype, offset, limit, name, uint64(c.GetInt64("id")))
+	}
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
@@ -195,6 +229,9 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -219,6 +256,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		Name:          req.Name,
 		Path:          req.Path,
 		Type:          req.Type,
+		UserID:        uint64(c.GetInt64("id")),
 		ExistsInImage: true,
 	}
 	err := models.InsertObject(&storageItem)
@@ -262,6 +300,9 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -289,7 +330,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		return
 	}
 	var tempFile string
-	if tempFile, err = utils.SaveTempFile(c, "file", "storageItem"); err != nil {
+	if tempFile, err = SaveTempFile(c, "file", "storageItem"); err != nil {
 		return
 	}
 	storageItem := models.StorageItem{
@@ -297,6 +338,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		Path:    tempFile,
 		Type:    mtype,
 		RelPath: c.PostForm("relPath"),
+		UserID:  uint64(c.GetInt64("id")),
 	}
 	err = models.InsertObject(&storageItem)
 	if err != nil {
@@ -327,6 +369,9 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	//   '200':
 	//      schema:
 	//        "$ref": "#/definitions/StorageItem"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -337,28 +382,17 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var req UriIDReq
-	err := c.ShouldBindUri(&req)
+	storageItem, err := getStorageItem(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
-	var storageItem models.StorageItem
-	if err = models.GetObjectByID(&storageItem, req.ID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
 	if !storageItem.ExistsInImage {
 		os.RemoveAll(storageItem.Path)
 	}
-	err = models.DeleteObjectByID(models.StorageItem{}, req.ID)
+	err = models.DeleteObjectByID(models.StorageItem{}, storageItem.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusNoContent, "")
+	c.String(http.StatusNoContent, "")
 }

@@ -1,24 +1,18 @@
 package controller
 
 import (
-	"github.com/gavv/httpexpect"
 	"net/http"
-	"net/http/httptest"
 	"strconv"
 	"testing"
 )
 
 func TestDeploymentList(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	e.GET("/api/deployment").Expect().Status(http.StatusOK)
 }
 
 func TestDeployment1(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	postdata1 := map[string]interface{}{
 		"content": "test1",
 	}
@@ -34,9 +28,7 @@ func TestDeployment1(t *testing.T) {
 }
 
 func TestDeployment2(t *testing.T) {
-	server := httptest.NewServer(r)
-	defer server.Close()
-	e := httpexpect.New(t, server.URL)
+	e := getExpect(t)
 	postdata1 := map[string]interface{}{
 		"name":    "test1",
 		"content": "111",

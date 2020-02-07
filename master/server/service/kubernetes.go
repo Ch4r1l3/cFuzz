@@ -191,5 +191,4 @@ func getServiceTaskID(service *apiv1.Service) (uint64, error) {
 		return 0, err
 	}
 	return uint64(taskID), nil
-
 }

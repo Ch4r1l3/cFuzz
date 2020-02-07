@@ -40,3 +40,15 @@ func NotFound(c *gin.Context) {
 		Error: "not found",
 	})
 }
+
+func Forbidden(c *gin.Context) {
+	c.JSON(http.StatusForbidden, ErrResp{
+		Error: "permission not enough",
+	})
+}
+
+func ForbiddenWithMsg(c *gin.Context, msg string) {
+	c.JSON(http.StatusForbidden, ErrResp{
+		Error: msg,
+	})
+}

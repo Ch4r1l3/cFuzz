@@ -4,6 +4,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 	"net/http"
 )
 
@@ -41,13 +42,26 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
+	var task models.Task
+	if err := models.GetObjectByID(&task, taskID); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			utils.NotFound(c)
+			return
+		}
+		utils.DBError(c)
+		return
+	}
+	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return
+	}
 	var taskFuzzResult []models.TaskFuzzResult
 	if err := models.GetObjectsByTaskID(&taskFuzzResult, taskID); err != nil {
 		utils.DBError(c)
 		return
 	}
 	if len(taskFuzzResult) == 0 {
-		c.JSON(http.StatusOK, "")
+		c.String(http.StatusOK, "")
 		return
 	}
 	stats, err := models.GetTaskFuzzResultStat(taskFuzzResult[0].ID)

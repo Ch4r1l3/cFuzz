@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/Ch4r1l3/cFuzz/utils"
+	"github.com/jinzhu/gorm"
 	"os"
 )
 
@@ -45,6 +46,9 @@ type Task struct {
 
 	// example: 1579996805
 	StartedAt int64 `json:"startedAt"`
+
+	// example: 1
+	UserID uint64 `json:"userID"`
 }
 
 const (
@@ -158,12 +162,36 @@ func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
 
+func GetObjectsByTaskIDAndUserID(obj interface{}, taskid uint64, userid uint64) error {
+	return DB.Where("task_id = ? AND user_id = ?", taskid, userid).Find(obj).Error
+}
+
 func GetCountByTaskID(obj interface{}, taskid uint64) (int, error) {
 	var count int
 	err := DB.Model(obj).Where("task_id = ?", taskid).Count(&count).Error
 	return count, err
 }
 
-func GetObjectsByTaskIDPagination(obj interface{}, taskid uint64, offset int, limit int) error {
-	return DB.Where("task_id = ?", taskid).Offset(offset).Limit(limit).Find(obj).Error
+func GetObjectsByTaskIDPagination(objs interface{}, taskid uint64, offset int, limit int) (int, error) {
+	var count int
+	err := DB.Model(objs).Where("task_id = ?", taskid).Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	t := DB.Where("task_id = ?", taskid)
+	if offset >= 0 && limit >= 0 {
+		t = t.Offset(offset).Limit(limit)
+	}
+	return count, t.Find(objs).Error
+}
+
+func GetTaskByID(id uint64) (*Task, error) {
+	var task Task
+	if err := DB.Where("id = ?", id).First(&task).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &task, nil
 }

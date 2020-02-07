@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,19 @@ type DeploymentCombine struct {
 }
 
 type DeploymentController struct{}
+
+func getDeployment(c *gin.Context) (*models.Deployment, error) {
+	var deployment models.Deployment
+	err := getObject(c, &deployment)
+	if err != nil {
+		return nil, err
+	}
+	if deployment.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return nil, errors.New("no permission")
+	}
+	return &deployment, nil
+}
 
 // List Deployment
 func (dc *DeploymentController) List(c *gin.Context) {
@@ -56,10 +70,16 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
+	var count int
+	var err error
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	count, err := models.GetObjectCombine(&deployments, offset, limit, name)
+	if c.GetBool("isAdmin") {
+		count, err = models.GetObjectCombine(&deployments, offset, limit, name)
+	} else {
+		count, err = models.GetObjectCombineByUserID(&deployments, offset, limit, name, uint64(c.GetInt64("id")))
+	}
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -89,7 +109,13 @@ func (dc *DeploymentController) Count(c *gin.Context) {
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
-	count, err := models.GetCount(&models.Deployment{})
+	var count int
+	var err error
+	if c.GetBool("isAdmin") {
+		count, err = models.GetCount(&models.Deployment{})
+	} else {
+		count, err = models.GetCountByUserID(&models.Deployment{}, uint64(c.GetInt64("id")))
+	}
 	if err != nil {
 		utils.DBError(c)
 	}
@@ -128,11 +154,17 @@ func (dc *DeploymentController) SimpList(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
+	var count int
+	var err error
 
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	count, err := models.GetObjectCombine(&deployments, offset, limit, name)
+	if c.GetBool("isAdmin") {
+		count, err = models.GetObjectCombine(&deployments, offset, limit, name)
+	} else {
+		count, err = models.GetObjectCombineByUserID(&deployments, offset, limit, name, uint64(c.GetInt64("id")))
+	}
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -170,6 +202,9 @@ func (dc *DeploymentController) Retrieve(c *gin.Context, id uint64) {
 	//        type: array
 	//        items:
 	//          "$ref": "#/definitions/Deployment"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -179,17 +214,11 @@ func (dc *DeploymentController) Retrieve(c *gin.Context, id uint64) {
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
-	var deployment models.Deployment
-	err := models.GetObjectByID(&deployment, id)
+	deployment, err := getDeployment(c)
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, deployment)
+	c.JSON(http.StatusOK, *deployment)
 }
 
 // Create Deployment
@@ -213,6 +242,9 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/Deployment"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -229,6 +261,7 @@ func (dc *DeploymentController) Create(c *gin.Context) {
 	deployment := models.Deployment{
 		Name:    req.Name,
 		Content: req.Content,
+		UserID:  uint64(c.GetInt64("id")),
 	}
 	err = models.InsertObject(&deployment)
 	if err != nil {
@@ -263,6 +296,9 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/Deployment"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -273,35 +309,23 @@ func (dc *DeploymentController) Update(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
-	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
 	var req DeploymentReq
-	err = c.ShouldBindJSON(&req)
+	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	var deployment models.Deployment
-	err = models.GetObjectByID(&deployment, uriReq.ID)
+	deployment, err := getDeployment(c)
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
 	deployment.Name = req.Name
 	deployment.Content = req.Content
-	if err = models.DB.Save(&deployment).Error; err != nil {
+	if err = models.DB.Save(deployment).Error; err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusCreated, "")
+	c.String(http.StatusCreated, "")
 }
 
 func (dc *DeploymentController) Destroy(c *gin.Context) {
@@ -323,6 +347,9 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 	//   '204':
 	//      schema:
 	//        "$ref": "#/definitions/Deployment"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -333,14 +360,11 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-
-	err := c.ShouldBindUri(&uriReq)
+	deployment, err := getDeployment(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	err = models.DeleteObjectByID(models.Deployment{}, uriReq.ID)
+	err = models.DeleteObjectByID(models.Deployment{}, deployment.ID)
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			utils.NotFound(c)
@@ -349,5 +373,5 @@ func (dc *DeploymentController) Destroy(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusNoContent, "")
+	c.String(http.StatusNoContent, "")
 }

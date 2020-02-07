@@ -5,11 +5,16 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"net/http"
 )
 
 type TaskCrashController struct{}
+
+// swagger:model
+type TaskCrashListResp struct {
+	Data []models.TaskCrash `json:"data"`
+	CountResp
+}
 
 // List all crashes by taskID
 func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
@@ -36,27 +41,38 @@ func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	// responses:
 	//   '200':
 	//      schema:
-	//        type: array
-	//        items:
-	//          "$ref": "#/definitions/TaskCrash"
+	//        "$ref": "#/definitions/TaskCrashListResp"
 	//   '500':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
 	var crashes []models.TaskCrash
-	var err error
-	if !c.GetBool("pagination") {
-		err = models.GetObjectsByTaskID(&crashes, taskID)
-	} else {
-		offset := c.GetInt("offset")
-		limit := c.GetInt("limit")
-		err = models.GetObjectsByTaskIDPagination(&crashes, taskID, offset, limit)
+	task, err := models.GetTaskByID(taskID)
+	if err != nil {
+		utils.InternalErrorWithMsg(c, err.Error())
+		return
 	}
+	if task == nil {
+		utils.NotFound(c)
+		return
+	}
+	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return
+	}
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	count, err := models.GetObjectsByTaskIDPagination(&crashes, taskID, offset, limit)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, crashes)
+	c.JSON(http.StatusOK, TaskCrashListResp{
+		Data: crashes,
+		CountResp: CountResp{
+			Count: count,
+		},
+	})
 }
 
 // Download task crash
@@ -90,23 +106,18 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var req UriIDReq
-	err := c.ShouldBindUri(&req)
-	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
 	var crash models.TaskCrash
-	err = models.GetObjectByID(&crash, req.ID)
+	err := getObject(c, &crash)
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
-	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=crash%d", req.ID))
+	var task models.Task
+	err = models.GetObjectByID(&task, crash.ID)
+	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return
+	}
+	c.Writer.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=crash%d", crash.ID))
 	c.Writer.Header().Add("Content-Type", "application/octet-stream")
 	c.File(crash.Path)
 }

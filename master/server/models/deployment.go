@@ -10,4 +10,7 @@ type Deployment struct {
 
 	// example: 123
 	Content string `json:"content"`
+
+	// example: 1
+	UserID uint64 `json:"userID"`
 }

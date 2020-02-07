@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
@@ -11,6 +12,19 @@ import (
 	"strings"
 	"time"
 )
+
+func getTask(c *gin.Context) (*models.Task, error) {
+	var task models.Task
+	err := getObject(c, &task)
+	if err != nil {
+		return nil, err
+	}
+	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return nil, errors.New("no permission")
+	}
+	return &task, nil
+}
 
 // swagger:model
 type TaskCreateReq struct {
@@ -227,8 +241,7 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var task models.Task
-	err := models.GetObjectByID(&task, id)
-	if err != nil {
+	if err := models.GetObjectByID(&task, id); err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			utils.NotFound(c)
 			return
@@ -280,6 +293,9 @@ func (tc *TaskController) Create(c *gin.Context) {
 	//   '201':
 	//      schema:
 	//        "$ref": "#/definitions/TaskResp"
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -306,6 +322,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		Time:          req.Time,
 		Name:          req.Name,
 		Status:        models.TaskCreated,
+		UserID:        uint64(c.GetInt64("id")),
 	}
 	if req.Image != "" {
 		task.Image = image
@@ -378,6 +395,9 @@ func (tc *TaskController) Start(c *gin.Context) {
 	// responses:
 	//   '202':
 	//     description: start task success
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -388,19 +408,8 @@ func (tc *TaskController) Start(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
+	task, err := getTask(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
-	var task models.Task
-	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
 	if task.Status != models.TaskCreated {
@@ -475,7 +484,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		Err = err
 		return
 	}
-	c.JSON(http.StatusAccepted, "")
+	c.String(http.StatusAccepted, "")
 }
 
 // stop task
@@ -497,6 +506,9 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	// responses:
 	//   '202':
 	//     description: stop task success
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -507,19 +519,8 @@ func (tc *TaskController) Stop(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
+	task, err := getTask(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
-	var task models.Task
-	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
 	if task.Status != models.TaskStarted && task.Status != models.TaskInitializing && task.Status != models.TaskRunning {
@@ -536,7 +537,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
 	}
-	c.JSON(http.StatusAccepted, "")
+	c.String(http.StatusAccepted, "")
 	return
 }
 
@@ -564,6 +565,9 @@ func (tc *TaskController) Update(c *gin.Context) {
 	// responses:
 	//   '201':
 	//      description: update task success
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -574,19 +578,8 @@ func (tc *TaskController) Update(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
+	task, err := getTask(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
-		return
-	}
-	var task models.Task
-	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
-		utils.DBError(c)
 		return
 	}
 	var req TaskUpdateReq
@@ -602,21 +595,21 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 
 	if req.Image != "" {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DeploymentID", 0).Error; err != nil {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("DeploymentID", 0).Error; err != nil {
 			utils.DBError(c)
 			return
 		}
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Image", req.Image).Error; err != nil {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Image", req.Image).Error; err != nil {
 			utils.DBError(c)
 			return
 		}
 	} else if req.DeploymentID != 0 {
 		if models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("DeploymentID", req.DeploymentID).Error; err != nil {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("DeploymentID", req.DeploymentID).Error; err != nil {
 				utils.DBError(c)
 				return
 			}
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Image", "").Error; err != nil {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Image", "").Error; err != nil {
 				utils.DBError(c)
 				return
 			}
@@ -640,46 +633,46 @@ func (tc *TaskController) Update(c *gin.Context) {
 				utils.BadRequestWithMsg(c, "wrong type")
 				return
 			}
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update(modelsField[i], ids[i]).Error; err != nil {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update(modelsField[i], ids[i]).Error; err != nil {
 				utils.DBError(c)
 				return
 			}
 		}
 	}
 	if req.Time != 0 {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("Time", req.Time).Error; err != nil {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Time", req.Time).Error; err != nil {
 			utils.DBError(c)
 			return
 		}
 	}
 	if req.FuzzCycleTime != 0 {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", uriReq.ID).Update("FuzzCycleTime", req.Time).Error; err != nil {
+		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("FuzzCycleTime", req.Time).Error; err != nil {
 			utils.DBError(c)
 			return
 		}
 	}
 	if req.Arguments != nil {
-		if err = models.DeleteObjectsByTaskID(&models.TaskArgument{}, uriReq.ID); err != nil {
+		if err = models.DeleteObjectsByTaskID(&models.TaskArgument{}, task.ID); err != nil {
 			utils.DBError(c)
 			return
 		}
-		if err = models.InsertArguments(uriReq.ID, req.Arguments); err != nil {
+		if err = models.InsertArguments(task.ID, req.Arguments); err != nil {
 			utils.DBError(c)
 			return
 		}
 	}
 	if req.Environments != nil {
-		if err = models.DeleteObjectsByTaskID(&models.TaskEnvironment{}, uriReq.ID); err != nil {
+		if err = models.DeleteObjectsByTaskID(&models.TaskEnvironment{}, task.ID); err != nil {
 			utils.DBError(c)
 			return
 		}
-		if err = models.InsertEnvironments(uriReq.ID, req.Environments); err != nil {
+		if err = models.InsertEnvironments(task.ID, req.Environments); err != nil {
 			utils.DBError(c)
 			return
 		}
 	}
 
-	c.JSON(http.StatusCreated, "")
+	c.String(http.StatusCreated, "")
 }
 
 // delete task
@@ -701,6 +694,9 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	// responses:
 	//   '204':
 	//      description: update task success
+	//   '400':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
 	//   '403':
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
@@ -708,26 +704,19 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var uriReq UriIDReq
-	err := c.ShouldBindUri(&uriReq)
+	task, err := getTask(c)
 	if err != nil {
-		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	var task models.Task
-	if err = models.GetObjectByID(&task, uriReq.ID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
+	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
+		utils.Forbidden(c)
+		return
+	}
+	if err := models.DeleteTask(task.ID); err != nil {
 		utils.DBError(c)
 		return
 	}
-	if err := models.DeleteTask(uriReq.ID); err != nil {
-		utils.DBError(c)
-		return
-	}
-	service.DeleteServiceByTaskID(uriReq.ID)
-	service.DeleteDeployByTaskID(uriReq.ID)
-	c.JSON(http.StatusNoContent, "")
+	service.DeleteServiceByTaskID(task.ID)
+	service.DeleteDeployByTaskID(task.ID)
+	c.String(http.StatusNoContent, "")
 }
