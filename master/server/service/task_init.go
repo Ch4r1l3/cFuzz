@@ -21,11 +21,16 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	defer func() {
 		if Err != nil {
 			logger.Logger.Error("Error exit init", "reason", Err.Error())
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "DB Error")
-			DeleteDeployByTaskID(taskID)
-			DeleteServiceByTaskID(taskID)
+			// check current task status first
+			var tempTask models.Task
+			err = models.GetObjectByID(&tempTask, uint64(taskID))
+			if err != nil || (tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped) {
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "DB Error")
+				DeleteDeployByTaskID(taskID)
+				DeleteServiceByTaskID(taskID)
+			}
 		}
 	}()
 	if err = models.GetObjectByID(&task, uint64(taskID)); err != nil {
@@ -128,8 +133,8 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	}
 
 	//create task on bot
-	//result, err = requestProxyPost(task.ID, []string{"task"}, postData)
-	result, err := requestProxyPostRaw(task.ID, []string{"task"}, postData)
+	result, err := requestProxyPost(task.ID, []string{"task"}, postData)
+	//result, err := requestProxyPostRaw(task.ID, []string{"task"}, postData)
 	logger.Logger.Debug("create task", "result", string(result))
 	if err != nil {
 		Err = errors.Wrap(err, "create task error")

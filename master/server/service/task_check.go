@@ -85,23 +85,18 @@ func checkSingleTask(taskID uint64) {
 	var Err error
 	defer func() {
 		if Err != nil {
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", Err.Error())
-			DeleteDeployByTaskID(taskID)
-			DeleteServiceByTaskID(taskID)
+			//check current task status first
+			var tempTask models.Task
+			err := models.GetObjectByID(&tempTask, uint64(taskID))
+			if err != nil || (tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped) {
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
+				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", Err.Error())
+				DeleteDeployByTaskID(taskID)
+				DeleteServiceByTaskID(taskID)
+			}
 		}
 	}()
-	if err := models.DB.Model(&models.Task{}).
-		Where("id = ?", taskID).Update("Status", models.TaskRunning).Error; err != nil {
-		logger.Logger.Error("DB error", "reason", err.Error())
-		return
-	}
-	if err := models.DB.Model(&models.Task{}).
-		Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
-		logger.Logger.Error("DB error", "reason", err.Error())
-		return
-	}
 	var task models.Task
 	if err := models.GetObjectByID(&task, taskID); err != nil {
 		logger.Logger.Error("DB error", "reason", err.Error())
