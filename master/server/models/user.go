@@ -18,7 +18,7 @@ type User struct {
 	// example:123
 	Username string `json:"username"`
 
-	Password string `josn:"-"`
+	Password string `json:"-"`
 	Salt     string `json:"-"`
 
 	// example:true
@@ -158,10 +158,30 @@ func IsUsernameExists(username string) (bool, error) {
 	return false, err
 }
 
-func GetNormalUser() ([]User, error) {
+func GetNormalUserCombine(offset, limit int, name string) ([]User, int, error) {
 	var users []User
-	if err := DB.Where("is_admin = ?", false).Find(&users).Error; err != nil {
-		return nil, err
+	var count int
+	var err error
+	if name == "" {
+		err = DB.Model(User{}).Where("is_admin = ? AND username like ?", false, "%"+name+"%").Count(&count).Error
+	} else {
+		err = DB.Model(User{}).Where("is_admin = ?", false).Count(&count).Error
 	}
-	return users, nil
+	if err != nil {
+		return nil, 0, err
+	}
+	t := DB.Order("id")
+	if name == "" {
+		t = t.Where("is_admin = ?", false)
+	} else {
+		t = t.Where("is_admin = ? AND username like ?", false, "%"+name+"%")
+	}
+	if offset >= 0 && limit >= 0 {
+		t = t.Offset(offset).Limit(limit)
+	}
+	err = t.Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+	return users, count, nil
 }

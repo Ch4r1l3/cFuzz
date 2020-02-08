@@ -78,8 +78,9 @@ func prepareRouter() {
 		api.GET("/task/:path1/:path2", middleware.Pagination, TaskGetHandler)
 
 		api.GET("/user/status", userController.Status)
-		api.GET("/user", middleware.AdminOnly, userController.List)
+		api.GET("/user", middleware.AdminOnly, middleware.Pagination, userController.List)
 		api.POST("/user", middleware.AdminOnly, userController.Create)
+		api.PUT("/user/:id", userController.Update)
 		api.DELETE("/user/:id", middleware.AdminOnly, userController.Delete)
 	}
 	r.POST("/api/user/login", userController.Login)
@@ -100,6 +101,22 @@ func prepareConfig() {
 	viper.UnmarshalKey("kubernetes", config.KubernetesConf)
 	config.KubernetesConf.CheckTaskTime = 10
 	config.ServerConf.SigningKey = "cfuzz"
+}
+
+func getAdminExpect(t *testing.T) *httpexpect.Expect {
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  s.URL,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Client: &http.Client{
+			Jar: httpexpect.NewJar(),
+		},
+	})
+	loginData := map[string]interface{}{
+		"username": "admin",
+		"password": "123456",
+	}
+	e.POST("/api/user/login").WithJSON(loginData).Expect().Status(http.StatusOK)
+	return e
 }
 
 func getExpect(t *testing.T) *httpexpect.Expect {

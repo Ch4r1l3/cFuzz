@@ -10,6 +10,7 @@ require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-cmd/cmd v1.1.0
+	github.com/go-playground/validator/v10 v10.1.0
 	github.com/golang/protobuf v1.3.2
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hashicorp/go-hclog v0.10.0
