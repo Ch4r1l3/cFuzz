@@ -76,26 +76,14 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var storageItems []models.StorageItem
-
-	var count int
-	var err error
-	offset := c.GetInt("offset")
-	limit := c.GetInt("limit")
-	name := c.Query("name")
-	if c.GetBool("isAdmin") {
-		count, err = models.GetObjectCombine(&storageItems, offset, limit, name)
-	} else {
-		count, err = models.GetObjectCombineByUserID(&storageItems, offset, limit, name, uint64(c.GetInt64("id")))
+	count, err := getList(c, &storageItems)
+	if err != nil {
+		return
 	}
-
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
 		}
-	}
-	if err != nil {
-		utils.DBError(c)
-		return
 	}
 	c.JSON(http.StatusOK, StorageItemCombine{
 		Data: storageItems,
@@ -180,17 +168,12 @@ func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	var storageItems []models.StorageItem
-	var count int
-	var err error
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	if c.GetBool("isAdmin") {
-		storageItems, count, err = models.GetStorageItemsByTypeCombine(mtype, offset, limit, name)
-	} else {
-		storageItems, count, err = models.GetStorageItemsByTypeAndUserIDCombine(mtype, offset, limit, name, uint64(c.GetInt64("id")))
-	}
+	userID := uint64(c.GetInt64("id"))
+	isAdmin := c.GetBool("isAdmin")
+	storageItems, count, err := models.GetStorageItemsByTypeCombine(mtype, offset, limit, name, userID, isAdmin)
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
@@ -248,7 +231,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	if models.IsStorageItemExistsByNameAndType(req.Name, req.Type) {
+	if models.IsStorageItemExistsCombine(req.Name, req.Type, uint64(c.GetInt64("id"))) {
 		utils.BadRequestWithMsg(c, "storageItem name exists")
 		return
 	}
@@ -325,7 +308,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	if models.IsStorageItemExistsByNameAndType(name, mtype) {
+	if models.IsStorageItemExistsCombine(name, mtype, uint64(c.GetInt64("id"))) {
 		utils.BadRequestWithMsg(c, "storageItem name exists")
 		return
 	}
@@ -386,10 +369,7 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if !storageItem.ExistsInImage {
-		os.RemoveAll(storageItem.Path)
-	}
-	err = models.DeleteObjectByID(models.StorageItem{}, storageItem.ID)
+	err = models.DeleteStorageItemByID(storageItem.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

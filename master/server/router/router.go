@@ -53,6 +53,7 @@ func InitRouter() *gin.Engine {
 
 	}
 	r.POST("/api/user/login", userController.Login)
+	r.GET("/api/user/logout", userController.Logout)
 	docs := r.Group("api/docs")
 	docs.Use(cors.Default())
 	{

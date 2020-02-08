@@ -1,5 +1,9 @@
 package models
 
+import (
+	"os"
+)
+
 // item that record some file info
 // swagger:model
 type StorageItem struct {
@@ -25,6 +29,13 @@ type StorageItem struct {
 	UserID uint64 `json:"userID"`
 }
 
+func (s *StorageItem) Delete() error {
+	if !s.ExistsInImage {
+		os.RemoveAll(s.Path)
+	}
+	return nil
+}
+
 // storage item types
 const (
 	Fuzzer = "fuzzer"
@@ -43,62 +54,36 @@ func IsStorageItemTypeValid(mtype string) bool {
 	return false
 }
 
-func IsStorageItemExistsByNameAndType(name string, mtype string) bool {
-	var storageItems []StorageItem
-	if err := DB.Where("name = ? AND type = ?", name, mtype).Find(&storageItems).Error; err != nil {
-		return true
-	}
-	return len(storageItems) >= 1
+func IsStorageItemExistsCombine(name string, mtype string, userID uint64) bool {
+	return IsObjectExistsCustom(&StorageItem{}, []string{"name = ?", "type = ?", "user_id = ?"}, []interface{}{name, mtype, userID})
 }
 
-func GetStorageItemsByType(mtype string) ([]StorageItem, error) {
-	var storageItems []StorageItem
-	if err := DB.Where("type = ?", mtype).Order("id").Find(&storageItems).Error; err != nil {
-		return nil, err
-	}
-	return storageItems, nil
-}
-
-func GetStorageItemsByTypeCombine(mtype string, offset int, limit int, name string) ([]StorageItem, int, error) {
+func GetStorageItemsByTypeCombine(mtype string, offset int, limit int, name string, userID uint64, isAdmin bool) ([]StorageItem, int, error) {
 	var storageItems []StorageItem
 	var count int
-	t := DB.Order("id")
-	if name != "" {
-		if err := DB.Model(&storageItems).Where("type = ? AND name LIKE ?", mtype, "%"+name+"%").Count(&count).Error; err != nil {
-			return nil, 0, err
-		}
-		t = t.Where("type = ? AND name LIKE ?", mtype, "%"+name+"%")
+	var err error
+	if isAdmin {
+		count, err = GetObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?"}, []interface{}{mtype})
 	} else {
-		if err := DB.Model(&storageItems).Where("type = ?", mtype).Count(&count).Error; err != nil {
-			return nil, 0, err
-		}
-		t = t.Where("type = ?", mtype)
+		count, err = GetObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?", "user_id = ?"}, []interface{}{mtype, userID})
 	}
-	if offset >= 0 && limit >= 0 {
-		t = t.Offset(offset).Limit(limit)
-	}
-	err := t.Find(&storageItems).Error
 	return storageItems, count, err
 }
 
-func GetStorageItemsByTypeAndUserIDCombine(mtype string, offset int, limit int, name string, userID uint64) ([]StorageItem, int, error) {
+func DeleteStorageItemCustom(query string, id uint64) error {
 	var storageItems []StorageItem
-	var count int
-	t := DB.Order("id")
-	if name != "" {
-		if err := DB.Model(&storageItems).Where("type = ? AND name LIKE ? AND user_id = ?", mtype, "%"+name+"%", userID).Count(&count).Error; err != nil {
-			return nil, 0, err
-		}
-		t = t.Where("type = ? AND name LIKE ? AND user_id = ?", mtype, "%"+name+"%", userID)
-	} else {
-		if err := DB.Model(&storageItems).Where("type = ? AND user_id = ?", mtype, userID).Count(&count).Error; err != nil {
-			return nil, 0, err
-		}
-		t = t.Where("type = ? AND user_id = ?", mtype, userID)
+	if err := DB.Where(query, id).Find(&storageItems).Error; err != nil {
+		return err
 	}
-	if offset >= 0 && limit >= 0 {
-		t = t.Offset(offset).Limit(limit)
+	for _, s := range storageItems {
+		s.Delete()
 	}
-	err := t.Find(&storageItems).Error
-	return storageItems, count, err
+	if err := DB.Where(query, id).Delete(StorageItem{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteStorageItemByID(id uint64) error {
+	return DeleteStorageItemCustom("id = ?", id)
 }

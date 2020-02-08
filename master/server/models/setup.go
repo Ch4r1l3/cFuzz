@@ -11,6 +11,14 @@ import (
 
 var DB *gorm.DB
 
+type DeleteAble interface {
+	Delete() error
+}
+
+type UserIDAble interface {
+	GetUserID() uint64
+}
+
 func InsertObject(obj interface{}) error {
 	return DB.Create(obj).Error
 }
@@ -25,20 +33,39 @@ func GetCount(objs interface{}) (int, error) {
 	return count, err
 }
 
-func GetObjectCombine(objs interface{}, offset int, limit int, name string) (int, error) {
+func GetObjectCombinCustom(objs interface{}, offset int, limit int, name string, queries []string, values []interface{}) (int, error) {
 	var count int
-	err := DB.Model(objs).Where("name LIKE ?", "%"+name+"%").Count(&count).Error
+	var err error
+	query := ""
+	for _, v := range queries {
+		query += v + " AND "
+	}
+	if name != "" {
+		err = DB.Model(objs).Where(query+"name LIKE ?", append(values, "%"+name+"%")...).Count(&count).Error
+	} else {
+		err = DB.Model(objs).Where(query+"1=1", values...).Count(&count).Error
+	}
 	if err != nil {
 		return 0, err
 	}
 	t := DB.Order("id")
 	if name != "" {
-		t = t.Where("name LIKE ?", "%"+name+"%")
+		t = t.Where(query+"name LIKE ?", append(values, "%"+name+"%")...)
+	} else {
+		t = t.Where(query+"1=1", values...)
 	}
 	if limit >= 0 && offset >= 0 {
 		t = t.Offset(offset).Limit(limit)
 	}
 	return count, t.Find(objs).Error
+}
+
+func GetObjectCombine(objs interface{}, offset int, limit int, name string, userID uint64, isAdmin bool) (int, error) {
+	if isAdmin {
+		return GetObjectCombinCustom(objs, offset, limit, name, nil, nil)
+	} else {
+		return GetObjectCombinCustom(objs, offset, limit, name, []string{"user_id = ?"}, []interface{}{userID})
+	}
 }
 
 func GetObjectByID(obj interface{}, id uint64) error {
@@ -49,8 +76,19 @@ func DeleteObjectByID(obj interface{}, id uint64) error {
 	return DB.Where("id = ?", id).Delete(obj).Error
 }
 
+func IsObjectExistsCustom(objs interface{}, queries []string, values []interface{}) bool {
+	query := ""
+	for i, v := range queries {
+		query += v
+		if i != len(queries)-1 {
+			query += " AND "
+		}
+	}
+	return !DB.Where(query, values...).First(objs).RecordNotFound()
+}
+
 func IsObjectExistsByID(obj interface{}, id uint64) bool {
-	return !DB.Where("id = ?", id).First(obj).RecordNotFound()
+	return IsObjectExistsCustom(obj, []string{"id = ?"}, []interface{}{id})
 }
 
 func Setup() {

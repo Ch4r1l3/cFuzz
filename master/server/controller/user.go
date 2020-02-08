@@ -103,7 +103,7 @@ func (us *UserController) List(c *gin.Context) {
 
 // user login
 func (us *UserController) Login(c *gin.Context) {
-	// swagger:operation GET /user/login user userLogin
+	// swagger:operation POST /user/login user userLogin
 	// user Login
 	//
 	// user Login
@@ -158,9 +158,28 @@ func (us *UserController) Login(c *gin.Context) {
 }
 
 func (us *UserController) Logout(c *gin.Context) {
+	// swagger:operation GET /user/logout user userLogout
+	// user Logout
+	//
+	// user Logout
+	// ---
+	// produces:
+	// - application/json
+	//
+	// responses:
+	//   '200':
+	//      description: "logout"
+	//   '403':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+	//   '500':
+	//      schema:
+	//        "$ref": "#/definitions/ErrResp"
+
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:    "session",
 		Value:   "",
+		Path:    "/",
 		Expires: time.Now(),
 	})
 	c.String(http.StatusOK, "")
@@ -256,7 +275,7 @@ func (us *UserController) Update(c *gin.Context) {
 		return
 	}
 	validate := validator.New()
-	if !c.GetBool("isAdmin") {
+	if uint64(c.GetInt64("id")) == user.ID {
 		if req.OldPassword == "" {
 			utils.BadRequestWithMsg(c, "oldpassword empty")
 			return

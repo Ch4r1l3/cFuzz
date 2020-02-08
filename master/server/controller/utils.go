@@ -25,3 +25,18 @@ func getObject(c *gin.Context, obj interface{}) error {
 	}
 	return nil
 }
+
+func getList(c *gin.Context, objs interface{}) (int, error) {
+	var count int
+	var err error
+	offset := c.GetInt("offset")
+	limit := c.GetInt("limit")
+	name := c.Query("name")
+	userID := uint64(c.GetInt64("id"))
+	isAdmin := c.GetBool("isAdmin")
+	count, err = models.GetObjectCombine(objs, offset, limit, name, userID, isAdmin)
+	if err != nil {
+		utils.DBError(c)
+	}
+	return count, err
+}

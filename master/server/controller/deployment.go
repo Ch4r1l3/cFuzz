@@ -70,18 +70,8 @@ func (dc *DeploymentController) List(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
-	var count int
-	var err error
-	offset := c.GetInt("offset")
-	limit := c.GetInt("limit")
-	name := c.Query("name")
-	if c.GetBool("isAdmin") {
-		count, err = models.GetObjectCombine(&deployments, offset, limit, name)
-	} else {
-		count, err = models.GetObjectCombineByUserID(&deployments, offset, limit, name, uint64(c.GetInt64("id")))
-	}
+	count, err := getList(c, &deployments)
 	if err != nil {
-		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, DeploymentCombine{
@@ -154,19 +144,8 @@ func (dc *DeploymentController) SimpList(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var deployments []models.Deployment
-	var count int
-	var err error
-
-	offset := c.GetInt("offset")
-	limit := c.GetInt("limit")
-	name := c.Query("name")
-	if c.GetBool("isAdmin") {
-		count, err = models.GetObjectCombine(&deployments, offset, limit, name)
-	} else {
-		count, err = models.GetObjectCombineByUserID(&deployments, offset, limit, name, uint64(c.GetInt64("id")))
-	}
+	count, err := getList(c, &deployments)
 	if err != nil {
-		utils.DBError(c)
 		return
 	}
 	for i, _ := range deployments {

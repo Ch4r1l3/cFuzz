@@ -113,24 +113,6 @@ func GetObjectsByUserID(objs interface{}, userID uint64) error {
 	return DB.Order("id").Where("user_id = ?", userID).Find(objs).Error
 }
 
-func GetObjectCombineByUserID(objs interface{}, offset int, limit int, name string, userID uint64) (int, error) {
-	var count int
-	err := DB.Model(objs).Where("name LIKE ? AND user_id = ?", "%"+name+"%", userID).Count(&count).Error
-	if err != nil {
-		return 0, err
-	}
-	t := DB.Order("id")
-	if name != "" {
-		t = t.Where("name LIKE ? AND user_id = ?", "%"+name+"%", userID)
-	} else {
-		t = t.Where("user_id = ?", userID)
-	}
-	if limit >= 0 && offset >= 0 {
-		t = t.Offset(offset).Limit(limit)
-	}
-	return count, t.Find(objs).Error
-}
-
 func GetCountByUserID(objs interface{}, userID uint64) (int, error) {
 	var count int
 	err := DB.Model(objs).Where("user_id = ?", userID).Count(&count).Error
@@ -162,26 +144,10 @@ func GetNormalUserCombine(offset, limit int, name string) ([]User, int, error) {
 	var users []User
 	var count int
 	var err error
-	if name == "" {
-		err = DB.Model(User{}).Where("is_admin = ? AND username like ?", false, "%"+name+"%").Count(&count).Error
+	if name != "" {
+		count, err = GetObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?", "username like ?"}, []interface{}{false, "%" + name + "%"})
 	} else {
-		err = DB.Model(User{}).Where("is_admin = ?", false).Count(&count).Error
+		count, err = GetObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?"}, []interface{}{false})
 	}
-	if err != nil {
-		return nil, 0, err
-	}
-	t := DB.Order("id")
-	if name == "" {
-		t = t.Where("is_admin = ?", false)
-	} else {
-		t = t.Where("is_admin = ? AND username like ?", false, "%"+name+"%")
-	}
-	if offset >= 0 && limit >= 0 {
-		t = t.Offset(offset).Limit(limit)
-	}
-	err = t.Find(&users).Error
-	if err != nil {
-		return nil, 0, err
-	}
-	return users, count, nil
+	return users, count, err
 }

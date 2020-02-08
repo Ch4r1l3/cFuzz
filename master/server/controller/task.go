@@ -151,7 +151,9 @@ func (tc *TaskController) List(c *gin.Context) {
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	count, err := models.GetObjectCombine(&tasks, offset, limit, name)
+	userID := uint64(c.GetInt64("id"))
+	isAdmin := c.GetBool("isAdmin")
+	count, err := models.GetObjectCombine(&tasks, offset, limit, name, userID, isAdmin)
 
 	if err != nil {
 		utils.DBError(c)

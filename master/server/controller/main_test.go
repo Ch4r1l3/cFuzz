@@ -84,6 +84,7 @@ func prepareRouter() {
 		api.DELETE("/user/:id", middleware.AdminOnly, userController.Delete)
 	}
 	r.POST("/api/user/login", userController.Login)
+	r.GET("/api/user/logout", userController.Logout)
 }
 
 func prepareConfig() {

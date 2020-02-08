@@ -76,10 +76,7 @@
         "responses": {
           "200": {
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Deployment"
-              }
+              "$ref": "#/definitions/DeploymentCombine"
             }
           },
           "500": {
@@ -113,6 +110,11 @@
           "201": {
             "schema": {
               "$ref": "#/definitions/Deployment"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -184,10 +186,7 @@
         "responses": {
           "200": {
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/DeploymentSimp"
-              }
+              "$ref": "#/definitions/DeploymentCombine"
             }
           },
           "500": {
@@ -224,6 +223,11 @@
               "items": {
                 "$ref": "#/definitions/Deployment"
               }
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -275,6 +279,11 @@
               "$ref": "#/definitions/Deployment"
             }
           },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "403": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -314,6 +323,11 @@
           "204": {
             "schema": {
               "$ref": "#/definitions/Deployment"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -420,9 +434,39 @@
               "$ref": "#/definitions/StorageItem"
             }
           },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "403": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/storage_item/count": {
+      "get": {
+        "description": "count of storageItem",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "storageItem"
+        ],
+        "summary": "count of storageItem",
+        "operationId": "countStorageItem",
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/CountResp"
             }
           },
           "500": {
@@ -458,6 +502,11 @@
           "201": {
             "schema": {
               "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -496,6 +545,11 @@
           "200": {
             "schema": {
               "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -543,12 +597,22 @@
             "type": "integer",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "name": "name",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
             "schema": {
               "$ref": "#/definitions/StorageItem"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -632,6 +696,11 @@
           "201": {
             "schema": {
               "$ref": "#/definitions/TaskResp"
+            }
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
             }
           },
           "403": {
@@ -734,6 +803,11 @@
           "201": {
             "description": "update task success"
           },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "403": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -773,6 +847,11 @@
           "204": {
             "description": "update task success"
           },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
           "403": {
             "schema": {
               "$ref": "#/definitions/ErrResp"
@@ -808,6 +887,11 @@
         "responses": {
           "202": {
             "description": "start task success"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
           },
           "403": {
             "schema": {
@@ -849,6 +933,11 @@
         "responses": {
           "202": {
             "description": "stop task success"
+          },
+          "400": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
           },
           "403": {
             "schema": {
@@ -900,10 +989,7 @@
         "responses": {
           "200": {
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/TaskCrash"
-              }
+              "$ref": "#/definitions/TaskCrashListResp"
             }
           },
           "500": {
@@ -946,6 +1032,177 @@
           }
         }
       }
+    },
+    "/user": {
+      "get": {
+        "description": "list user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "list user",
+        "operationId": "listUser",
+        "responses": {
+          "202": {
+            "schema": {
+              "$ref": "#/definitions/UserListResp"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "create user",
+        "operationId": "createUser",
+        "responses": {
+          "202": {
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/user/info": {
+      "get": {
+        "description": "get current user status",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "get current user status",
+        "operationId": "userStatus",
+        "responses": {
+          "202": {
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "get": {
+        "description": "user Login",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "user Login",
+        "operationId": "userLogin",
+        "responses": {
+          "202": {
+            "schema": {
+              "$ref": "#/definitions/LoginResp"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/user/logout": {
+      "get": {
+        "description": "user Logout",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "user Logout",
+        "operationId": "userLogout",
+        "responses": {
+          "200": {
+            "description": "logout"
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
+    },
+    "/user/{id}": {
+      "delete": {
+        "description": "delete user",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "user"
+        ],
+        "summary": "delete user",
+        "operationId": "deleteUser",
+        "responses": {
+          "204": {
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "403": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          },
+          "500": {
+            "schema": {
+              "$ref": "#/definitions/ErrResp"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -979,9 +1236,34 @@
           "type": "string",
           "x-go-name": "Name",
           "example": "test-image"
+        },
+        "userID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "UserID",
+          "example": 1
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "DeploymentCombine": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count",
+          "example": 1
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Deployment"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
     "DeploymentReq": {
       "type": "object",
@@ -1002,23 +1284,6 @@
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
-    "DeploymentSimp": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "uint64",
-          "x-go-name": "ID",
-          "example": 1
-        },
-        "name": {
-          "type": "string",
-          "x-go-name": "Name",
-          "example": "test-image"
-        }
-      },
-      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
-    },
     "ErrResp": {
       "type": "object",
       "properties": {
@@ -1029,6 +1294,17 @@
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/utils"
+    },
+    "LoginResp": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "x-go-name": "Token",
+          "example": "111xxxx"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
     "StorageItem": {
       "description": "item that record some file info",
@@ -1064,9 +1340,34 @@
           "type": "string",
           "x-go-name": "Type",
           "example": "fuzzer"
+        },
+        "userID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "UserID",
+          "example": 1
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "StorageItemCombine": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count",
+          "example": 1
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/StorageItem"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
     "StorageItemExistReq": {
       "type": "object",
@@ -1159,6 +1460,12 @@
           "format": "uint64",
           "x-go-name": "Time",
           "example": 60
+        },
+        "userID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "UserID",
+          "example": 1
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
@@ -1166,6 +1473,11 @@
     "TaskCrash": {
       "type": "object",
       "properties": {
+        "fileName": {
+          "type": "string",
+          "x-go-name": "FileName",
+          "example": "xxxxx"
+        },
         "id": {
           "type": "integer",
           "format": "uint64",
@@ -1185,6 +1497,25 @@
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "TaskCrashListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count",
+          "example": 1
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TaskCrash"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
     },
     "TaskCreateReq": {
       "type": "object",
@@ -1396,6 +1727,12 @@
           "format": "uint64",
           "x-go-name": "Time",
           "example": 60
+        },
+        "userID": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "UserID",
+          "example": 1
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
@@ -1514,6 +1851,78 @@
           "format": "uint64",
           "x-go-name": "Time",
           "example": 3600
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "ID"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "x-go-name": "IsAdmin",
+          "example": true
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "Username",
+          "example": "123"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/models"
+    },
+    "UserListResp": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Count",
+          "example": 1
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/User"
+          },
+          "x-go-name": "Data"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "UserReq": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string",
+          "x-go-name": "Password",
+          "example": "1233"
+        },
+        "username": {
+          "type": "string",
+          "x-go-name": "Username",
+          "example": "123"
+        }
+      },
+      "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
+    },
+    "UserUpdateReq": {
+      "type": "object",
+      "properties": {
+        "newPassword": {
+          "type": "string",
+          "x-go-name": "NewPassword",
+          "example": "123456"
+        },
+        "oldPassword": {
+          "type": "string",
+          "x-go-name": "OldPassword",
+          "example": "1233445"
         }
       },
       "x-go-package": "github.com/Ch4r1l3/cFuzz/master/server/controller"
