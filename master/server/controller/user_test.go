@@ -53,7 +53,7 @@ func TestUser2(t *testing.T) {
 		"oldPassword": "123456",
 		"newPassword": "123456",
 	}
-	id := int(e.GET("/api/user/status").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
+	id := int(e.GET("/api/user/info").Expect().Status(http.StatusOK).JSON().Object().Value("id").Number().Raw())
 	e.GET("/api/user").Expect().Status(http.StatusForbidden)
 	e.POST("/api/user").WithJSON(postdata1).Expect().Status(http.StatusForbidden)
 	e.POST("/api/user").WithJSON(postdata2).Expect().Status(http.StatusForbidden)

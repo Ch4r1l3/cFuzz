@@ -32,7 +32,11 @@ import Layout from '@/layout'
 const docUrl = location.protocol.concat('//').concat(location.host).concat('/api/docs/swagger.json')
 
 export const constantRoutes = [
-
+  {
+    path: '/login',
+    component: () => import('@/views/login/index'),
+    hidden: true
+  },
   {
     path: '/404',
     component: () => import('@/views/404'),
@@ -135,7 +139,34 @@ export const constantRoutes = [
       }
 
     ]
-  },
+  }
+
+]
+
+export const adminRoutes = [
+  {
+    path: '/user',
+    component: Layout,
+    redirect: '/user/list',
+    children: [
+      {
+        path: 'list',
+        name: 'listUser',
+        component: () => import('@/views/user/list'),
+        meta: { title: 'User', icon: 'user' }
+      },
+      {
+        path: 'create',
+        name: 'createUser',
+        component: () => import('@/views/user/create'),
+        meta: { title: 'Create' },
+        hidden: true
+      }
+    ]
+  }
+]
+
+export const lastRoutes = [
   {
     path: 'external-link',
     component: Layout,
@@ -146,7 +177,6 @@ export const constantRoutes = [
       }
     ]
   },
-
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
 ]

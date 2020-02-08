@@ -48,6 +48,11 @@
             {{ scope.row.id }}
           </template>
         </el-table-column>
+        <el-table-column v-if="isAdmin" align="center" label="User ID" width="95">
+          <template slot-scope="scope">
+            {{ scope.row.userID }}
+          </template>
+        </el-table-column>
         <el-table-column label="Name">
           <template slot-scope="scope">
             {{ scope.row.name }}
@@ -92,6 +97,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { getItemsCombine, deleteItem } from '@/api/storageItem'
 import { getOffset } from '@/utils'
 import { pageSize } from '@/settings'
@@ -116,6 +122,11 @@ export default {
       searchName: '',
       count: 0
     }
+  },
+  computed: {
+    ...mapGetters([
+      'isAdmin'
+    ])
   },
   created() {
     this.fetchData()

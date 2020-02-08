@@ -24,6 +24,8 @@ func TestDeployment1(t *testing.T) {
 	e.POST("/api/deployment").WithJSON(postdata2).Expect().Status(http.StatusCreated).JSON().Object().Value("id").NotEqual(0)
 	obj := e.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
 	id := int(obj.Value("id").Number().Raw())
+	ae := getAdminExpect(t)
+	ae.GET("/api/deployment").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().NotEqual(0)
 	e.DELETE("/api/deployment/" + strconv.Itoa(id)).Expect().Status(http.StatusNoContent)
 }
 

@@ -46,6 +46,8 @@ func TestStorageItem1(t *testing.T) {
 	e.GET("/api/storage_item").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	e.GET("/api/storage_item/fuzzer").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	e.GET("/api/storage_item/fuzzer").WithQuery("name", "a").WithQuery("offset", 0).WithQuery("limit", "1").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
+	ae := getAdminExpect(t)
+	ae.GET("/api/storage_item").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().NotEqual(0)
 	obj := e.GET("/api/storage_item").Expect().
 		Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
 	obj.ValueEqual("name", "afl")

@@ -45,19 +45,19 @@ func InitRouter() *gin.Engine {
 		api.GET("/task/:path1", controller.TaskGetHandler)
 		api.GET("/task/:path1/:path2", middleware.Pagination, controller.TaskGetHandler)
 
-		api.GET("/user/status", userController.Status)
+		api.GET("/user/info", userController.Info)
 		api.GET("/user", middleware.AdminOnly, middleware.Pagination, userController.List)
 		api.POST("/user", middleware.AdminOnly, userController.Create)
 		api.PUT("/user/:id", userController.Update)
 		api.DELETE("/user/:id", middleware.AdminOnly, userController.Delete)
 
-		docs := api.Group("docs")
-		docs.Use(cors.Default())
-		{
-			docs.StaticFile("/swagger.json", "./docs/swagger.json")
-		}
 	}
 	r.POST("/api/user/login", userController.Login)
+	docs := r.Group("api/docs")
+	docs.Use(cors.Default())
+	{
+		docs.StaticFile("/swagger.json", "./docs/swagger.json")
+	}
 
 	return r
 }

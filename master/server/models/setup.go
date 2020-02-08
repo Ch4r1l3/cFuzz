@@ -1,9 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"golang.org/x/crypto/ssh/terminal"
 	"log"
+	"syscall"
 )
 
 var DB *gorm.DB
@@ -59,4 +62,28 @@ func Setup() {
 	DB.Exec("PRAGMA foreign_keys = ON")
 	DB.SingularTable(true)
 	DB.AutoMigrate(&Deployment{}, &Task{}, &StorageItem{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{}, &User{})
+
+	// check if admin exist, if not, create one
+	var user User
+	err = DB.Where("is_admin = true").First(&user).Error
+	if err != nil && !gorm.IsRecordNotFoundError(err) {
+		log.Fatal(err)
+	} else if err != nil {
+		var username string
+		fmt.Print("admin username: ")
+		fmt.Scan(&username)
+		fmt.Print("admin password: ")
+		password, err := terminal.ReadPassword(int(syscall.Stdin))
+		if len(password) < 6 {
+			log.Fatal("password should longer than 6")
+		}
+		if len(password) > 18 {
+			log.Fatal("password should shorter than 18")
+		}
+		if err = CreateUser(username, string(password), true); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("\ncreate success")
+		}
+	}
 }

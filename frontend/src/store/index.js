@@ -5,6 +5,8 @@ import app from './modules/app'
 import settings from './modules/settings'
 import deployment from './modules/deployment'
 import storageItem from './modules/storageItem'
+import user from './modules/user'
+import permission from './modules/permission'
 
 Vue.use(Vuex)
 
@@ -13,7 +15,9 @@ const store = new Vuex.Store({
     app,
     settings,
     deployment,
-    storageItem
+    storageItem,
+    user,
+    permission
   },
   getters
 })

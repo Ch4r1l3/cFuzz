@@ -11,6 +11,7 @@ import '@/styles/index.scss' // global css
 import App from './App'
 import store from './store'
 import router from './router'
+import '@/permission'
 
 import 'codemirror/theme/monokai.css'
 

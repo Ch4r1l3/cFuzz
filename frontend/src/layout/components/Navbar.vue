@@ -4,6 +4,24 @@
 
     <breadcrumb class="breadcrumb-container" />
 
+    <div class="right-menu">
+      <el-dropdown class="avatar-container" trigger="click">
+        <div class="avatar-wrapper">
+          <span> {{ name }}</span>
+          <i class="el-icon-caret-bottom" />
+        </div>
+        <el-dropdown-menu slot="dropdown" class="user-dropdown">
+          <router-link to="/">
+            <el-dropdown-item>
+              Home
+            </el-dropdown-item>
+          </router-link>
+          <el-dropdown-item divided @click.native="logout">
+            <span style="display:block;">Log Out</span>
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </div>
   </div>
 </template>
 
@@ -20,7 +38,7 @@ export default {
   computed: {
     ...mapGetters([
       'sidebar',
-      'avatar'
+      'name'
     ])
   },
   methods: {

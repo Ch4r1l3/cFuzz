@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row :gutter="20">
       <el-col :span="2">
-        <router-link to="/deployment/create">
+        <router-link to="/user/create">
           <el-button type="primary">Create</el-button>
         </router-link>
       </el-col>
@@ -22,33 +22,21 @@
         fit
         highlight-current-row
       >
-        <el-table-column type="expand">
-          <template :id="'deploy'+scope.row.id" slot-scope="scope">
-            <deployment-expand :deploy-id="scope.row.id" />
-          </template>
-        </el-table-column>
         <el-table-column align="center" label="ID" width="95">
           <template slot-scope="scope">
             {{ scope.row.id }}
           </template>
         </el-table-column>
-        <el-table-column v-if="isAdmin" align="center" label="User ID" width="95">
-          <template slot-scope="scope">
-            {{ scope.row.userID }}
-          </template>
-        </el-table-column>
         <el-table-column label="Name">
           <template slot-scope="scope">
-            {{ scope.row.name }}
+            {{ scope.row.username }}
           </template>
         </el-table-column>
         <el-table-column label="Edit" width="95" align="center">
           <template slot-scope="scope">
-            <router-link :to="'/deployment/edit/'+scope.row.id">
-              <el-button type="primary">
-                Edit
-              </el-button>
-            </router-link>
+            <el-button type="primary" @click="showEdit(scope.row)">
+              Edit
+            </el-button>
           </template>
         </el-table-column>
         <el-table-column label="Delete" width="110" align="center">
@@ -59,7 +47,7 @@
               icon="el-icon-info"
               icon-color="red"
               title="Delete it?"
-              @onConfirm="deleteDeploy(scope.row)"
+              @onConfirm="deleteUser(scope.row)"
             >
               <el-button slot="reference" type="danger">
                 Delete
@@ -79,18 +67,26 @@
         @current-change="handleCurrentChange"
       />
     </el-row>
+    <el-dialog
+      title="Edit Password"
+      :visible.sync="dialogVisible"
+      width="30%"
+      @open="cleanPassword"
+    >
+      <edit-password ref="editPassword" :user-id="currentEditID" :is-normal="false" @onClose="dialogVisible = false" />
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
-import { getSimpListCombine, deleteItem } from '@/api/deployment'
+import { getItemsCombine, deleteItem } from '@/api/user'
 import { pageSize } from '@/settings'
 import { getOffset } from '@/utils'
-import DeploymentExpand from '@/components/DeploymentExpand'
+import EditPassword from '@/components/EditPassword'
 
 export default {
-  components: { DeploymentExpand },
+  components: { EditPassword },
   data() {
     return {
       listLoading: true,
@@ -98,7 +94,9 @@ export default {
       count: 0,
       currentPage: 1,
       pageSize: pageSize,
-      searchName: ''
+      searchName: '',
+      dialogVisible: false,
+      currentEditID: 0
     }
   },
   computed: {
@@ -113,13 +111,13 @@ export default {
     fetchData() {
       this.listLoading = true
       const offset = getOffset(this.currentPage, pageSize)
-      getSimpListCombine(offset, pageSize, this.searchName).then((data) => {
+      getItemsCombine(offset, pageSize, this.searchName).then((data) => {
         this.items = data.data
         this.count = data.count
         this.listLoading = false
       })
     },
-    deleteDeploy(item) {
+    deleteUser(item) {
       deleteItem(item).then(() => {
         this.$message('delete success')
         if (this.items.length === 1 && this.currentPage > 1) {
@@ -135,6 +133,15 @@ export default {
     search() {
       this.currentPage = 1
       this.fetchData()
+    },
+    showEdit(item) {
+      this.currentEditID = item.id
+      this.dialogVisible = true
+    },
+    cleanPassword() {
+      if (this.$refs.editPassword) {
+        this.$refs.editPassword.reset()
+      }
     }
   }
 }

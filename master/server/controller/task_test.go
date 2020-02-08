@@ -60,6 +60,8 @@ func TestTask1(t *testing.T) {
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
 	obj.Value("status").NotEqual("")
 	obj.Value("startedAt").Equal(0)
+	ae := getAdminExpect(t)
+	ae.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().NotEqual(0)
 	e.GET("/api/task").WithQuery("name", "t").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	e.GET("/api/task").WithQuery("name", "a").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 0).WithQuery("limit", 0).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
+import store from '@/store'
 
 // create an axios instance
 const service = axios.create({
@@ -38,12 +39,16 @@ service.interceptors.response.use(
     const res = response.data
     // if the status code large than 214, error
     if (response.status > 214) {
-      Message({
-        message: res.error || 'Error',
-        type: 'error',
-        duration: 5 * 1000
-      })
-      return Promise.reject(new Error(res.error || 'Error'))
+      if (response.status === 401) {
+        store.dispatch('user/resetToken')
+      } else {
+        Message({
+          message: res.error || 'Error',
+          type: 'error',
+          duration: 5 * 1000
+        })
+        return Promise.reject(new Error(res.error || 'Error'))
+      }
     } else {
       return res
     }

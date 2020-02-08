@@ -77,7 +77,7 @@ func prepareRouter() {
 		api.GET("/task/:path1", TaskGetHandler)
 		api.GET("/task/:path1/:path2", middleware.Pagination, TaskGetHandler)
 
-		api.GET("/user/status", userController.Status)
+		api.GET("/user/info", userController.Info)
 		api.GET("/user", middleware.AdminOnly, middleware.Pagination, userController.List)
 		api.POST("/user", middleware.AdminOnly, userController.Create)
 		api.PUT("/user/:id", userController.Update)

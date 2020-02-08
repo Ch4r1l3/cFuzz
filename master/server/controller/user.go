@@ -40,8 +40,8 @@ type UserUpdateReq struct {
 }
 
 // get current user status
-func (uc *UserController) Status(c *gin.Context) {
-	// swagger:operation GET /user/status user userStatus
+func (uc *UserController) Info(c *gin.Context) {
+	// swagger:operation GET /user/info user userStatus
 	// get current user status
 	//
 	// get current user status
