@@ -7,21 +7,27 @@
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
-          <span> {{ name }}</span>
+          <img src="https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png" class="user-avatar">
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown" class="user-dropdown">
-          <router-link to="/">
-            <el-dropdown-item>
-              Home
-            </el-dropdown-item>
-          </router-link>
+          <el-dropdown-item @click.native="dialogVisible = true">
+            Reset Password
+          </el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">
             <span style="display:block;">Log Out</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </div>
+    <el-dialog
+      title="Edit Password"
+      :visible.sync="dialogVisible"
+      width="30%"
+      @open="cleanPassword"
+    >
+      <edit-password ref="editPassword" :user-id="id" @onClose="dialogVisible = false" />
+    </el-dialog>
   </div>
 </template>
 
@@ -29,16 +35,24 @@
 import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
+import EditPassword from '@/components/EditPassword'
 
 export default {
   components: {
     Breadcrumb,
-    Hamburger
+    Hamburger,
+    EditPassword
+  },
+  data() {
+    return {
+      dialogVisible: false
+    }
   },
   computed: {
     ...mapGetters([
       'sidebar',
-      'name'
+      'name',
+      'id'
     ])
   },
   methods: {
@@ -48,6 +62,11 @@ export default {
     async logout() {
       await this.$store.dispatch('user/logout')
       this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+    },
+    cleanPassword() {
+      if (this.$refs.editPassword) {
+        this.$refs.editPassword.reset()
+      }
     }
   }
 }
