@@ -224,6 +224,10 @@ func (dc *ImageController) Update(c *gin.Context) {
 	if err != nil {
 		return
 	}
+	if models.IsImageReferred(image.ID) {
+		utils.BadRequestWithMsg(c, "this image is being used by task")
+		return
+	}
 	image.Name = req.Name
 	image.Content = req.Content
 	image.IsDeployment = req.IsDeployment
@@ -268,6 +272,10 @@ func (dc *ImageController) Destroy(c *gin.Context) {
 
 	image, err := getImage(c)
 	if err != nil {
+		return
+	}
+	if models.IsImageReferred(image.ID) {
+		utils.BadRequestWithMsg(c, "this image is being used by task")
 		return
 	}
 	err = models.DeleteObjectByID(models.Image{}, image.ID)

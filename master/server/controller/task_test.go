@@ -69,9 +69,9 @@ func TestTask1(t *testing.T) {
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 0).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 0).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask2(t *testing.T) {
@@ -137,9 +137,9 @@ func TestTask2(t *testing.T) {
 	obj.Value("a3").Equal("a4")
 	obj.Value("a4").Equal("a5")
 
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask3(t *testing.T) {
@@ -183,10 +183,10 @@ func TestTask3(t *testing.T) {
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -224,10 +224,10 @@ func TestTask4(t *testing.T) {
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -271,10 +271,10 @@ func TestTask5(t *testing.T) {
 	obj.Value("stats").NotNull()
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -312,10 +312,10 @@ func TestTask6(t *testing.T) {
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").Equal("failed to create deployment")
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -352,9 +352,10 @@ func TestTask7(t *testing.T) {
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*2) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -414,10 +415,10 @@ func TestTask8(t *testing.T) {
 	obj.Value("stats").NotNull()
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -470,10 +471,10 @@ func TestTask9(t *testing.T) {
 	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*2) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskError)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("errorMsg").NotEqual("")
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -511,10 +512,10 @@ func TestTask10(t *testing.T) {
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
@@ -565,9 +566,9 @@ spec:
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskRunning)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusAccepted)
 	<-time.After(time.Duration(2) * time.Second)
+	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
-	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }

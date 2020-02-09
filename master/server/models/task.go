@@ -1,9 +1,7 @@
 package models
 
 import (
-	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/jinzhu/gorm"
-	"os"
 )
 
 // swagger:model
@@ -45,7 +43,7 @@ type Task struct {
 	StartedAt int64 `json:"startedAt"`
 
 	// example: 1
-	UserID uint64 `json:"userID"`
+	UserID uint64 `json:"userID" sql:"type:bigint REFERENCES user(id) ON DELETE CASCADE"`
 }
 
 const (
@@ -69,27 +67,13 @@ type TaskEnvironment struct {
 
 func DeleteTask(taskid uint64) error {
 	var err error
-	if err = DeleteObjectsByTaskID(&TaskEnvironment{}, taskid); err != nil {
-		return err
-	}
-	if err = DeleteObjectsByTaskID(&TaskArgument{}, taskid); err != nil {
-		return err
-	}
-	if err = DeleteObjectsByTaskID(&TaskFuzzResult{}, taskid); err != nil {
-		return err
-	}
 	// delete crashes
 	var crashes []TaskCrash
 	if err = GetObjectsByTaskID(&crashes, taskid); err != nil {
 		return err
 	}
 	for _, c := range crashes {
-		if utils.IsPathExists(c.Path) {
-			os.RemoveAll(c.Path)
-		}
-	}
-	if err = DeleteObjectsByTaskID(&TaskCrash{}, taskid); err != nil {
-		return err
+		c.Delete()
 	}
 	if err = DeleteObjectByID(&Task{}, taskid); err != nil {
 		return err
@@ -155,10 +139,6 @@ func GetArguments(taskid uint64) (map[string]string, error) {
 	return arguments, nil
 }
 
-func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
-	return DB.Where("task_id = ?", taskid).Delete(obj).Error
-}
-
 func GetObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return DB.Where("task_id = ?", taskid).Find(obj).Error
 }
@@ -182,4 +162,8 @@ func GetTaskByID(id uint64) (*Task, error) {
 		return nil, err
 	}
 	return &task, nil
+}
+
+func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
+	return DB.Where("task_id = ?", taskid).Delete(obj).Error
 }

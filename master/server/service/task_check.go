@@ -22,7 +22,7 @@ func checkTasks() {
 			logger.Logger.Error("checkTasks", "error", err.Error())
 		} else {
 			for _, task := range tasks {
-				logger.Logger.Debug("checkTasks")
+				//logger.Logger.Debug("checkTasks")
 				if task.Status == models.TaskStarted && task.StatusUpdateAt+config.KubernetesConf.MaxStartTime < time.Now().Unix() {
 					go func() {
 						logger.Logger.Error("deployment start too long", "start", task.StatusUpdateAt, "now", time.Now().Unix())

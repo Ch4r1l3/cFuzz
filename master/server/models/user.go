@@ -149,7 +149,6 @@ func GetNormalUserCombine(offset, limit int, name string) ([]User, int, error) {
 }
 
 func DeleteUserByID(id uint64) error {
-	DeleteObjectsByUserID(&Image{}, id)
 	DeleteStorageItemCustom("user_id = ?", id)
 	var tasks []Task
 	if GetObjectsByUserID(&tasks, id) == nil {

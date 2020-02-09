@@ -1,5 +1,9 @@
 package models
 
+import (
+	"os"
+)
+
 // swagger:model
 type TaskCrash struct {
 	// example: 1
@@ -19,4 +23,11 @@ type TaskCrash struct {
 
 	// example: xxxxx
 	FileName string `json:"fileName"`
+}
+
+func (t *TaskCrash) Delete() error {
+	if t.Path != "" && t.Path != "/" {
+		return os.RemoveAll(t.Path)
+	}
+	return nil
 }

@@ -33,6 +33,7 @@ func prepareTestDB() {
 		log.Fatal(err)
 	}
 
+	models.DB.Exec("PRAGMA foreign_keys = ON")
 	models.DB.SingularTable(true)
 	models.DB.AutoMigrate(&models.Image{}, &models.Task{}, &models.StorageItem{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.User{})
 

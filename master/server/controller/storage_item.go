@@ -338,6 +338,10 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	if err != nil {
 		return
 	}
+	if models.IsStorageItemReferred(storageItem.ID) {
+		utils.BadRequestWithMsg(c, "storageItem is being used by task")
+		return
+	}
 	err = models.DeleteStorageItemByID(storageItem.ID)
 	if err != nil {
 		utils.DBError(c)

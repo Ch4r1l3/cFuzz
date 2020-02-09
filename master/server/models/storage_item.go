@@ -26,7 +26,7 @@ type StorageItem struct {
 	RelPath string `json:"relPath"`
 
 	// example: 1
-	UserID uint64 `json:"userID"`
+	UserID uint64 `json:"userID" sql:"type:bigint REFERENCES user(id) ON DELETE CASCADE"`
 }
 
 func (s *StorageItem) Delete() error {
@@ -43,6 +43,8 @@ const (
 	Corpus = "corpus"
 )
 
+var StorageItemTypes = []string{Fuzzer, Target, Corpus}
+
 func IsStorageItemTypeValid(mtype string) bool {
 	switch mtype {
 	case
@@ -56,6 +58,15 @@ func IsStorageItemTypeValid(mtype string) bool {
 
 func IsStorageItemExistsCombine(name string, mtype string, userID uint64) bool {
 	return IsObjectExistsCustom(&StorageItem{}, []string{"name = ?", "type = ?", "user_id = ?"}, []interface{}{name, mtype, userID})
+}
+
+func IsStorageItemReferred(id uint64) bool {
+	for _, v := range StorageItemTypes {
+		if IsObjectExistsCustom(&Task{}, []string{v + "_id = ?"}, []interface{}{id}) {
+			return true
+		}
+	}
+	return false
 }
 
 func GetStorageItemsByTypeCombine(mtype string, offset int, limit int, name string, userID uint64, isAdmin bool) ([]StorageItem, int, error) {
