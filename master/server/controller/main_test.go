@@ -34,7 +34,7 @@ func prepareTestDB() {
 	}
 
 	models.DB.SingularTable(true)
-	models.DB.AutoMigrate(&models.Deployment{}, &models.Task{}, &models.StorageItem{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.User{})
+	models.DB.AutoMigrate(&models.Image{}, &models.Task{}, &models.StorageItem{}, &models.TaskEnvironment{}, &models.TaskArgument{}, &models.TaskCrash{}, &models.TaskFuzzResult{}, &models.TaskFuzzResultStat{}, &models.User{})
 
 }
 
@@ -49,12 +49,12 @@ func prepareRouter() {
 	api := r.Group("/api")
 	api.Use(middleware.Auth)
 	{
-		deploymentController := new(DeploymentController)
-		api.GET("/deployment", middleware.Pagination, deploymentController.List)
-		api.POST("/deployment", middleware.CheckUserExist, deploymentController.Create)
-		api.PUT("/deployment/:id", middleware.CheckUserExist, deploymentController.Update)
-		api.DELETE("/deployment/:id", middleware.CheckUserExist, deploymentController.Destroy)
-		api.GET("/deployment/:path1", middleware.Pagination, DeploymentGetHandler)
+		imageController := new(ImageController)
+		api.GET("/image", middleware.Pagination, imageController.List)
+		api.GET("/image/:id", imageController.Retrieve)
+		api.POST("/image", middleware.CheckUserExist, imageController.Create)
+		api.PUT("/image/:id", middleware.CheckUserExist, imageController.Update)
+		api.DELETE("/image/:id", middleware.CheckUserExist, imageController.Destroy)
 
 		taskController := new(TaskController)
 		api.GET("/task", middleware.Pagination, taskController.List)
@@ -69,10 +69,10 @@ func prepareRouter() {
 
 		storageItemController := new(StorageItemController)
 		api.GET("/storage_item", middleware.Pagination, storageItemController.List)
+		api.GET("/storage_item/:type", middleware.Pagination, storageItemController.ListByType)
 		api.POST("/storage_item", middleware.CheckUserExist, storageItemController.Create)
 		api.POST("/storage_item/exist", middleware.CheckUserExist, storageItemController.CreateExist)
 		api.DELETE("/storage_item/:id", middleware.CheckUserExist, storageItemController.Destroy)
-		api.GET("/storage_item/:path1", middleware.Pagination, StorageItemGetHandler)
 
 		api.GET("/task/:path1", TaskGetHandler)
 		api.GET("/task/:path1/:path2", middleware.Pagination, TaskGetHandler)

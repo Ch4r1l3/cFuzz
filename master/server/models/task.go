@@ -14,11 +14,8 @@ type Task struct {
 	// example: test
 	Name string `json:"name"`
 
-	// example: test-image
-	Image string `json:"image"`
-
 	// example: 1
-	DeploymentID uint64 `json:"deploymentID"`
+	ImageID uint64 `json:"imageID"`
 
 	// example: 60
 	Time uint64 `json:"time"`

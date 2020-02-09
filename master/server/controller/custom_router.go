@@ -11,16 +11,12 @@ func TaskGetHandler(c *gin.Context) {
 	p2 := c.Param("path2")
 	if p1 != "" && p2 == "" {
 		task := new(TaskController)
-		if p1 == "count" {
-			task.Count(c)
-		} else {
-			n, err := strconv.ParseUint(p1, 10, 64)
-			if err != nil {
-				utils.BadRequestWithMsg(c, err.Error())
-				return
-			}
-			task.Retrieve(c, n)
+		n, err := strconv.ParseUint(p1, 10, 64)
+		if err != nil {
+			utils.BadRequestWithMsg(c, err.Error())
+			return
 		}
+		task.Retrieve(c, n)
 	} else if p1 != "" && p2 != "" {
 		n, err := strconv.ParseUint(p1, 10, 64)
 		if err != nil {
@@ -38,33 +34,5 @@ func TaskGetHandler(c *gin.Context) {
 		}
 	} else {
 		utils.NotFound(c)
-	}
-}
-
-func StorageItemGetHandler(c *gin.Context) {
-	p1 := c.Param("path1")
-	storageItemController := new(StorageItemController)
-	if p1 == "count" {
-		storageItemController.Count(c)
-	} else {
-		storageItemController.ListByType(c, p1)
-	}
-}
-
-func DeploymentGetHandler(c *gin.Context) {
-	p1 := c.Param("path1")
-	deploymentController := new(DeploymentController)
-	if p1 == "simplist" {
-		deploymentController.SimpList(c)
-	} else if p1 == "count" {
-		deploymentController.Count(c)
-	} else {
-		n, err := strconv.ParseUint(p1, 10, 64)
-		if err != nil {
-			utils.BadRequestWithMsg(c, err.Error())
-			return
-		}
-		deploymentController.Retrieve(c, n)
-
 	}
 }

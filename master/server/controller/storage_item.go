@@ -93,40 +93,8 @@ func (sic *StorageItemController) List(c *gin.Context) {
 	})
 }
 
-// Count of StorageItem
-func (dc *StorageItemController) Count(c *gin.Context) {
-	// swagger:operation GET /storage_item/count storageItem countStorageItem
-	// count of storageItem
-	//
-	// count of storageItem
-	// ---
-	// produces:
-	// - application/json
-	//
-	// responses:
-	//   '200':
-	//      schema:
-	//        "$ref": "#/definitions/CountResp"
-	//   '500':
-	//      schema:
-	//        "$ref": "#/definitions/ErrResp"
-	var count int
-	var err error
-	if c.GetBool("isAdmin") {
-		count, err = models.GetCount(&models.StorageItem{})
-	} else {
-		count, err = models.GetCountByUserID(&models.StorageItem{}, uint64(c.GetInt64("id")))
-	}
-	if err != nil {
-		utils.DBError(c)
-	}
-	c.JSON(http.StatusOK, CountResp{
-		Count: count,
-	})
-}
-
 // List StorageItem By Type
-func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
+func (sic *StorageItemController) ListByType(c *gin.Context) {
 	// swagger:operation GET /storage_item/{type} storageItem listStorageItemByType
 	// list storageItem by type
 	//
@@ -164,6 +132,7 @@ func (sic *StorageItemController) ListByType(c *gin.Context, mtype string) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
+	mtype := c.Param("type")
 	if !models.IsStorageItemTypeValid(mtype) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return

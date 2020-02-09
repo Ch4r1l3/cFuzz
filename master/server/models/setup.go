@@ -99,7 +99,7 @@ func Setup() {
 	}
 	DB.Exec("PRAGMA foreign_keys = ON")
 	DB.SingularTable(true)
-	DB.AutoMigrate(&Deployment{}, &Task{}, &StorageItem{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{}, &User{})
+	DB.AutoMigrate(&Image{}, &Task{}, &StorageItem{}, &TaskEnvironment{}, &TaskArgument{}, &TaskCrash{}, &TaskFuzzResult{}, &TaskFuzzResultStat{}, &User{})
 
 	// check if admin exist, if not, create one
 	var user User

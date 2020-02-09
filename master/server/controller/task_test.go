@@ -18,11 +18,12 @@ func TestTaskList(t *testing.T) {
 
 func TestTask1(t *testing.T) {
 	e := getExpect(t)
-	deploymentPostData := map[string]interface{}{
-		"name":    "test",
-		"content": "11123",
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "11123",
 	}
-	deploymentID := int(e.POST("/api/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	err := ioutil.WriteFile("./fuzzer_test", []byte("afl"), 0755)
 	if err != nil {
 		t.Fatal(err)
@@ -35,7 +36,7 @@ func TestTask1(t *testing.T) {
 
 	taskPostData := map[string]interface{}{
 		"name":          "test",
-		"deploymentID":  deploymentID,
+		"imageID":       imageID,
 		"time":          100,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -49,9 +50,9 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
-	obj.Keys().ContainsOnly("id", "deploymentID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "image", "name", "fuzzCycleTime", "startedAt", "crashNum", "userID")
+	obj.Keys().ContainsOnly("id", "imageID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "name", "fuzzCycleTime", "startedAt", "crashNum", "userID")
 	obj.Value("id").NotEqual(0)
-	obj.Value("deploymentID").NotEqual(0)
+	obj.Value("imageID").NotEqual(0)
 	obj.Value("time").NotEqual(0)
 	obj.Value("fuzzCycleTime").NotEqual(0)
 	obj.Value("fuzzerID").NotEqual(0)
@@ -68,18 +69,19 @@ func TestTask1(t *testing.T) {
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 0).WithQuery("limit", 1).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
 	e.GET("/api/task").WithQuery("name", "t").WithQuery("offset", 1).WithQuery("limit", 0).Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(0)
-	e.DELETE("/api/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask2(t *testing.T) {
 	e := getExpect(t)
-	deploymentPostData := map[string]interface{}{
-		"name":    "test",
-		"content": "11123",
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "11123",
 	}
-	deploymentID := int(e.POST("/api/deployment").WithJSON(deploymentPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	err := ioutil.WriteFile("./fuzzer_test", []byte("afl"), 0755)
 	if err != nil {
 		t.Fatal(err)
@@ -92,7 +94,7 @@ func TestTask2(t *testing.T) {
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"deploymentID":  deploymentID,
+		"imageID":       imageID,
 		"time":          100,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -103,7 +105,7 @@ func TestTask2(t *testing.T) {
 		},
 	}
 	taskPostData2 := map[string]interface{}{
-		"deploymentID": -1,
+		"imageID": -1,
 	}
 	taskPostData3 := map[string]interface{}{
 		"fuzzerID": -1,
@@ -135,7 +137,7 @@ func TestTask2(t *testing.T) {
 	obj.Value("a3").Equal("a4")
 	obj.Value("a4").Equal("a5")
 
-	e.DELETE("/api/deployment/" + strconv.Itoa(deploymentID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
 }
@@ -143,11 +145,17 @@ func TestTask2(t *testing.T) {
 func TestTask3(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-bot",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-bot",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 3,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -179,18 +187,25 @@ func TestTask3(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask4(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-bot",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-bot",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 2,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -213,18 +228,25 @@ func TestTask4(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask5(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-bot",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-bot",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 5,
 		"fuzzCycleTime": 15,
 		"fuzzerID":      fuzzerID,
@@ -253,18 +275,25 @@ func TestTask5(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask6(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "deadbeef:v1",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "deadbeef:v1",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -287,18 +316,25 @@ func TestTask6(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask7(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "nginx:1.16-alpine",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpus").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "nginx:1.16-alpine",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -319,11 +355,18 @@ func TestTask7(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(fuzzerID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask8(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-exist",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerData := map[string]string{
 		"name": "f1",
 		"type": "fuzzer",
@@ -346,7 +389,7 @@ func TestTask8(t *testing.T) {
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-exist",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 5,
 		"fuzzCycleTime": 15,
 		"fuzzerID":      fuzzerID,
@@ -375,11 +418,18 @@ func TestTask8(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask9(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-exist",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerData := map[string]string{
 		"name": "f1",
 		"type": "fuzzer",
@@ -402,7 +452,7 @@ func TestTask9(t *testing.T) {
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-exist",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 8,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -424,18 +474,25 @@ func TestTask9(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask10(t *testing.T) {
 	e := getExpect(t)
 
+	imagePostData := map[string]interface{}{
+		"name":         "test",
+		"isDeployment": false,
+		"content":      "ch4r1l3/cfuzz:test-bot",
+	}
+	imageID := int(e.POST("/api/image").WithJSON(imagePostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	fuzzerID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/afl").WithFormField("name", "afl").WithFormField("type", "fuzzer").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	targetID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/test.zip").WithFormField("relPath", "test").WithFormField("name", "test_target").WithFormField("type", "target").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpuscc").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"image":         "ch4r1l3/cfuzz:test-bot",
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 3,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -458,6 +515,7 @@ func TestTask10(t *testing.T) {
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }
 
 func TestTask11(t *testing.T) {
@@ -468,7 +526,8 @@ func TestTask11(t *testing.T) {
 	corpusID := int(e.POST("/api/storage_item").WithMultipart().WithFile("file", "../test_data/corpus").WithFormField("name", "test_corpuscc").WithFormField("type", "corpus").Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	postdata1 := map[string]interface{}{
-		"name": "test1",
+		"name":         "test1",
+		"isDeployment": true,
 		"content": `
 apiVersion: apps/v1 
 kind: Deployment
@@ -483,11 +542,11 @@ spec:
         - containerPort: 80
 `,
 	}
-	deploymentID := int(e.POST("/api/deployment").WithJSON(postdata1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
+	imageID := int(e.POST("/api/image").WithJSON(postdata1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	taskPostData1 := map[string]interface{}{
 		"name":          "test",
-		"deploymentID":  deploymentID,
+		"imageID":       imageID,
 		"time":          config.KubernetesConf.CheckTaskTime * 3,
 		"fuzzCycleTime": 60,
 		"fuzzerID":      fuzzerID,
@@ -510,4 +569,5 @@ spec:
 	e.DELETE("/api/storage_item/" + strconv.Itoa(targetID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/storage_item/" + strconv.Itoa(corpusID)).Expect().Status(http.StatusNoContent)
 	e.DELETE("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusNoContent)
+	e.DELETE("/api/image/" + strconv.Itoa(imageID)).Expect().Status(http.StatusNoContent)
 }

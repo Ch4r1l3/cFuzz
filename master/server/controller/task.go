@@ -9,7 +9,6 @@ import (
 	"github.com/jinzhu/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -32,11 +31,8 @@ type TaskCreateReq struct {
 	// required: true
 	Name string `json:"name" binding:"required"`
 
-	// example: afl-image
-	Image string `json:"image"`
-
 	// example: 1
-	DeploymentID uint64 `json:"deploymentID"`
+	ImageID uint64 `json:"imageID" binding:"required"`
 
 	// example: 3600
 	// required: true
@@ -67,11 +63,8 @@ type TaskUpdateReq struct {
 	// example: test
 	Name string `json:"name"`
 
-	// example: afl-image
-	Image string `json:"image"`
-
 	// example: 1
-	DeploymentID uint64 `json:"deploymentID"`
+	ImageID uint64 `json:"imageID"`
 
 	// example: 3600
 	Time uint64 `json:"time"`
@@ -148,12 +141,7 @@ func (tc *TaskController) List(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var tasks []models.Task
-	offset := c.GetInt("offset")
-	limit := c.GetInt("limit")
-	name := c.Query("name")
-	userID := uint64(c.GetInt64("id"))
-	isAdmin := c.GetBool("isAdmin")
-	count, err := models.GetObjectCombine(&tasks, offset, limit, name, userID, isAdmin)
+	count, err := getList(c, &tasks)
 
 	if err != nil {
 		utils.DBError(c)
@@ -189,33 +177,6 @@ func (tc *TaskController) List(c *gin.Context) {
 			Count: count,
 		},
 	})
-}
-
-// count task
-func (tc *TaskController) Count(c *gin.Context) {
-	// swagger:operation GET /task/count task countTask
-	// count of task
-	//
-	// count of task
-	// ---
-	// produces:
-	// - application/json
-	//
-	// responses:
-	//   '200':
-	//      schema:
-	//        "$ref": "#/definitions/CountResp"
-	//   '500':
-	//      schema:
-	//        "$ref": "#/definitions/ErrResp"
-	count, err := models.GetCount(&models.Task{})
-	if err != nil {
-		utils.DBError(c)
-	}
-	c.JSON(http.StatusOK, CountResp{
-		Count: count,
-	})
-
 }
 
 // retrieve task
@@ -311,29 +272,20 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	image := strings.TrimSpace(req.Image)
-	if image == "" && req.DeploymentID == 0 {
-		utils.BadRequestWithMsg(c, "image and deployment is empty")
-		return
-	}
 	task := models.Task{
 		FuzzerID:      req.FuzzerID,
 		CorpusID:      req.CorpusID,
 		TargetID:      req.TargetID,
+		ImageID:       req.ImageID,
 		FuzzCycleTime: req.FuzzCycleTime,
 		Time:          req.Time,
 		Name:          req.Name,
 		Status:        models.TaskCreated,
 		UserID:        uint64(c.GetInt64("id")),
 	}
-	if req.Image != "" {
-		task.Image = image
-	} else {
-		if !models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
-			utils.BadRequestWithMsg(c, "deployment not exists")
-			return
-		}
-		task.DeploymentID = req.DeploymentID
+	if !models.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+		utils.BadRequestWithMsg(c, "image not exists")
+		return
 	}
 	if req.FuzzerID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
@@ -443,35 +395,32 @@ func (tc *TaskController) Start(c *gin.Context) {
 			service.DeleteServiceByTaskID(task.ID)
 		}
 	}()
-	var deployment *appsv1.Deployment
-	if task.Image != "" {
-		deployment, err = service.GenerateDeployment(task.ID, task.Name, task.Image, 1)
+	var tempImage models.Image
+	if err = models.GetObjectByID(&tempImage, task.ImageID); err != nil {
+		Err = err
+		utils.BadRequestWithMsg(c, "image not exists")
+		return
+	}
+	var image *appsv1.Deployment
+	if !tempImage.IsDeployment {
+		image, err = service.GenerateDeployment(task.ID, task.Name, tempImage.Content, 1)
 		if err != nil {
 			Err = err
-			utils.InternalErrorWithMsg(c, "generate deployment failed")
+			utils.InternalErrorWithMsg(c, "generate image failed")
 			return
 		}
-	} else if task.DeploymentID != 0 {
-		var tempDeployment models.Deployment
-		if err = models.GetObjectByID(&tempDeployment, task.DeploymentID); err != nil {
-			Err = err
-			utils.BadRequestWithMsg(c, "deployment not exists")
-			return
-		}
-		deployment, err = service.GenerateDeploymentByYaml(tempDeployment.Content, task.ID)
+	} else {
+		image, err = service.GenerateDeploymentByYaml(tempImage.Content, task.ID)
 		if err != nil {
 			Err = err
 			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
-	} else {
-		utils.BadRequestWithMsg(c, "image or deployment should have value")
-		return
 	}
-	err = service.CreateDeploy(deployment)
+	err = service.CreateDeploy(image)
 	if err != nil {
 		Err = err
-		utils.InternalErrorWithMsg(c, "create deployment failed")
+		utils.InternalErrorWithMsg(c, "create image failed")
 		return
 	}
 	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
@@ -595,27 +544,14 @@ func (tc *TaskController) Update(c *gin.Context) {
 		return
 	}
 
-	if req.Image != "" {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("DeploymentID", 0).Error; err != nil {
-			utils.DBError(c)
-			return
-		}
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Image", req.Image).Error; err != nil {
-			utils.DBError(c)
-			return
-		}
-	} else if req.DeploymentID != 0 {
-		if models.IsObjectExistsByID(&models.Deployment{}, req.DeploymentID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("DeploymentID", req.DeploymentID).Error; err != nil {
-				utils.DBError(c)
-				return
-			}
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Image", "").Error; err != nil {
+	if req.ImageID != 0 {
+		if models.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ImageID", req.ImageID).Error; err != nil {
 				utils.DBError(c)
 				return
 			}
 		} else {
-			utils.BadRequestWithMsg(c, "deployment id not exist")
+			utils.BadRequestWithMsg(c, "image id not exist")
 			return
 		}
 	}
