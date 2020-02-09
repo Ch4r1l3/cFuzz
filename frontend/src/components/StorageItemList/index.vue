@@ -106,6 +106,7 @@ export default {
       this.fetchData()
     },
     search() {
+      this.currentPage = 1
       this.fetchData()
     }
   }

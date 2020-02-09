@@ -8,15 +8,9 @@
         <el-form-item label="Time (second)" prop="time">
           <el-input-number v-model.number="task.time" :min="1" type="number" />
         </el-form-item>
-        <el-form-item label="UseDeployment">
-          <el-switch v-model="useDeployment" />
-        </el-form-item>
-        <el-form-item v-if="!useDeployment" label="Image" prop="image">
-          <el-input v-model="task.image" />
-        </el-form-item>
-        <el-form-item v-else label="Deployment ID" prop="deploymentID">
-          <el-input v-model.number="task.deploymentID" placeholder="input Deployment ID" class="id-input">
-            <el-button slot="suffix" style="margin-right: 5px" type="text" @click="deployDialogVisible=true"> Choose </el-button>
+        <el-form-item label="Image ID" prop="imageID">
+          <el-input v-model.number="task.imageID" placeholder="input Image ID" class="id-input">
+            <el-button slot="suffix" style="margin-right: 5px" type="text" @click="imageDialogVisible=true"> Choose </el-button>
           </el-input>
         </el-form-item>
         <el-form-item label="FuzzCycleTime (second)" prop="fuzzCycleTime">
@@ -64,11 +58,11 @@
       </el-form>
     </el-row>
     <el-dialog
-      title="Choose Deployment"
-      :visible="deployDialogVisible"
-      :before-close="() => {deployDialogVisible = false}"
+      title="Choose Image"
+      :visible="imageDialogVisible"
+      :before-close="() => {imageDialogVisible = false}"
     >
-      <deployment-list @choose="chooseDeploy" />
+      <image-list @choose="chooseImage" />
     </el-dialog>
     <el-dialog
       title="Choose Fuzzer"
@@ -96,12 +90,12 @@
 
 <script>
 import { getItem, createItem, editItem } from '@/api/task'
-import DeploymentList from '@/components/DeploymentList'
+import ImageList from '@/components/ImageList'
 import StorageItemList from '@/components/StorageItemList'
 import { getServerItem, parseServerItem } from '@/utils/task'
 export default {
   name: 'TaskCreateEdit',
-  components: { DeploymentList, StorageItemList },
+  components: { ImageList, StorageItemList },
   props: {
     isEdit: {
       type: Boolean,
@@ -109,30 +103,11 @@ export default {
     }
   },
   data() {
-    var checkImage = (rule, value, callback) => {
-      if (!this.useDeployment && this.task.image === '') {
-        callback(new Error('image is required'))
-      } else {
-        callback()
-      }
-    }
-    var checkDeployment = (rule, value, callback) => {
-      if (this.useDeployment && !this.task.deploymentID) {
-        callback(new Error('deploymentID is required'))
-      } else if (this.useDeployment && this.task.deploymentID.constructor.name !== 'Number') {
-        callback(new Error('deploymentID is not a number'))
-      } else if (this.useDeployment && this.task.deploymentID <= 0) {
-        callback(new Error('deployment ID should large than zero'))
-      } else {
-        callback()
-      }
-    }
     return {
       task: {
         name: '',
         time: 3600,
-        deploymentID: 0,
-        image: '',
+        imageID: 0,
         fuzzCycleTime: 60,
         environments: [],
         arguments: [],
@@ -140,9 +115,8 @@ export default {
         corpusID: 0,
         targetID: 0
       },
-      useDeployment: false,
       loading: false,
-      deployDialogVisible: false,
+      imageDialogVisible: false,
       storageDialogVisible: {
         fuzzer: false,
         corpus: false,
@@ -155,11 +129,9 @@ export default {
         time: [
           { type: 'number', required: true, trigger: 'change' }
         ],
-        image: [
-          { validator: checkImage, trigger: 'change' }
-        ],
-        deploymentID: [
-          { type: 'number', validator: checkDeployment }
+        imageID: [
+          { type: 'number', required: true },
+          { type: 'number', min: 1 }
         ],
         fuzzCycleTime: [
           { type: 'number', required: true }
@@ -193,7 +165,6 @@ export default {
       this.loading = true
       getItem(id).then((data) => {
         this.task = parseServerItem(data)
-        this.useDeployment = this.task.deploymentID !== 0
         this.loading = false
       })
     },
@@ -202,11 +173,6 @@ export default {
         if (valid) {
           this.loading = true
           const temp = getServerItem(this.task)
-          if (this.useDeployment) {
-            temp.image = ''
-          } else {
-            temp.deploymentID = 0
-          }
           createItem(temp).then(() => {
             this.$message('create success')
             this.routerBack()
@@ -221,11 +187,6 @@ export default {
         if (valid) {
           this.loading = true
           const temp = getServerItem(this.task)
-          if (this.useDeployment) {
-            temp.image = ''
-          } else {
-            temp.deploymentID = 0
-          }
           editItem(temp).then(() => {
             this.$message('edit success')
             this.routerBack()
@@ -247,9 +208,9 @@ export default {
     deleteEnvironment(index) {
       this.task.environments.splice(index, 1)
     },
-    chooseDeploy(deploy) {
-      this.deployDialogVisible = false
-      this.task.deploymentID = deploy.id
+    chooseImage(image) {
+      this.imageDialogVisible = false
+      this.task.imageID = image.id
     },
     chooseStorageItem(type, storageItem) {
       this.storageDialogVisible[type] = false

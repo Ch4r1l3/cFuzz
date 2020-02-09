@@ -2,7 +2,7 @@
   <div class="app-container">
     <el-row :gutter="20">
       <el-col :span="2">
-        <router-link to="/deployment/create">
+        <router-link to="/image/create">
           <el-button type="primary">Create</el-button>
         </router-link>
       </el-col>
@@ -23,8 +23,8 @@
         highlight-current-row
       >
         <el-table-column type="expand">
-          <template :id="'deploy'+scope.row.id" slot-scope="scope">
-            <deployment-expand :deploy-id="scope.row.id" />
+          <template :id="'image'+scope.row.id" slot-scope="scope">
+            <image-expand :image-id="scope.row.id" />
           </template>
         </el-table-column>
         <el-table-column align="center" label="ID" width="95">
@@ -44,7 +44,7 @@
         </el-table-column>
         <el-table-column label="Edit" width="95" align="center">
           <template slot-scope="scope">
-            <router-link :to="'/deployment/edit/'+scope.row.id">
+            <router-link :to="'/image/edit/'+scope.row.id">
               <el-button type="primary">
                 Edit
               </el-button>
@@ -59,7 +59,7 @@
               icon="el-icon-info"
               icon-color="red"
               title="Delete it?"
-              @onConfirm="deleteDeploy(scope.row)"
+              @onConfirm="deleteImage(scope.row)"
             >
               <el-button slot="reference" type="danger">
                 Delete
@@ -84,13 +84,13 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getSimpListCombine, deleteItem } from '@/api/deployment'
+import { getItemsCombine, deleteItem } from '@/api/image'
 import { pageSize } from '@/settings'
 import { getOffset } from '@/utils'
-import DeploymentExpand from '@/components/DeploymentExpand'
+import ImageExpand from '@/components/ImageExpand'
 
 export default {
-  components: { DeploymentExpand },
+  components: { ImageExpand },
   data() {
     return {
       listLoading: true,
@@ -113,13 +113,13 @@ export default {
     fetchData() {
       this.listLoading = true
       const offset = getOffset(this.currentPage, pageSize)
-      getSimpListCombine(offset, pageSize, this.searchName).then((data) => {
+      getItemsCombine(offset, pageSize, this.searchName).then((data) => {
         this.items = data.data
         this.count = data.count
         this.listLoading = false
       })
     },
-    deleteDeploy(item) {
+    deleteImage(item) {
       deleteItem(item).then(() => {
         this.$message('delete success')
         if (this.items.length === 1 && this.currentPage > 1) {

@@ -1,30 +1,34 @@
 <template>
-  <el-form :id="'deploy'+deployId" label-position="left">
+  <el-form :id="'image'+imageId" label-position="left">
     <el-form-item label="Name">
-      {{ deployment.name }}
+      {{ image.name }}
     </el-form-item>
-    <el-form-item label="Content">
-      <codemirror :value="deployment.content" :options="{ readOnly: true, theme: 'monokai', mode: 'text/x-yaml' }" />
+    <el-form-item v-if="image.isDeployment" label="Content">
+      <codemirror :value="image.content" :options="{ readOnly: true, theme: 'monokai', mode: 'text/x-yaml' }" />
+    </el-form-item>
+    <el-form-item v-else label="Image">
+      {{ image.content }}
     </el-form-item>
   </el-form>
 </template>
 
 <script>
-import { getItem } from '@/api/deployment'
+import { getItem } from '@/api/image'
 
 export default {
-  name: 'DeploymentExpand',
+  name: 'ImageExpand',
   props: {
-    deployId: {
+    imageId: {
       type: Number,
       default: 1
     }
   },
   data() {
     return {
-      deployment: {
+      image: {
         name: '',
-        content: ''
+        content: '',
+        isDeploymente: false
       }
     }
   },
@@ -37,10 +41,10 @@ export default {
         const loading = this.$loading({
           lock: true,
           fullscreen: false,
-          target: `#deploy${this.deployId}`
+          target: `#image${this.imageId}`
         })
-        getItem(this.deployId).then((res) => {
-          this.deployment = res
+        getItem(this.imageId).then((res) => {
+          this.image = res
           loading.close()
         })
       })

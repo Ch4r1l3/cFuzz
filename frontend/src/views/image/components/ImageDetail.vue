@@ -1,12 +1,18 @@
 <template>
-  <div class="deployment-container">
+  <div class="image-container">
     <el-row>
-      <el-form ref="form" :rules="rules" :model="deployment" label-width="120px">
+      <el-form ref="form" :rules="rules" :model="image" label-width="120px">
         <el-form-item label="Name" prop="name">
-          <el-input v-model="deployment.name" />
+          <el-input v-model="image.name" />
         </el-form-item>
-        <el-form-item label="Content" prop="content">
-          <codemirror v-model="deployment.content" :options="{ theme: 'monokai', mode: 'text/x-yaml', lineNumbers: true }" />
+        <el-form-item label="IsDeployment">
+          <el-switch v-model="image.isDeployment" @change="image.content = ''" />
+        </el-form-item>
+        <el-form-item v-if="image.isDeployment" label="Content" prop="content">
+          <codemirror v-model="image.content" :options="{ theme: 'monokai', mode: 'text/x-yaml', lineNumbers: true }" />
+        </el-form-item>
+        <el-form-item v-else label="Image" prop="content">
+          <el-input v-model="image.content" />
         </el-form-item>
         <el-form-item>
           <el-button v-if="isEdit" v-loading="loading" type="primary" @click="edit">Edit</el-button>
@@ -19,9 +25,9 @@
 </template>
 
 <script>
-import { getItem, createItem, editItem } from '@/api/deployment'
+import { getItem, createItem, editItem } from '@/api/image'
 export default {
-  name: 'DeploymentDetail',
+  name: 'ImageDetail',
   props: {
     isEdit: {
       type: Boolean,
@@ -30,9 +36,10 @@ export default {
   },
   data() {
     return {
-      deployment: {
+      image: {
         name: '',
-        content: ''
+        content: '',
+        isDeployment: false
       },
       loading: false,
       rules: {
@@ -58,7 +65,7 @@ export default {
     get(id) {
       this.loading = true
       getItem(id).then((data) => {
-        this.deployment = data
+        this.image = data
         this.loading = false
       })
     },
@@ -66,7 +73,7 @@ export default {
       this.$refs.form.validate((valid) => {
         if (valid) {
           this.loading = true
-          createItem(this.deployment).then(() => {
+          createItem(this.image).then(() => {
             this.$message('create success')
             this.routerBack()
           }).finally(() => {
@@ -79,7 +86,7 @@ export default {
       this.$refs.form.validate((valid) => {
         if (valid) {
           this.loading = true
-          editItem(this.deployment).then(() => {
+          editItem(this.image).then(() => {
             this.$message('edit success')
             this.routerBack()
           }).finally(() => {
@@ -98,6 +105,9 @@ export default {
 }
 .el-form-item__content .CodeMirror {
     line-height: 25px;
+}
+.el-form .el-input {
+  width: 350px;
 }
 </style>
 

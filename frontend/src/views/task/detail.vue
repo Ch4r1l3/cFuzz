@@ -17,11 +17,8 @@
         <el-form-item label="Time (second):">
           {{ task.time }}
         </el-form-item>
-        <el-form-item v-if="task.image !== ''" label="Image:">
-          {{ task.image }}
-        </el-form-item>
-        <el-form-item v-else label="Deployment ID:">
-          {{ task.deploymentID }}
+        <el-form-item label="Image ID:">
+          {{ task.imageID }}
         </el-form-item>
         <el-form-item label="FuzzCycleTime:">
           {{ task.fuzzCycleTime }}
@@ -138,8 +135,7 @@ export default {
         name: '',
         time: 3600,
         status: '',
-        deploymentID: 0,
-        image: '',
+        imageID: 0,
         fuzzCycleTime: 60,
         environments: [],
         arguments: [],
@@ -168,7 +164,6 @@ export default {
         })
         getItem(id).then((data) => {
           this.task = parseServerItem(data)
-          this.useDeployment = this.task.deploymentID !== 0
         }).finally(() => {
           loading1.close()
         })
@@ -178,7 +173,7 @@ export default {
           target: '#detail-crash'
         })
         getCrashes(id).then((res) => {
-          this.crashes = res
+          this.crashes = res.data
         }).finally(() => {
           loading2.close()
         })

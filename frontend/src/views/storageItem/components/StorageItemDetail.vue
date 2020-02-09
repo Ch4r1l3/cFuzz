@@ -51,7 +51,7 @@
 <script>
 import { getItem, createItem } from '@/api/storageItem'
 export default {
-  name: 'DeploymentDetail',
+  name: 'StorageItemDetail',
   props: {
     isEdit: {
       type: Boolean,

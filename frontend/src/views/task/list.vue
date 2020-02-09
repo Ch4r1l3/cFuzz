@@ -66,7 +66,7 @@
           </template>
         </el-table-column>
         <el-table-column label="Delete" width="110" align="center">
-          <template slot-scope="scope">
+          <template slot-scope="scope" v-if="!canStop(scope.row)">
             <el-popconfirm
               confirm-button-text="OK"
               cancel-button-text="Cancel"

@@ -85,27 +85,27 @@ export const constantRoutes = [
   },
 
   {
-    path: '/deployment',
+    path: '/image',
     component: Layout,
-    redirect: '/deployment/list',
+    redirect: '/image/list',
     children: [
       {
         path: 'list',
-        name: 'listDeployment',
-        component: () => import('@/views/deployment/list'),
-        meta: { title: 'Deployment', icon: 'edit' }
+        name: 'listImage',
+        component: () => import('@/views/image/list'),
+        meta: { title: 'Image', icon: 'edit' }
       },
       {
         path: 'create',
-        name: 'createDeployment',
-        component: () => import('@/views/deployment/create'),
+        name: 'createImage',
+        component: () => import('@/views/image/create'),
         meta: { title: 'Create' },
         hidden: true
       },
       {
         path: 'edit/:id(\\d+)',
-        name: 'editDeployment',
-        component: () => import('@/views/deployment/edit'),
+        name: 'editImage',
+        component: () => import('@/views/image/edit'),
         meta: { title: 'Edit' },
         hidden: true
       }
