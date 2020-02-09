@@ -22,14 +22,12 @@ func initDeployTask(deploy *appsv1.Deployment) {
 		if Err != nil {
 			logger.Logger.Error("Error exit init", "reason", Err.Error())
 			// check current task status first
-			var tempTask models.Task
-			err = models.GetObjectByID(&tempTask, uint64(taskID))
-			if err != nil || (tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped) {
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "DB Error")
-				DeleteDeployByTaskID(taskID)
-				DeleteServiceByTaskID(taskID)
+			tempTask, err := models.GetTaskByID(uint64(taskID))
+			if tempTask == nil || err != nil {
+				return
+			}
+			if tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped {
+				SetTaskError(taskID, "init task error: "+Err.Error())
 			}
 		}
 	}()

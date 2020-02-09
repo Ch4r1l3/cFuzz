@@ -3,7 +3,6 @@ package service
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
-	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -72,9 +71,5 @@ func deleteTaskByPod(pod *corev1.Pod) {
 		return
 	}
 	logger.Logger.Debug("deployment failed to start")
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "failed to create deployment")
-	DeleteDeployByTaskID(taskID)
-	DeleteServiceByTaskID(taskID)
+	SetTaskError(taskID, "failed to create deployment")
 }

@@ -22,23 +22,19 @@ func checkTasks() {
 			logger.Logger.Error("checkTasks", "error", err.Error())
 		} else {
 			for _, task := range tasks {
+				logger.Logger.Debug("checkTasks")
 				if task.Status == models.TaskStarted && task.StatusUpdateAt+config.KubernetesConf.MaxStartTime < time.Now().Unix() {
 					go func() {
 						logger.Logger.Error("deployment start too long", "start", task.StatusUpdateAt, "now", time.Now().Unix())
-						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskError)
-						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ErrorMsg", "deployment start waste to much time")
-						DeleteDeployByTaskID(task.ID)
-						DeleteServiceByTaskID(task.ID)
+						SetTaskError(task.ID, "deployment start waste to much time")
 					}()
 				} else if task.Status == models.TaskRunning && time.Now().Unix()-task.StartedAt > int64(task.Time) {
 					go func() {
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped)
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-						requestProxyGet(task.ID, []string{"task", "stop"})
+						requestProxyPost(task.ID, []string{"task", "stop"}, []string{"xx"})
 						<-time.After(time.Duration(task.FuzzCycleTime) * time.Second)
-						DeleteDeployByTaskID(task.ID)
-						DeleteServiceByTaskID(task.ID)
+						DeleteContainerByTaskID(task.ID)
 					}()
 				} else if task.Status == models.TaskRunning {
 					if activeRoutineNum[task.ID] == nil {
@@ -86,14 +82,12 @@ func checkSingleTask(taskID uint64) {
 	defer func() {
 		if Err != nil {
 			//check current task status first
-			var tempTask models.Task
-			err := models.GetObjectByID(&tempTask, uint64(taskID))
-			if err != nil || (tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped) {
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-				models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", Err.Error())
-				DeleteDeployByTaskID(taskID)
-				DeleteServiceByTaskID(taskID)
+			tempTask, err := models.GetTaskByID(uint64(taskID))
+			if tempTask == nil || err != nil {
+				return
+			}
+			if tempTask.Status != models.TaskError && tempTask.Status != models.TaskStopped {
+				SetTaskError(taskID, Err.Error())
 			}
 		}
 	}()
@@ -141,8 +135,7 @@ func checkSingleTask(taskID uint64) {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
 		}
 		models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-		DeleteServiceByTaskID(taskID)
-		DeleteDeployByTaskID(taskID)
+		DeleteContainerByTaskID(taskID)
 		return
 	} else {
 		//get bot task crashes
@@ -204,7 +197,7 @@ func checkSingleTask(taskID uint64) {
 				return
 			}
 			logger.Logger.Debug("last fuzz result", "result", lastFuzzResult)
-			if lastFuzzResult.UpdateAt < fuzzResult.UpdateAt {
+			if lastFuzzResult == nil || lastFuzzResult.UpdateAt < fuzzResult.UpdateAt {
 				taskFuzzResult := models.TaskFuzzResult{
 					Command:      fuzzResult.Command,
 					TimeExecuted: fuzzResult.TimeExecuted,

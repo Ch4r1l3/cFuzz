@@ -128,16 +128,8 @@ func GetUserByUsername(username string) (*User, error) {
 	return &user, nil
 }
 
-func IsUsernameExists(username string) (bool, error) {
-	var user User
-	err := DB.Where("username = ?", username).First(&user).Error
-	if err == nil {
-		return true, nil
-	}
-	if gorm.IsRecordNotFoundError(err) {
-		return false, nil
-	}
-	return false, err
+func IsUsernameExists(username string) bool {
+	return IsObjectExistsCustom(&User{}, []string{"username = ?"}, []interface{}{username})
 }
 
 func GetNormalUserCombine(offset, limit int, name string) ([]User, int, error) {

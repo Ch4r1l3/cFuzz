@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
+	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/scheme"
 	"strconv"
+	"time"
 )
 
 func GetAllDeploys() ([]appsv1.Deployment, error) {
@@ -151,6 +153,18 @@ func DeleteServiceByTaskID(taskID uint64) error {
 	return ClientSet.CoreV1().Services(config.KubernetesConf.Namespace).Delete(fmt.Sprintf(ServiceNameFmt, taskID), &metav1.DeleteOptions{})
 }
 
+func DeleteContainerByTaskID(taskID uint64) error {
+	err1 := DeleteDeployByTaskID(taskID)
+	err2 := DeleteServiceByTaskID(taskID)
+	if err1 != nil {
+		return err1
+	}
+	if err2 != nil {
+		return err2
+	}
+	return nil
+}
+
 func getDeployTaskID(deploy *appsv1.Deployment) (uint64, error) {
 	if deploy.ObjectMeta.Labels == nil {
 		return 0, errors.New("label not exists")
@@ -191,4 +205,11 @@ func getServiceTaskID(service *apiv1.Service) (uint64, error) {
 		return 0, err
 	}
 	return uint64(taskID), nil
+}
+
+func SetTaskError(taskID uint64, errorMsg string) {
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
+	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", errorMsg)
+	DeleteContainerByTaskID(taskID)
 }

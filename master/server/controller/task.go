@@ -533,9 +533,8 @@ func (tc *TaskController) Stop(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	err1 := service.DeleteServiceByTaskID(task.ID)
-	err2 := service.DeleteDeployByTaskID(task.ID)
-	if err1 != nil || err2 != nil {
+	err = service.DeleteContainerByTaskID(task.ID)
+	if err != nil {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
 	}
@@ -714,11 +713,14 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 		utils.Forbidden(c)
 		return
 	}
+	if task.Status != models.TaskCreated && task.Status != models.TaskStopped && task.Status != models.TaskError {
+		utils.BadRequestWithMsg(c, "task is still running")
+		return
+	}
 	if err := models.DeleteTask(task.ID); err != nil {
 		utils.DBError(c)
 		return
 	}
-	service.DeleteServiceByTaskID(task.ID)
-	service.DeleteDeployByTaskID(task.ID)
+	service.DeleteContainerByTaskID(task.ID)
 	c.String(http.StatusNoContent, "")
 }

@@ -211,12 +211,7 @@ func (us *UserController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	ok, err := models.IsUsernameExists(req.Username)
-	if err != nil {
-		utils.DBError(c)
-		return
-	}
-	if ok {
+	if models.IsUsernameExists(req.Username) {
 		utils.BadRequestWithMsg(c, "username exist")
 		return
 	}
@@ -226,7 +221,7 @@ func (us *UserController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, errs.Error())
 		return
 	}
-	err = models.CreateUser(req.Username, req.Password, false)
+	err := models.CreateUser(req.Username, req.Password, false)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return

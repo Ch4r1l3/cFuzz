@@ -55,22 +55,22 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 		utils.Forbidden(c)
 		return
 	}
-	var taskFuzzResult []models.TaskFuzzResult
-	if err := models.GetObjectsByTaskID(&taskFuzzResult, taskID); err != nil {
+	taskFuzzResult, err := models.GetLastestFuzzResultByTaskID(taskID)
+	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	if len(taskFuzzResult) == 0 {
+	if taskFuzzResult == nil {
 		c.String(http.StatusOK, "")
 		return
 	}
-	stats, err := models.GetTaskFuzzResultStat(taskFuzzResult[0].ID)
+	stats, err := models.GetTaskFuzzResultStat(taskFuzzResult.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
 	c.JSON(http.StatusOK, TaskResultResp{
-		TaskFuzzResult: taskFuzzResult[0],
+		TaskFuzzResult: *taskFuzzResult,
 		Stats:          stats,
 	})
 }

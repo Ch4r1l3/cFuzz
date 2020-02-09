@@ -54,7 +54,7 @@ func GetLastestFuzzResultByTaskID(taskid uint64) (*TaskFuzzResult, error) {
 	var taskFuzzResult TaskFuzzResult
 	if err := DB.Where("task_id = ?", taskid).Order("update_at desc").First(&taskFuzzResult).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return &taskFuzzResult, nil
+			return nil, nil
 		}
 		return nil, err
 	}
