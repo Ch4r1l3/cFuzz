@@ -60,6 +60,10 @@ const (
 	TaskError        = "TaskError"
 )
 
+func (t *Task) IsRunning() bool {
+	return t.Status == TaskStarted || t.Status == TaskInitializing || t.Status == TaskRunning
+}
+
 type TaskEnvironment struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
 	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
@@ -169,16 +173,7 @@ func GetCountByTaskID(obj interface{}, taskid uint64) (int, error) {
 }
 
 func GetObjectsByTaskIDPagination(objs interface{}, taskid uint64, offset int, limit int) (int, error) {
-	var count int
-	err := DB.Model(objs).Where("task_id = ?", taskid).Count(&count).Error
-	if err != nil {
-		return 0, err
-	}
-	t := DB.Where("task_id = ?", taskid)
-	if offset >= 0 && limit >= 0 {
-		t = t.Offset(offset).Limit(limit)
-	}
-	return count, t.Find(objs).Error
+	return GetObjectCombinCustom(objs, offset, limit, "", []string{"task_id = ?"}, []interface{}{taskid})
 }
 
 func GetTaskByID(id uint64) (*Task, error) {

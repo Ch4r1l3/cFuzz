@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -319,7 +320,16 @@ func (us *UserController) Delete(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if err = models.DeleteObjectByID(&models.User{}, user.ID); err != nil {
+	var tasks []models.Task
+	if err = models.GetObjectsByUserID(&tasks, user.ID); err != nil {
+		utils.InternalErrorWithMsg(c, err.Error())
+	}
+	for _, t := range tasks {
+		if t.IsRunning() {
+			service.DeleteContainerByTaskID(t.ID)
+		}
+	}
+	if err = models.DeleteUserByID(user.ID); err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
 	}

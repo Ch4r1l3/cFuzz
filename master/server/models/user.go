@@ -113,6 +113,10 @@ func GetObjectsByUserID(objs interface{}, userID uint64) error {
 	return DB.Order("id").Where("user_id = ?", userID).Find(objs).Error
 }
 
+func DeleteObjectsByUserID(objs interface{}, userID uint64) error {
+	return DB.Where("user_id = ?", userID).Delete(objs).Error
+}
+
 func GetCountByUserID(objs interface{}, userID uint64) (int, error) {
 	var count int
 	err := DB.Model(objs).Where("user_id = ?", userID).Count(&count).Error
@@ -142,4 +146,16 @@ func GetNormalUserCombine(offset, limit int, name string) ([]User, int, error) {
 		count, err = GetObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?"}, []interface{}{false})
 	}
 	return users, count, err
+}
+
+func DeleteUserByID(id uint64) error {
+	DeleteObjectsByUserID(&Deployment{}, id)
+	DeleteStorageItemCustom("user_id = ?", id)
+	var tasks []Task
+	if GetObjectsByUserID(&tasks, id) == nil {
+		for _, t := range tasks {
+			DeleteTask(t.ID)
+		}
+	}
+	return DeleteObjectByID(&User{}, id)
 }
