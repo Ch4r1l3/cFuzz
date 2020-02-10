@@ -15,7 +15,7 @@ type Image struct {
 	Content string `json:"content"`
 
 	// example: 1
-	UserID uint64 `json:"userID" sql:"type:bigint REFERENCES user(id) ON DELETE CASCADE"`
+	UserID uint64 `json:"userID" sql:"type:integer REFERENCES user(id) ON DELETE CASCADE"`
 }
 
 func IsImageReferred(id uint64) bool {

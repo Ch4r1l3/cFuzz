@@ -26,7 +26,7 @@ type StorageItem struct {
 	RelPath string `json:"relPath"`
 
 	// example: 1
-	UserID uint64 `json:"userID" sql:"type:bigint REFERENCES user(id) ON DELETE CASCADE"`
+	UserID uint64 `json:"userID" sql:"type:integer REFERENCES user(id) ON DELETE CASCADE"`
 }
 
 func (s *StorageItem) Delete() error {

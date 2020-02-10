@@ -10,7 +10,7 @@ type TaskCrash struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 
 	// example: 1
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	TaskID uint64 `json:"taskid" sql:"type:integer REFERENCES task(id) ON DELETE CASCADE"`
 
 	// example: 1
 	BotCrashID uint64 `json:"-"`

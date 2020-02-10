@@ -13,7 +13,7 @@ type Task struct {
 	Name string `json:"name"`
 
 	// example: 1
-	ImageID uint64 `json:"imageID"`
+	ImageID uint64 `json:"imageID" sql:"type:integer REFERENCES image(id)"`
 
 	// example: 60
 	Time uint64 `json:"time"`
@@ -22,13 +22,13 @@ type Task struct {
 	FuzzCycleTime uint64 `json:"fuzzCycleTime"`
 
 	// example: 1
-	FuzzerID uint64 `json:"fuzzerID"`
+	FuzzerID uint64 `json:"fuzzerID" sql:"type:integer REFERENCES storage_item(id)"`
 
 	// example: 2
-	CorpusID uint64 `json:"corpusID"`
+	CorpusID uint64 `json:"corpusID" sql:"type:integer REFERENCES storage_item(id)"`
 
 	// example: 3
-	TargetID uint64 `json:"targetID"`
+	TargetID uint64 `json:"targetID" sql:"type:integer REFERENCES storage_item(id)"`
 
 	// example: TaskRunning
 	Status string `json:"status"`
@@ -43,7 +43,7 @@ type Task struct {
 	StartedAt int64 `json:"startedAt"`
 
 	// example: 1
-	UserID uint64 `json:"userID" sql:"type:bigint REFERENCES user(id) ON DELETE CASCADE"`
+	UserID uint64 `json:"userID" sql:"type:integer REFERENCES user(id) ON DELETE CASCADE"`
 }
 
 const (
@@ -61,7 +61,7 @@ func (t *Task) IsRunning() bool {
 
 type TaskEnvironment struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	TaskID uint64 `json:"taskid" sql:"type:integer REFERENCES task(id) ON DELETE CASCADE"`
 	Value  string `json:"value"`
 }
 
@@ -108,7 +108,7 @@ func GetEnvironments(taskid uint64) ([]string, error) {
 
 type TaskArgument struct {
 	ID     uint64 `gorm:"primary_key" json:"id"`
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	TaskID uint64 `json:"taskid" sql:"type:integer REFERENCES task(id) ON DELETE CASCADE"`
 	Key    string `json:"key"`
 	Value  string `json:"value"`
 }

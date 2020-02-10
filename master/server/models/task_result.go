@@ -13,7 +13,7 @@ type TaskFuzzResult struct {
 	// example: 60
 	TimeExecuted int `json:"timeExecuted"`
 	// example: 1
-	TaskID uint64 `json:"taskid" sql:"type:bigint REFERENCES task(id) ON DELETE CASCADE"`
+	TaskID uint64 `json:"taskid" sql:"type:integer REFERENCES task(id) ON DELETE CASCADE"`
 	// example: 1579996805
 	UpdateAt int64 `json:"updateAt"`
 }
@@ -21,7 +21,7 @@ type TaskFuzzResult struct {
 type TaskFuzzResultStat struct {
 	Key              string `json:"key"`
 	Value            string `json:"value"`
-	TaskFuzzResultID uint64 `json:"taskid" sql:"type:bigint REFERENCES task_fuzz_result(id) ON DELETE CASCADE"`
+	TaskFuzzResultID uint64 `json:"taskid" sql:"type:integer REFERENCES task_fuzz_result(id) ON DELETE CASCADE"`
 }
 
 func InsertTaskFuzzResultStat(id uint64, stats map[string]string) error {
