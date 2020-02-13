@@ -65,6 +65,9 @@ export default {
 }
 .el-form-item__content .CodeMirror {
     line-height: 25px;
+}
+
+.CodeMirror-code {
     padding: 8px;
 }
 </style>
