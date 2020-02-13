@@ -82,7 +82,7 @@ func GenerateDeploymentByYaml(content string, taskID uint64) (*appsv1.Deployment
 	return deployment, nil
 }
 
-func GenerateDeployment(taskID uint64, taskName string, image string, replicasNum int32) (*appsv1.Deployment, error) {
+func GenerateDeployment(taskID uint64, image string, replicasNum int32) (*appsv1.Deployment, error) {
 	if replicasNum <= 0 {
 		return nil, errors.New("replicas number should large than 0")
 	}
@@ -109,7 +109,7 @@ func GenerateDeployment(taskID uint64, taskName string, image string, replicasNu
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
-							Name:  taskName,
+							Name:  fmt.Sprintf(DeployNameFmt, taskID),
 							Image: image,
 							Ports: []apiv1.ContainerPort{
 								{

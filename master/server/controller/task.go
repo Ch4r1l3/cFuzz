@@ -403,7 +403,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 	}
 	var image *appsv1.Deployment
 	if !tempImage.IsDeployment {
-		image, err = service.GenerateDeployment(task.ID, task.Name, tempImage.Content, 1)
+		image, err = service.GenerateDeployment(task.ID, tempImage.Content, 1)
 		if err != nil {
 			Err = err
 			utils.InternalErrorWithMsg(c, "generate image failed")
@@ -420,7 +420,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 	err = service.CreateDeploy(image)
 	if err != nil {
 		Err = err
-		utils.InternalErrorWithMsg(c, "create image failed")
+		utils.InternalErrorWithMsg(c, "create image failed: "+err.Error())
 		return
 	}
 	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
