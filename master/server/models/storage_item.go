@@ -11,7 +11,7 @@ type StorageItem struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 
 	// example: afl
-	Name string `json:"name"`
+	Name string `json:"name" sql:"type:varchar(255) NOT NULL UNIQUE"`
 
 	Path string `json:"path"`
 

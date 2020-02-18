@@ -10,7 +10,7 @@ type Task struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 
 	// example: test
-	Name string `json:"name"`
+	Name string `json:"name" sql:"type:varchar(255) NOT NULL UNIQUE"`
 
 	// example: 1
 	ImageID uint64 `json:"imageID" sql:"type:integer REFERENCES image(id)"`

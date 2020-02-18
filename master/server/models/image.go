@@ -6,7 +6,7 @@ type Image struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 
 	// example: test-image
-	Name string `json:"name"`
+	Name string `json:"name" sql:"type:varchar(255) NOT NULL UNIQUE"`
 
 	// example: true
 	IsDeployment bool `json:"isDeployment"`

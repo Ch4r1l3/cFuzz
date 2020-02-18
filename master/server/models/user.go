@@ -16,7 +16,7 @@ import (
 type User struct {
 	ID uint64 `gorm:"primary_key" json:"id"`
 	// example:123
-	Username string `json:"username"`
+	Username string `json:"username" sql:"type:varchar(255) NOT NULL UNIQUE"`
 
 	Password string `json:"-"`
 	Salt     string `json:"-"`
