@@ -42,7 +42,7 @@ func parseResp(data []byte) error {
 	return nil
 }
 
-func RequestProxyGet(taskID uint64, url []string) ([]byte, error) {
+func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	urls := append([]string{"proxy"}, url...)
 	bytesData, err := ClientSet.
 		CoreV1().
@@ -63,7 +63,7 @@ func RequestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	return bytesData, parseResp(bytesData)
 }
 
-func RequestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
+func requestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
 	urls := append([]string{"proxy"}, url...)
 	resp, err := ClientSet.
 		CoreV1().
@@ -96,11 +96,11 @@ func RequestProxySaveFile(taskID uint64, url []string, saveDir string) (string, 
 	return tempFile.Name(), nil
 }
 
-func RequestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
+func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Post", taskID, url, data)
 }
 
-func RequestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error) {
+func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Put", taskID, url, data)
 }
 
@@ -156,11 +156,11 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 	return bytesData, parseResp(bytesData)
 }
 
-func RequestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
+func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Post", taskID, url, form, filePath)
 }
 
-func RequestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
+func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Put", taskID, url, form, filePath)
 }
 

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	botmodels "github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
@@ -48,7 +47,7 @@ func initDeployTask(taskID uint64) {
 	}
 	//test if bot is not up, retry 3 times
 	for i := 0; i < 3; i++ {
-		_, err = kubernetes.RequestProxyGet(uint64(taskID), []string{"storage_item"})
+		_, err = kubernetes.GetStorageItems(task.ID)
 		if err != nil {
 			if i == 2 {
 				Err = errors.Wrap(err, "service Error")
@@ -69,40 +68,12 @@ func initDeployTask(taskID uint64) {
 			Err = errors.Wrap(err, "DB Error")
 			return
 		}
-		if storageItem.ExistsInImage {
-			uploadFuzzerPostData := map[string]interface{}{
-				"type":          types[i],
-				"existsInImage": true,
-				"path":          storageItem.Path,
-			}
-			result, err := kubernetes.RequestProxyPost(uint64(taskID), []string{"storage_item", "exist"}, uploadFuzzerPostData)
-			if err != nil {
-				Err = errors.Wrap(err, "upload fuzzer Error")
-				return
-			}
-			var resp clientStorageItemPostResp
-			if err := json.Unmarshal(result, &resp); err != nil {
-				Err = errors.Wrap(err, "json decode fuzzer resp Error")
-				return
-			}
-			botids = append(botids, resp.ID)
-		} else {
-			form := map[string]string{
-				"type":    types[i],
-				"relPath": storageItem.RelPath,
-			}
-			result, err := kubernetes.RequestProxyPostWithFile(uint64(taskID), []string{"storage_item"}, form, storageItem.Path)
-			if err != nil {
-				Err = errors.Wrap(err, "upload fuzzer Error")
-				return
-			}
-			var resp clientStorageItemPostResp
-			if err := json.Unmarshal(result, &resp); err != nil {
-				Err = errors.Wrap(err, "json decode fuzzer resp Error")
-				return
-			}
-			botids = append(botids, resp.ID)
+		tid, err := kubernetes.CreateStorageItem(task.ID, storageItem.ExistsInImage, types[i], storageItem.Path, storageItem.RelPath)
+		if err != nil {
+			Err = errors.Wrap(err, "upload storageItem failed")
+			return
 		}
+		botids = append(botids, tid)
 	}
 
 	taskArguments, err := models.GetArguments(task.ID)
@@ -126,16 +97,13 @@ func initDeployTask(taskID uint64) {
 	}
 
 	//create task on bot
-	result, err := kubernetes.RequestProxyPost(task.ID, []string{"task"}, postData)
-	//result, err := requestProxyPostRaw(task.ID, []string{"task"}, postData)
-	logger.Logger.Debug("create task", "result", string(result))
+	err = kubernetes.CreateTask(task.ID, postData)
 	if err != nil {
 		Err = errors.Wrap(err, "create task error")
 		return
 	}
-
 	//start fuzz target
-	result, err = kubernetes.RequestProxyPost(task.ID, []string{"task", "start"}, struct{}{})
+	err = kubernetes.StartTask(task.ID)
 	if err != nil {
 		Err = errors.Wrap(err, "start bot fuzz error")
 		return

@@ -1,4 +1,4 @@
-package service
+package kubernetes
 
 type clientStorageItemPostResp struct {
 	ID            uint64 `json:"id" binding:"required"`

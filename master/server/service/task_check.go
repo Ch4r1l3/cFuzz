@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	botmodels "github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
@@ -33,7 +32,7 @@ func checkTasks() {
 					go func() {
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped)
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-						kubernetes.RequestProxyPost(task.ID, []string{"task", "stop"}, []string{"xx"})
+						kubernetes.StopTask(task.ID)
 						<-time.After(time.Duration(task.FuzzCycleTime) * time.Second)
 						kubernetes.DeleteContainerByTaskID(task.ID)
 					}()
@@ -115,23 +114,17 @@ func checkSingleTask(taskID uint64) {
 	}
 
 	//get bot task status
-	result, err := kubernetes.RequestProxyGet(taskID, []string{"task"})
+	clientStatus, clientErrorMsg, err := kubernetes.GetTask(taskID)
 	if err != nil {
 		logger.Logger.Error("get task error", "reason", err.Error())
 		Err = err
 		return
 	}
-	var clientTask clientTaskGetResp
-	if err := json.Unmarshal(result, &clientTask); err != nil {
-		logger.Logger.Error("get task error", "reason", err.Error())
-		Err = err
-		return
-	}
-	if clientTask.Status != botmodels.TaskRunning {
-		logger.Logger.Debug("client status is not running", "status", clientTask.Status)
-		if clientTask.Status == botmodels.TaskError {
+	if clientStatus != botmodels.TaskRunning {
+		logger.Logger.Debug("client status is not running", "status", clientStatus)
+		if clientStatus == botmodels.TaskError {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit: "+clientTask.ErrorMsg)
+			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit: "+clientErrorMsg)
 		} else {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
 		}
@@ -140,15 +133,9 @@ func checkSingleTask(taskID uint64) {
 		return
 	} else {
 		//get bot task crashes
-		result, err = kubernetes.RequestProxyGet(taskID, []string{"task", "crash"})
+		crashes, err := kubernetes.GetCrashes(taskID)
 		if err != nil {
-			logger.Logger.Error("client get crash failed", "reason", err.Error())
-			Err = err
-			return
-		}
-		var crashes []clientCrashGetResp
-		if err = json.Unmarshal(result, &crashes); err != nil {
-			logger.Logger.Error("client  crash json decode fail", "reason", err.Error())
+			logger.Logger.Error("client get crashes fail", "reason", err.Error())
 			return
 		}
 		logger.Logger.Debug("task", "crashes", crashes)
@@ -160,9 +147,10 @@ func checkSingleTask(taskID uint64) {
 			}
 			if !crashesMap[taskID][crash.ID] {
 				crashesMap[taskID][crash.ID] = true
-				savePath, err := kubernetes.RequestProxySaveFile(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))}, crashesPath)
+				savePath, err := kubernetes.DownloadCrash(taskID, crash.ID, crashesPath)
 				if err != nil {
 					logger.Logger.Error("request save file error", "reason", err.Error())
+					continue
 				}
 				taskCrash := models.TaskCrash{
 					BotCrashID:    crash.ID,
@@ -179,18 +167,12 @@ func checkSingleTask(taskID uint64) {
 		}
 
 		//get bot task result
-		result, err = kubernetes.RequestProxyGet(taskID, []string{"task", "result"})
+		fuzzResult, err := kubernetes.GetResult(taskID)
 		if err != nil {
-			logger.Logger.Error("client get result failed", "reason", err.Error())
-			Err = err
+			logger.Logger.Error("client get result fail", "reason", err.Error())
 			return
 		}
-		if len(result) > 10 {
-			var fuzzResult clientResultGetResp
-			if err = json.Unmarshal(result, &fuzzResult); err != nil {
-				logger.Logger.Error("client fuzz result json decode fail", "len", len(result), "content", result, "reason", err.Error())
-				return
-			}
+		if fuzzResult != nil {
 			lastFuzzResult, err := models.GetLastestFuzzResultByTaskID(taskID)
 			if err != nil {
 				logger.Logger.Error("get fuzz result from db error", "reason", err.Error())
