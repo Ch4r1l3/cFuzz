@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
-	"github.com/Ch4r1l3/cFuzz/master/server/service"
+	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -326,7 +326,7 @@ func (us *UserController) Delete(c *gin.Context) {
 	}
 	for _, t := range tasks {
 		if t.IsRunning() {
-			service.DeleteContainerByTaskID(t.ID)
+			kubernetes.DeleteContainerByTaskID(t.ID)
 		}
 	}
 	if err = models.DeleteUserByID(user.ID); err != nil {

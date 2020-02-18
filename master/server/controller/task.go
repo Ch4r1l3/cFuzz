@@ -3,7 +3,7 @@ package controller
 import (
 	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
-	"github.com/Ch4r1l3/cFuzz/master/server/service"
+	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -384,7 +384,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		return
 	}
 
-	err = service.CreateServiceByTaskID(task.ID)
+	err = kubernetes.CreateServiceByTaskID(task.ID)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, "create service failed")
 		return
@@ -392,7 +392,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 
 	defer func() {
 		if Err != nil {
-			service.DeleteServiceByTaskID(task.ID)
+			kubernetes.DeleteServiceByTaskID(task.ID)
 		}
 	}()
 	var tempImage models.Image
@@ -403,34 +403,34 @@ func (tc *TaskController) Start(c *gin.Context) {
 	}
 	var image *appsv1.Deployment
 	if !tempImage.IsDeployment {
-		image, err = service.GenerateDeployment(task.ID, tempImage.Content, 1)
+		image, err = kubernetes.GenerateDeployment(task.ID, tempImage.Content, 1)
 		if err != nil {
 			Err = err
 			utils.InternalErrorWithMsg(c, "generate image failed")
 			return
 		}
 	} else {
-		image, err = service.GenerateDeploymentByYaml(tempImage.Content, task.ID)
+		image, err = kubernetes.GenerateDeploymentByYaml(tempImage.Content, task.ID)
 		if err != nil {
 			Err = err
 			utils.BadRequestWithMsg(c, err.Error())
 			return
 		}
 	}
-	err = service.CreateDeploy(image)
+	err = kubernetes.CreateDeploy(image)
 	if err != nil {
 		Err = err
 		utils.InternalErrorWithMsg(c, "create image failed: "+err.Error())
 		return
 	}
 	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
-		service.DeleteDeployByTaskID(task.ID)
+		kubernetes.DeleteDeployByTaskID(task.ID)
 		utils.DBError(c)
 		Err = err
 		return
 	}
 	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
-		service.DeleteDeployByTaskID(task.ID)
+		kubernetes.DeleteDeployByTaskID(task.ID)
 		utils.DBError(c)
 		Err = err
 		return
@@ -482,7 +482,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	err = service.DeleteContainerByTaskID(task.ID)
+	err = kubernetes.DeleteContainerByTaskID(task.ID)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
@@ -657,6 +657,6 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 		utils.DBError(c)
 		return
 	}
-	service.DeleteContainerByTaskID(task.ID)
+	kubernetes.DeleteContainerByTaskID(task.ID)
 	c.String(http.StatusNoContent, "")
 }

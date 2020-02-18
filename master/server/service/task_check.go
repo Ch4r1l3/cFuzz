@@ -6,6 +6,7 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/panjf2000/ants/v2"
 	"github.com/pkg/errors"
 	"os"
@@ -32,9 +33,9 @@ func checkTasks() {
 					go func() {
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped)
 						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-						requestProxyPost(task.ID, []string{"task", "stop"}, []string{"xx"})
+						kubernetes.RequestProxyPost(task.ID, []string{"task", "stop"}, []string{"xx"})
 						<-time.After(time.Duration(task.FuzzCycleTime) * time.Second)
-						DeleteContainerByTaskID(task.ID)
+						kubernetes.DeleteContainerByTaskID(task.ID)
 					}()
 				} else if task.Status == models.TaskRunning {
 					if activeRoutineNum[task.ID] == nil {
@@ -101,7 +102,7 @@ func checkSingleTask(taskID uint64) {
 	}
 
 	//get deployment check if it is running
-	deploys, err := GetDeployByTaskID(taskID)
+	deploys, err := kubernetes.GetDeployByTaskID(taskID)
 	if len(deploys) == 0 {
 		logger.Logger.Error("get deployment empty")
 		Err = errors.New("get deployment empty")
@@ -114,7 +115,7 @@ func checkSingleTask(taskID uint64) {
 	}
 
 	//get bot task status
-	result, err := requestProxyGet(taskID, []string{"task"})
+	result, err := kubernetes.RequestProxyGet(taskID, []string{"task"})
 	if err != nil {
 		logger.Logger.Error("get task error", "reason", err.Error())
 		Err = err
@@ -135,11 +136,11 @@ func checkSingleTask(taskID uint64) {
 			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
 		}
 		models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-		DeleteContainerByTaskID(taskID)
+		kubernetes.DeleteContainerByTaskID(taskID)
 		return
 	} else {
 		//get bot task crashes
-		result, err = requestProxyGet(taskID, []string{"task", "crash"})
+		result, err = kubernetes.RequestProxyGet(taskID, []string{"task", "crash"})
 		if err != nil {
 			logger.Logger.Error("client get crash failed", "reason", err.Error())
 			Err = err
@@ -159,7 +160,7 @@ func checkSingleTask(taskID uint64) {
 			}
 			if !crashesMap[taskID][crash.ID] {
 				crashesMap[taskID][crash.ID] = true
-				savePath, err := requestProxySaveFile(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))}, crashesPath)
+				savePath, err := kubernetes.RequestProxySaveFile(taskID, []string{"task", "crash", strconv.Itoa(int(crash.ID))}, crashesPath)
 				if err != nil {
 					logger.Logger.Error("request save file error", "reason", err.Error())
 				}
@@ -178,7 +179,7 @@ func checkSingleTask(taskID uint64) {
 		}
 
 		//get bot task result
-		result, err = requestProxyGet(taskID, []string{"task", "result"})
+		result, err = kubernetes.RequestProxyGet(taskID, []string{"task", "result"})
 		if err != nil {
 			logger.Logger.Error("client get result failed", "reason", err.Error())
 			Err = err

@@ -5,24 +5,19 @@ import (
 	botmodels "github.com/Ch4r1l3/cFuzz/bot/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/pkg/errors"
-	appsv1 "k8s.io/api/apps/v1"
 	"time"
 )
 
-func initDeployTask(deploy *appsv1.Deployment) {
-	var taskID uint64
+func initDeployTask(taskID uint64) {
 	var task models.Task
 	var err, Err error
-	taskID, err = getDeployTaskID(deploy)
-	if err != nil {
-		return
-	}
 	defer func() {
 		if Err != nil {
 			logger.Logger.Error("Error exit init", "reason", Err.Error())
 			// check current task status first
-			tempTask, err := models.GetTaskByID(uint64(taskID))
+			tempTask, err := models.GetTaskByID(taskID)
 			if tempTask == nil || err != nil {
 				return
 			}
@@ -31,7 +26,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 			}
 		}
 	}()
-	if err = models.GetObjectByID(&task, uint64(taskID)); err != nil {
+	if err = models.GetObjectByID(&task, taskID); err != nil {
 		Err = err
 		return
 	}
@@ -47,13 +42,13 @@ func initDeployTask(deploy *appsv1.Deployment) {
 			return
 		}
 	} else {
-		DeleteDeployByTaskID(taskID)
-		DeleteServiceByTaskID(taskID)
+		kubernetes.DeleteDeployByTaskID(taskID)
+		kubernetes.DeleteServiceByTaskID(taskID)
 		return
 	}
 	//test if bot is not up, retry 3 times
 	for i := 0; i < 3; i++ {
-		_, err = requestProxyGet(uint64(taskID), []string{"storage_item"})
+		_, err = kubernetes.RequestProxyGet(uint64(taskID), []string{"storage_item"})
 		if err != nil {
 			if i == 2 {
 				Err = errors.Wrap(err, "service Error")
@@ -80,7 +75,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 				"existsInImage": true,
 				"path":          storageItem.Path,
 			}
-			result, err := requestProxyPost(uint64(taskID), []string{"storage_item", "exist"}, uploadFuzzerPostData)
+			result, err := kubernetes.RequestProxyPost(uint64(taskID), []string{"storage_item", "exist"}, uploadFuzzerPostData)
 			if err != nil {
 				Err = errors.Wrap(err, "upload fuzzer Error")
 				return
@@ -96,7 +91,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 				"type":    types[i],
 				"relPath": storageItem.RelPath,
 			}
-			result, err := requestProxyPostWithFile(uint64(taskID), []string{"storage_item"}, form, storageItem.Path)
+			result, err := kubernetes.RequestProxyPostWithFile(uint64(taskID), []string{"storage_item"}, form, storageItem.Path)
 			if err != nil {
 				Err = errors.Wrap(err, "upload fuzzer Error")
 				return
@@ -131,7 +126,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	}
 
 	//create task on bot
-	result, err := requestProxyPost(task.ID, []string{"task"}, postData)
+	result, err := kubernetes.RequestProxyPost(task.ID, []string{"task"}, postData)
 	//result, err := requestProxyPostRaw(task.ID, []string{"task"}, postData)
 	logger.Logger.Debug("create task", "result", string(result))
 	if err != nil {
@@ -140,7 +135,7 @@ func initDeployTask(deploy *appsv1.Deployment) {
 	}
 
 	//start fuzz target
-	result, err = requestProxyPost(task.ID, []string{"task", "start"}, struct{}{})
+	result, err = kubernetes.RequestProxyPost(task.ID, []string{"task", "start"}, struct{}{})
 	if err != nil {
 		Err = errors.Wrap(err, "start bot fuzz error")
 		return

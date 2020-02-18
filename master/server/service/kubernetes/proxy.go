@@ -1,4 +1,4 @@
-package service
+package kubernetes
 
 import (
 	"bytes"
@@ -42,7 +42,7 @@ func parseResp(data []byte) error {
 	return nil
 }
 
-func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
+func RequestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	urls := append([]string{"proxy"}, url...)
 	bytesData, err := ClientSet.
 		CoreV1().
@@ -63,7 +63,7 @@ func requestProxyGet(taskID uint64, url []string) ([]byte, error) {
 	return bytesData, parseResp(bytesData)
 }
 
-func requestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
+func RequestProxySaveFile(taskID uint64, url []string, saveDir string) (string, error) {
 	urls := append([]string{"proxy"}, url...)
 	resp, err := ClientSet.
 		CoreV1().
@@ -96,11 +96,11 @@ func requestProxySaveFile(taskID uint64, url []string, saveDir string) (string, 
 	return tempFile.Name(), nil
 }
 
-func requestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
+func RequestProxyPost(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Post", taskID, url, data)
 }
 
-func requestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error) {
+func RequestProxyPut(taskID uint64, url []string, data interface{}) ([]byte, error) {
 	return requestProxyPostPut("Put", taskID, url, data)
 }
 
@@ -156,11 +156,11 @@ func requestProxyPostPut(method string, taskID uint64, url []string, data interf
 	return bytesData, parseResp(bytesData)
 }
 
-func requestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
+func RequestProxyPostWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Post", taskID, url, form, filePath)
 }
 
-func requestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
+func RequestProxyPutWithFile(taskID uint64, url []string, form map[string]string, filePath string) ([]byte, error) {
 	return requestProxyPostPutWithFile("Put", taskID, url, form, filePath)
 }
 

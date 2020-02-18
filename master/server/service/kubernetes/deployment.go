@@ -1,18 +1,21 @@
-package service
+package kubernetes
 
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
-	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/logger"
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/cache"
 	"strconv"
 	"time"
 )
+
+type functype func(uint64)
 
 func GetAllDeploys() ([]appsv1.Deployment, error) {
 	deploys, err := ClientSet.AppsV1().Deployments(config.KubernetesConf.Namespace).List(metav1.ListOptions{})
@@ -20,14 +23,6 @@ func GetAllDeploys() ([]appsv1.Deployment, error) {
 		return nil, err
 	}
 	return deploys.Items, nil
-}
-
-func GetAllServices() ([]apiv1.Service, error) {
-	services, err := ClientSet.CoreV1().Services(config.KubernetesConf.Namespace).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return services.Items, nil
 }
 
 func GetDeployByTaskID(taskID uint64) ([]appsv1.Deployment, error) {
@@ -127,45 +122,7 @@ func GenerateDeployment(taskID uint64, image string, replicasNum int32) (*appsv1
 	return deployment, nil
 }
 
-func CreateServiceByTaskID(taskID uint64) error {
-	_, err := ClientSet.CoreV1().Services(config.KubernetesConf.Namespace).Create(&apiv1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf(ServiceNameFmt, taskID),
-		},
-		Spec: apiv1.ServiceSpec{
-			Type: apiv1.ServiceTypeClusterIP,
-			Selector: map[string]string{
-				LabelName: fmt.Sprintf("%d", taskID),
-			},
-			Ports: []apiv1.ServicePort{
-				apiv1.ServicePort{
-					Protocol:   apiv1.ProtocolTCP,
-					Port:       80,
-					TargetPort: intstr.FromInt(80),
-				},
-			},
-		},
-	})
-	return err
-}
-
-func DeleteServiceByTaskID(taskID uint64) error {
-	return ClientSet.CoreV1().Services(config.KubernetesConf.Namespace).Delete(fmt.Sprintf(ServiceNameFmt, taskID), &metav1.DeleteOptions{})
-}
-
-func DeleteContainerByTaskID(taskID uint64) error {
-	err1 := DeleteDeployByTaskID(taskID)
-	err2 := DeleteServiceByTaskID(taskID)
-	if err1 != nil {
-		return err1
-	}
-	if err2 != nil {
-		return err2
-	}
-	return nil
-}
-
-func getDeployTaskID(deploy *appsv1.Deployment) (uint64, error) {
+func GetDeployTaskID(deploy *appsv1.Deployment) (uint64, error) {
 	if deploy.ObjectMeta.Labels == nil {
 		return 0, errors.New("label not exists")
 	}
@@ -179,37 +136,30 @@ func getDeployTaskID(deploy *appsv1.Deployment) (uint64, error) {
 	return uint64(taskID), nil
 }
 
-func getPodTaskID(pod *apiv1.Pod) (uint64, error) {
-	if pod.ObjectMeta.Labels == nil {
-		return 0, errors.New("label not exists")
-	}
-	if _, ok := pod.ObjectMeta.Labels[LabelName]; !ok {
-		return 0, errors.New("taskid not exists in label")
-	}
-	taskID, err := strconv.ParseInt(pod.ObjectMeta.Labels[LabelName], 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return uint64(taskID), nil
+func isDeployReady(deploy *appsv1.Deployment) bool {
+	logger.Logger.Debug("deployment status", "status", deploy.Status)
+	return deploy.Status.AvailableReplicas >= 1
 }
 
-func getServiceTaskID(service *apiv1.Service) (uint64, error) {
-	if service.ObjectMeta.Labels == nil {
-		return 0, errors.New("label not exists")
-	}
-	if _, ok := service.ObjectMeta.Labels[LabelName]; !ok {
-		return 0, errors.New("taskid not exists in label")
-	}
-	taskID, err := strconv.ParseInt(service.ObjectMeta.Labels[LabelName], 10, 64)
-	if err != nil {
-		return 0, err
-	}
-	return uint64(taskID), nil
-}
-
-func SetTaskError(taskID uint64, errorMsg string) {
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", errorMsg)
-	DeleteContainerByTaskID(taskID)
+func WatchDeploy(callback functype) {
+	watchlist := cache.NewListWatchFromClient(ClientSet.AppsV1().RESTClient(), "deployments", config.KubernetesConf.Namespace,
+		fields.Everything())
+	_, controller := cache.NewInformer(
+		watchlist,
+		&appsv1.Deployment{},
+		time.Second*0,
+		cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(oldObj, newObj interface{}) {
+				deploy, ok := newObj.(*appsv1.Deployment)
+				if ok && isDeployReady(deploy) {
+					taskID, err := GetDeployTaskID(deploy)
+					if err != nil {
+						return
+					}
+					go callback(taskID)
+				}
+			},
+		},
+	)
+	go controller.Run(deployWatchChan)
 }
