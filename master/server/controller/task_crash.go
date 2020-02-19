@@ -112,8 +112,14 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	var task models.Task
-	err = service.GetObjectByID(&task, crash.ID)
+	task, err := service.GetTaskByID(crash.TaskID)
+	if err != nil {
+		utils.DBError(c)
+		return
+	}
+	if task == nil {
+		utils.InternalErrorWithMsg(c, "task not exists")
+	}
 	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
 		utils.Forbidden(c)
 		return

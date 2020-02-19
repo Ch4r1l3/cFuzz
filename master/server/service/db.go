@@ -4,21 +4,15 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 )
 
-func InsertObject(obj interface{}) error {
+func insertObject(obj interface{}) error {
 	return models.DB.Create(obj).Error
 }
 
-func GetObjects(objs interface{}) error {
+func getObjects(objs interface{}) error {
 	return models.DB.Order("id").Find(objs).Error
 }
 
-func GetCount(objs interface{}) (int, error) {
-	var count int
-	err := models.DB.Model(objs).Count(&count).Error
-	return count, err
-}
-
-func GetObjectCombinCustom(objs interface{}, offset int, limit int, name string, queries []string, values []interface{}) (int, error) {
+func getObjectCombinCustom(objs interface{}, offset int, limit int, name string, queries []string, values []interface{}) (int, error) {
 	var count int
 	var err error
 	query := ""
@@ -46,9 +40,9 @@ func GetObjectCombinCustom(objs interface{}, offset int, limit int, name string,
 }
 func GetObjectCombine(objs interface{}, offset int, limit int, name string, userID uint64, isAdmin bool) (int, error) {
 	if isAdmin {
-		return GetObjectCombinCustom(objs, offset, limit, name, nil, nil)
+		return getObjectCombinCustom(objs, offset, limit, name, nil, nil)
 	} else {
-		return GetObjectCombinCustom(objs, offset, limit, name, []string{"user_id = ?"}, []interface{}{userID})
+		return getObjectCombinCustom(objs, offset, limit, name, []string{"user_id = ?"}, []interface{}{userID})
 	}
 }
 

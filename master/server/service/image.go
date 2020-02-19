@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/jinzhu/gorm"
 )
 
 func IsImageReferred(id uint64) bool {
@@ -9,5 +10,16 @@ func IsImageReferred(id uint64) bool {
 }
 
 func CreateImage(image *models.Image) error {
-	return InsertObject(image)
+	return insertObject(image)
+}
+
+func GetImageByID(id uint64) (*models.Image, error) {
+	var image models.Image
+	if err := GetObjectByID(&image, id); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &image, nil
 }

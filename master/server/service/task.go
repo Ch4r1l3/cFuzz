@@ -83,12 +83,12 @@ func GetCountByTaskID(obj interface{}, taskid uint64) (int, error) {
 }
 
 func GetObjectsByTaskIDPagination(objs interface{}, taskid uint64, offset int, limit int) (int, error) {
-	return GetObjectCombinCustom(objs, offset, limit, "", []string{"task_id = ?"}, []interface{}{taskid})
+	return getObjectCombinCustom(objs, offset, limit, "", []string{"task_id = ?"}, []interface{}{taskid})
 }
 
 func GetTaskByID(id uint64) (*models.Task, error) {
 	var task models.Task
-	if err := models.DB.Where("id = ?", id).First(&task).Error; err != nil {
+	if err := GetObjectByID(&task, id); err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -97,6 +97,18 @@ func GetTaskByID(id uint64) (*models.Task, error) {
 	return &task, nil
 }
 
+func GetTasks() ([]models.Task, error) {
+	var tasks []models.Task
+	if err := getObjects(&tasks); err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
 func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return models.DB.Where("task_id = ?", taskid).Delete(obj).Error
+}
+
+func CreateTask(task *models.Task) error {
+	return insertObject(task)
 }

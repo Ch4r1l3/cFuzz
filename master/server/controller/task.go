@@ -7,7 +7,6 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
 	"time"
@@ -44,13 +43,13 @@ type TaskCreateReq struct {
 	FuzzCycleTime uint64 `json:"fuzzCycleTime" binding:"required"`
 
 	// example: 1
-	FuzzerID uint64 `json:"fuzzerID"`
+	FuzzerID uint64 `json:"fuzzerID" binding:"required"`
 
 	// example: 2
-	CorpusID uint64 `json:"corpusID"`
+	CorpusID uint64 `json:"corpusID" binding:"required"`
 
 	// example: 3
-	TargetID uint64 `json:"targetID"`
+	TargetID uint64 `json:"targetID" binding:"required"`
 
 	// example: ["AFL_FUZZ=1", "ASAN=1"]
 	Environments []string `json:"environments"`
@@ -204,13 +203,13 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var task models.Task
-	if err := service.GetObjectByID(&task, id); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
+	task, err := service.GetTaskByID(id)
+	if err != nil {
 		utils.DBError(c)
+		return
+	}
+	if task == nil {
+		utils.NotFound(c)
 		return
 	}
 	environments, err := service.GetEnvironments(task.ID)
@@ -229,7 +228,7 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		return
 	}
 	c.JSON(http.StatusOK, TaskResp{
-		Task:         task,
+		Task:         *task,
 		CrashNum:     crashNum,
 		Environments: environments,
 		Arguments:    arguments,
@@ -301,7 +300,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		return
 	}
 
-	err = service.InsertObject(&task)
+	err = service.CreateTask(&task)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -396,9 +395,14 @@ func (tc *TaskController) Start(c *gin.Context) {
 			kubernetes.DeleteServiceByTaskID(task.ID)
 		}
 	}()
-	var tempImage models.Image
-	if err = service.GetObjectByID(&tempImage, task.ImageID); err != nil {
+	tempImage, err := service.GetImageByID(task.ImageID)
+	if err != nil {
 		Err = err
+		utils.DBError(c)
+		return
+	}
+	if tempImage == nil {
+		Err = errors.New("image not exists")
 		utils.BadRequestWithMsg(c, "image not exists")
 		return
 	}
@@ -561,9 +565,12 @@ func (tc *TaskController) Update(c *gin.Context) {
 	modelsField := []string{"FuzzerID", "CorpusID", "TargetID"}
 	for i, _ := range ids {
 		if ids[i] != 0 {
-			var storageItem models.StorageItem
-			err = service.GetObjectByID(&storageItem, ids[i])
+			storageItem, err := service.GetStorageItemByID(ids[i])
 			if err != nil {
+				utils.DBError(c)
+				return
+			}
+			if storageItem == nil {
 				utils.BadRequestWithMsg(c, types[i]+" not exist")
 				return
 			}

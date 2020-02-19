@@ -59,12 +59,16 @@ func (uc *UserController) Info(c *gin.Context) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 	id := uint64(c.GetInt64("id"))
-	var user models.User
-	if service.GetObjectByID(&user, id) != nil {
+	user, err := service.GetUserByID(id)
+	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	if user == nil {
+		utils.NotFound(c)
+		return
+	}
+	c.JSON(http.StatusOK, *user)
 }
 
 // list user

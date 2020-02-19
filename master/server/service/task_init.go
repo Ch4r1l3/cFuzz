@@ -10,8 +10,7 @@ import (
 )
 
 func initDeployTask(taskID uint64) {
-	var task models.Task
-	var err, Err error
+	var Err error
 	defer func() {
 		if Err != nil {
 			logger.Logger.Error("Error exit init", "reason", Err.Error())
@@ -25,7 +24,8 @@ func initDeployTask(taskID uint64) {
 			}
 		}
 	}()
-	if err = GetObjectByID(&task, taskID); err != nil {
+	task, err := GetTaskByID(taskID)
+	if err != nil || task == nil {
 		Err = err
 		return
 	}
@@ -63,9 +63,13 @@ func initDeployTask(taskID uint64) {
 	types := []string{botmodels.Fuzzer, botmodels.Corpus, botmodels.Target}
 	botids := []uint64{}
 	for i, _ := range ids {
-		var storageItem models.StorageItem
-		if err = GetObjectByID(&storageItem, ids[i]); err != nil {
+		storageItem, err := GetStorageItemByID(ids[i])
+		if err != nil {
 			Err = errors.Wrap(err, "DB Error")
+			return
+		}
+		if storageItem == nil {
+			Err = errors.New("storageItem not exists")
 			return
 		}
 		tid, err := kubernetes.CreateStorageItem(task.ID, storageItem.ExistsInImage, types[i], storageItem.Path, storageItem.RelPath)

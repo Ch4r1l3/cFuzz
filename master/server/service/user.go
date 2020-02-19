@@ -33,7 +33,7 @@ func CreateUser(username string, password string, isAdmin bool) error {
 		Salt:     salt,
 		IsAdmin:  isAdmin,
 	}
-	return InsertObject(&user)
+	return insertObject(&user)
 }
 
 func VerifyUser(username string, password string) (bool, error) {
@@ -110,14 +110,25 @@ func GetUserByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
+func GetUserByID(id uint64) (*models.User, error) {
+	var user models.User
+	if err := GetObjectByID(&user, id); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 func GetNormalUserCombine(offset, limit int, name string) ([]models.User, int, error) {
 	var users []models.User
 	var count int
 	var err error
 	if name != "" {
-		count, err = GetObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?", "username like ?"}, []interface{}{false, "%" + name + "%"})
+		count, err = getObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?", "username like ?"}, []interface{}{false, "%" + name + "%"})
 	} else {
-		count, err = GetObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?"}, []interface{}{false})
+		count, err = getObjectCombinCustom(&users, offset, limit, "", []string{"is_admin = ?"}, []interface{}{false})
 	}
 	return users, count, err
 }

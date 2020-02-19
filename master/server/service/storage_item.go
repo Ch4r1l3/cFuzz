@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/jinzhu/gorm"
 )
 
 func IsStorageItemExistsCombine(name string, mtype string, userID uint64) bool {
@@ -22,9 +23,9 @@ func GetStorageItemsByTypeCombine(mtype string, offset int, limit int, name stri
 	var count int
 	var err error
 	if isAdmin {
-		count, err = GetObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?"}, []interface{}{mtype})
+		count, err = getObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?"}, []interface{}{mtype})
 	} else {
-		count, err = GetObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?", "user_id = ?"}, []interface{}{mtype, userID})
+		count, err = getObjectCombinCustom(&storageItems, offset, limit, name, []string{"type = ?", "user_id = ?"}, []interface{}{mtype, userID})
 	}
 	return storageItems, count, err
 }
@@ -45,4 +46,19 @@ func DeleteStorageItemCustom(query string, id uint64) error {
 
 func DeleteStorageItemByID(id uint64) error {
 	return DeleteStorageItemCustom("id = ?", id)
+}
+
+func CreateStorageItem(storageItem *models.StorageItem) error {
+	return insertObject(storageItem)
+}
+
+func GetStorageItemByID(id uint64) (*models.StorageItem, error) {
+	var storageItem models.StorageItem
+	if err := GetObjectByID(&storageItem, id); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &storageItem, nil
 }

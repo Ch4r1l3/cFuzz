@@ -5,7 +5,6 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"net/http"
 )
 
@@ -43,13 +42,13 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 	//      schema:
 	//        "$ref": "#/definitions/ErrResp"
 
-	var task models.Task
-	if err := service.GetObjectByID(&task, taskID); err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			utils.NotFound(c)
-			return
-		}
+	task, err := service.GetTaskByID(taskID)
+	if err != nil {
 		utils.DBError(c)
+		return
+	}
+	if task == nil {
+		utils.NotFound(c)
 		return
 	}
 	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {

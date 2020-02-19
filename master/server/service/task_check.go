@@ -18,7 +18,8 @@ import (
 func checkTasks() {
 	for {
 		var tasks []models.Task
-		if err := GetObjects(&tasks); err != nil {
+		var err error
+		if tasks, err = GetTasks(); err != nil {
 			logger.Logger.Error("checkTasks", "error", err.Error())
 		} else {
 			for _, task := range tasks {
@@ -57,8 +58,8 @@ func checkTasks() {
 
 func initCrashesMap() error {
 	crashesMap = make(map[uint64]map[uint64]bool)
-	var crashes []models.TaskCrash
-	if err := GetObjects(&crashes); err != nil {
+	crashes, err := GetTaskCrashes()
+	if err != nil {
 		return err
 	}
 
@@ -91,9 +92,13 @@ func checkSingleTask(taskID uint64) {
 			}
 		}
 	}()
-	var task models.Task
-	if err := GetObjectByID(&task, taskID); err != nil {
+	task, err := GetTaskByID(taskID)
+	if err != nil {
 		logger.Logger.Error("DB error", "reason", err.Error())
+		return
+	}
+	if task == nil {
+		logger.Logger.Error("Task not exists", "id", taskID)
 		return
 	}
 	if task.Status != models.TaskRunning {

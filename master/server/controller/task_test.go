@@ -232,7 +232,7 @@ func TestTask4(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*3+1) * time.Second)
+	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
 	<-time.After(time.Duration(2) * time.Second)

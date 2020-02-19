@@ -212,7 +212,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		UserID:        uint64(c.GetInt64("id")),
 		ExistsInImage: true,
 	}
-	err := service.InsertObject(&storageItem)
+	err := service.CreateStorageItem(&storageItem)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -293,7 +293,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		RelPath: c.PostForm("relPath"),
 		UserID:  uint64(c.GetInt64("id")),
 	}
-	err = service.InsertObject(&storageItem)
+	err = service.CreateStorageItem(&storageItem)
 	if err != nil {
 		os.RemoveAll(tempFile)
 		utils.DBError(c)

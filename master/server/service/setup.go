@@ -27,7 +27,7 @@ func Setup() {
 
 func initKubernetesCleanup() {
 	var tasks []models.Task
-	if err := GetObjects(&tasks); err != nil {
+	if err := getObjects(&tasks); err != nil {
 		logger.Logger.Error("checkTasks", "error", err.Error())
 		return
 	}
