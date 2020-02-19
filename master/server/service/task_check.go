@@ -18,7 +18,7 @@ import (
 func checkTasks() {
 	for {
 		var tasks []models.Task
-		if err := models.GetObjects(&tasks); err != nil {
+		if err := GetObjects(&tasks); err != nil {
 			logger.Logger.Error("checkTasks", "error", err.Error())
 		} else {
 			for _, task := range tasks {
@@ -58,7 +58,7 @@ func checkTasks() {
 func initCrashesMap() error {
 	crashesMap = make(map[uint64]map[uint64]bool)
 	var crashes []models.TaskCrash
-	if err := models.GetObjects(&crashes); err != nil {
+	if err := GetObjects(&crashes); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func checkSingleTask(taskID uint64) {
 	defer func() {
 		if Err != nil {
 			//check current task status first
-			tempTask, err := models.GetTaskByID(uint64(taskID))
+			tempTask, err := GetTaskByID(uint64(taskID))
 			if tempTask == nil || err != nil {
 				return
 			}
@@ -92,7 +92,7 @@ func checkSingleTask(taskID uint64) {
 		}
 	}()
 	var task models.Task
-	if err := models.GetObjectByID(&task, taskID); err != nil {
+	if err := GetObjectByID(&task, taskID); err != nil {
 		logger.Logger.Error("DB error", "reason", err.Error())
 		return
 	}
@@ -173,7 +173,7 @@ func checkSingleTask(taskID uint64) {
 			return
 		}
 		if fuzzResult != nil {
-			lastFuzzResult, err := models.GetLastestFuzzResultByTaskID(taskID)
+			lastFuzzResult, err := GetLastestFuzzResultByTaskID(taskID)
 			if err != nil {
 				logger.Logger.Error("get fuzz result from db error", "reason", err.Error())
 				Err = err
@@ -191,7 +191,7 @@ func checkSingleTask(taskID uint64) {
 					Err = err
 					return
 				}
-				if err = models.InsertTaskFuzzResultStat(taskFuzzResult.ID, fuzzResult.Stats); err != nil {
+				if err = InsertTaskFuzzResultStat(taskFuzzResult.ID, fuzzResult.Stats); err != nil {
 					Err = err
 					return
 				}

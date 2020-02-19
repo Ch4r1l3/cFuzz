@@ -16,7 +16,7 @@ func initDeployTask(taskID uint64) {
 		if Err != nil {
 			logger.Logger.Error("Error exit init", "reason", Err.Error())
 			// check current task status first
-			tempTask, err := models.GetTaskByID(taskID)
+			tempTask, err := GetTaskByID(taskID)
 			if tempTask == nil || err != nil {
 				return
 			}
@@ -25,7 +25,7 @@ func initDeployTask(taskID uint64) {
 			}
 		}
 	}()
-	if err = models.GetObjectByID(&task, taskID); err != nil {
+	if err = GetObjectByID(&task, taskID); err != nil {
 		Err = err
 		return
 	}
@@ -64,7 +64,7 @@ func initDeployTask(taskID uint64) {
 	botids := []uint64{}
 	for i, _ := range ids {
 		var storageItem models.StorageItem
-		if err = models.GetObjectByID(&storageItem, ids[i]); err != nil {
+		if err = GetObjectByID(&storageItem, ids[i]); err != nil {
 			Err = errors.Wrap(err, "DB Error")
 			return
 		}
@@ -76,12 +76,12 @@ func initDeployTask(taskID uint64) {
 		botids = append(botids, tid)
 	}
 
-	taskArguments, err := models.GetArguments(task.ID)
+	taskArguments, err := GetArguments(task.ID)
 	if err != nil {
 		Err = errors.Wrap(err, "DB Error")
 		return
 	}
-	taskEnvironments, err := models.GetEnvironments(task.ID)
+	taskEnvironments, err := GetEnvironments(task.ID)
 	if err != nil {
 		Err = errors.Wrap(err, "DB Error")
 		return

@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -142,7 +143,7 @@ func (sic *StorageItemController) ListByType(c *gin.Context) {
 	name := c.Query("name")
 	userID := uint64(c.GetInt64("id"))
 	isAdmin := c.GetBool("isAdmin")
-	storageItems, count, err := models.GetStorageItemsByTypeCombine(mtype, offset, limit, name, userID, isAdmin)
+	storageItems, count, err := service.GetStorageItemsByTypeCombine(mtype, offset, limit, name, userID, isAdmin)
 	for i, _ := range storageItems {
 		if !storageItems[i].ExistsInImage {
 			storageItems[i].Path = ""
@@ -200,7 +201,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	if models.IsStorageItemExistsCombine(req.Name, req.Type, uint64(c.GetInt64("id"))) {
+	if service.IsStorageItemExistsCombine(req.Name, req.Type, uint64(c.GetInt64("id"))) {
 		utils.BadRequestWithMsg(c, "storageItem name exists")
 		return
 	}
@@ -211,7 +212,7 @@ func (sic *StorageItemController) CreateExist(c *gin.Context) {
 		UserID:        uint64(c.GetInt64("id")),
 		ExistsInImage: true,
 	}
-	err := models.InsertObject(&storageItem)
+	err := service.InsertObject(&storageItem)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -277,7 +278,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "storageItem type is not valid")
 		return
 	}
-	if models.IsStorageItemExistsCombine(name, mtype, uint64(c.GetInt64("id"))) {
+	if service.IsStorageItemExistsCombine(name, mtype, uint64(c.GetInt64("id"))) {
 		utils.BadRequestWithMsg(c, "storageItem name exists")
 		return
 	}
@@ -292,7 +293,7 @@ func (sic *StorageItemController) Create(c *gin.Context) {
 		RelPath: c.PostForm("relPath"),
 		UserID:  uint64(c.GetInt64("id")),
 	}
-	err = models.InsertObject(&storageItem)
+	err = service.InsertObject(&storageItem)
 	if err != nil {
 		os.RemoveAll(tempFile)
 		utils.DBError(c)
@@ -338,11 +339,11 @@ func (sic *StorageItemController) Destroy(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if models.IsStorageItemReferred(storageItem.ID) {
+	if service.IsStorageItemReferred(storageItem.ID) {
 		utils.BadRequestWithMsg(c, "storageItem is being used by task")
 		return
 	}
-	err = models.DeleteStorageItemByID(storageItem.ID)
+	err = service.DeleteStorageItemByID(storageItem.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

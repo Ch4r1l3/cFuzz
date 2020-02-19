@@ -147,10 +147,10 @@ func TestMain(m *testing.M) {
 	service.Setup()
 	s = httptest.NewServer(r)
 	defer s.Close()
-	if err := models.CreateUser("admin", "123456", true); err != nil {
+	if err := service.CreateUser("admin", "123456", true); err != nil {
 		log.Fatal("create user error")
 	}
-	if err := models.CreateUser("abc", "123456", false); err != nil {
+	if err := service.CreateUser("abc", "123456", false); err != nil {
 		log.Fatal("create user error")
 	}
 	m.Run()

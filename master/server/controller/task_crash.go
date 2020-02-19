@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -47,7 +48,7 @@ func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var crashes []models.TaskCrash
-	task, err := models.GetTaskByID(taskID)
+	task, err := service.GetTaskByID(taskID)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
@@ -62,7 +63,7 @@ func (tcc *TaskCrashController) ListByTaskID(c *gin.Context, taskID uint64) {
 	}
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
-	count, err := models.GetObjectsByTaskIDPagination(&crashes, taskID, offset, limit)
+	count, err := service.GetObjectsByTaskIDPagination(&crashes, taskID, offset, limit)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -112,7 +113,7 @@ func (tcc *TaskCrashController) Download(c *gin.Context) {
 		return
 	}
 	var task models.Task
-	err = models.GetObjectByID(&task, crash.ID)
+	err = service.GetObjectByID(&task, crash.ID)
 	if task.UserID != uint64(c.GetInt64("id")) && !c.GetBool("isAdmin") {
 		utils.Forbidden(c)
 		return

@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -168,7 +169,7 @@ func (dc *ImageController) Create(c *gin.Context) {
 		Content:      req.Content,
 		UserID:       uint64(c.GetInt64("id")),
 	}
-	err = models.InsertObject(&image)
+	err = service.CreateImage(&image)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -224,7 +225,7 @@ func (dc *ImageController) Update(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if models.IsImageReferred(image.ID) {
+	if service.IsImageReferred(image.ID) {
 		utils.BadRequestWithMsg(c, "this image is being used by task")
 		return
 	}
@@ -274,11 +275,11 @@ func (dc *ImageController) Destroy(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if models.IsImageReferred(image.ID) {
+	if service.IsImageReferred(image.ID) {
 		utils.BadRequestWithMsg(c, "this image is being used by task")
 		return
 	}
-	err = models.DeleteObjectByID(models.Image{}, image.ID)
+	err = service.DeleteObjectByID(models.Image{}, image.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

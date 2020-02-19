@@ -1,9 +1,5 @@
 package models
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 // swagger:model
 type TaskFuzzResult struct {
 	// example: 1
@@ -22,41 +18,4 @@ type TaskFuzzResultStat struct {
 	Key              string `json:"key"`
 	Value            string `json:"value"`
 	TaskFuzzResultID uint64 `json:"taskid" sql:"type:integer REFERENCES task_fuzz_result(id) ON DELETE CASCADE"`
-}
-
-func InsertTaskFuzzResultStat(id uint64, stats map[string]string) error {
-	for k, v := range stats {
-		taskFuzzResultStat := TaskFuzzResultStat{
-			TaskFuzzResultID: id,
-			Key:              k,
-			Value:            v,
-		}
-		if err := DB.Create(&taskFuzzResultStat).Error; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func GetTaskFuzzResultStat(id uint64) (map[string]string, error) {
-	var taskFuzzResultStat []TaskFuzzResultStat
-	if err := DB.Where("task_fuzz_result_id = ?", id).Find(&taskFuzzResultStat).Error; err != nil {
-		return nil, err
-	}
-	stats := make(map[string]string)
-	for _, v := range taskFuzzResultStat {
-		stats[v.Key] = v.Value
-	}
-	return stats, nil
-}
-
-func GetLastestFuzzResultByTaskID(taskid uint64) (*TaskFuzzResult, error) {
-	var taskFuzzResult TaskFuzzResult
-	if err := DB.Where("task_id = ?", taskid).Order("update_at desc").First(&taskFuzzResult).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &taskFuzzResult, nil
 }

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -12,7 +12,7 @@ func Auth(c *gin.Context) {
 		c.String(http.StatusUnauthorized, "")
 		c.Abort()
 	} else {
-		claims, err := models.ParseToken(session)
+		claims, err := service.ParseToken(session)
 		if err != nil {
 			c.String(http.StatusUnauthorized, "")
 			c.Abort()
@@ -34,7 +34,7 @@ func AdminOnly(c *gin.Context) {
 
 func CheckUserExist(c *gin.Context) {
 	id := c.GetInt64("id")
-	if !models.IsObjectExistsByID(&models.User{}, uint64(id)) {
+	if !service.IsUserExistsByID(uint64(id)) {
 		c.String(http.StatusForbidden, "")
 		c.Abort()
 	} else {

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -43,7 +44,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var task models.Task
-	if err := models.GetObjectByID(&task, taskID); err != nil {
+	if err := service.GetObjectByID(&task, taskID); err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			utils.NotFound(c)
 			return
@@ -55,7 +56,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 		utils.Forbidden(c)
 		return
 	}
-	taskFuzzResult, err := models.GetLastestFuzzResultByTaskID(taskID)
+	taskFuzzResult, err := service.GetLastestFuzzResultByTaskID(taskID)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -64,7 +65,7 @@ func (trc *TaskResultController) Retrieve(c *gin.Context, taskID uint64) {
 		c.String(http.StatusOK, "")
 		return
 	}
-	stats, err := models.GetTaskFuzzResultStat(taskFuzzResult.ID)
+	stats, err := service.GetTaskFuzzResultStat(taskFuzzResult.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

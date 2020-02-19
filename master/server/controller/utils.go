@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -14,7 +14,7 @@ func getObject(c *gin.Context, obj interface{}) error {
 		utils.BadRequestWithMsg(c, err.Error())
 		return err
 	}
-	err = models.GetObjectByID(obj, uriReq.ID)
+	err = service.GetObjectByID(obj, uriReq.ID)
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			utils.NotFound(c)
@@ -34,7 +34,7 @@ func getList(c *gin.Context, objs interface{}) (int, error) {
 	name := c.Query("name")
 	userID := uint64(c.GetInt64("id"))
 	isAdmin := c.GetBool("isAdmin")
-	count, err = models.GetObjectCombine(objs, offset, limit, name, userID, isAdmin)
+	count, err = service.GetObjectCombine(objs, offset, limit, name, userID, isAdmin)
 	if err != nil {
 		utils.DBError(c)
 	}

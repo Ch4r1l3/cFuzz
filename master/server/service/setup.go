@@ -27,16 +27,14 @@ func Setup() {
 
 func initKubernetesCleanup() {
 	var tasks []models.Task
-	if err := models.GetObjects(&tasks); err != nil {
+	if err := GetObjects(&tasks); err != nil {
 		logger.Logger.Error("checkTasks", "error", err.Error())
 		return
 	}
 	tempRecord := make(map[uint64]bool)
 	for _, task := range tasks {
 		if task.Status == models.TaskStarted || task.Status == models.TaskInitializing || (config.KubernetesConf.InitCleanup && task.Status == models.TaskRunning) {
-			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-			models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ErrorMsg", "server stopped")
+			SetTaskError(task.ID, "server stopped")
 		}
 		if task.Status == models.TaskRunning {
 			tempRecord[task.ID] = true

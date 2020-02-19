@@ -2,6 +2,7 @@ package controller
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
@@ -59,7 +60,7 @@ func (uc *UserController) Info(c *gin.Context) {
 	//        "$ref": "#/definitions/ErrResp"
 	id := uint64(c.GetInt64("id"))
 	var user models.User
-	if models.GetObjectByID(&user, id) != nil {
+	if service.GetObjectByID(&user, id) != nil {
 		utils.DBError(c)
 		return
 	}
@@ -89,7 +90,7 @@ func (us *UserController) List(c *gin.Context) {
 	offset := c.GetInt("offset")
 	limit := c.GetInt("limit")
 	name := c.Query("name")
-	users, count, err := models.GetNormalUserCombine(offset, limit, name)
+	users, count, err := service.GetNormalUserCombine(offset, limit, name)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
@@ -128,18 +129,18 @@ func (us *UserController) Login(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	ok, err := models.VerifyUser(req.Username, req.Password)
+	ok, err := service.VerifyUser(req.Username, req.Password)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
 	}
 	if ok {
-		user, err := models.GetUserByUsername(req.Username)
+		user, err := service.GetUserByUsername(req.Username)
 		if err != nil {
 			utils.DBError(c)
 			return
 		}
-		token, err := models.CreateToken(user.ID, user.IsAdmin)
+		token, err := service.CreateToken(user.ID, user.IsAdmin)
 		if err != nil {
 			utils.InternalErrorWithMsg(c, err.Error())
 			return
@@ -212,7 +213,7 @@ func (us *UserController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, err.Error())
 		return
 	}
-	if models.IsUsernameExists(req.Username) {
+	if service.IsUserExistsByUsername(req.Username) {
 		utils.BadRequestWithMsg(c, "username exist")
 		return
 	}
@@ -222,12 +223,12 @@ func (us *UserController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, errs.Error())
 		return
 	}
-	err := models.CreateUser(req.Username, req.Password, false)
+	err := service.CreateUser(req.Username, req.Password, false)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
 	}
-	user, err := models.GetUserByUsername(req.Username)
+	user, err := service.GetUserByUsername(req.Username)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -276,7 +277,7 @@ func (us *UserController) Update(c *gin.Context) {
 			utils.BadRequestWithMsg(c, "oldpassword empty")
 			return
 		}
-		if models.GetEncryptPassword(req.OldPassword, user.Salt) != user.Password {
+		if utils.GetEncryptPassword(req.OldPassword, user.Salt) != user.Password {
 			utils.BadRequestWithMsg(c, "oldpassword wrong")
 			return
 		}
@@ -286,7 +287,7 @@ func (us *UserController) Update(c *gin.Context) {
 		utils.BadRequestWithMsg(c, errs.Error())
 		return
 	}
-	user.Password = models.GetEncryptPassword(req.NewPassword, user.Salt)
+	user.Password = utils.GetEncryptPassword(req.NewPassword, user.Salt)
 	if err = models.DB.Save(user).Error; err != nil {
 		utils.DBError(c)
 		return
@@ -321,7 +322,7 @@ func (us *UserController) Delete(c *gin.Context) {
 		return
 	}
 	var tasks []models.Task
-	if err = models.GetObjectsByUserID(&tasks, user.ID); err != nil {
+	if err = service.GetObjectsByUserID(&tasks, user.ID); err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 	}
 	for _, t := range tasks {
@@ -329,7 +330,7 @@ func (us *UserController) Delete(c *gin.Context) {
 			kubernetes.DeleteContainerByTaskID(t.ID)
 		}
 	}
-	if err = models.DeleteUserByID(user.ID); err != nil {
+	if err = service.DeleteUserByID(user.ID); err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 		return
 	}

@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service"
 	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/gin-gonic/gin"
@@ -149,17 +150,17 @@ func (tc *TaskController) List(c *gin.Context) {
 	}
 	results := []TaskResp{}
 	for _, task := range tasks {
-		environments, err := models.GetEnvironments(task.ID)
+		environments, err := service.GetEnvironments(task.ID)
 		if err != nil {
 			utils.DBError(c)
 			return
 		}
-		arguments, err := models.GetArguments(task.ID)
+		arguments, err := service.GetArguments(task.ID)
 		if err != nil {
 			utils.DBError(c)
 			return
 		}
-		crashNum, err := models.GetCountByTaskID(&models.TaskCrash{}, task.ID)
+		crashNum, err := service.GetCountByTaskID(&models.TaskCrash{}, task.ID)
 		if err != nil {
 			utils.DBError(c)
 			return
@@ -204,7 +205,7 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 	//        "$ref": "#/definitions/ErrResp"
 
 	var task models.Task
-	if err := models.GetObjectByID(&task, id); err != nil {
+	if err := service.GetObjectByID(&task, id); err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			utils.NotFound(c)
 			return
@@ -212,17 +213,17 @@ func (tc *TaskController) Retrieve(c *gin.Context, id uint64) {
 		utils.DBError(c)
 		return
 	}
-	environments, err := models.GetEnvironments(task.ID)
+	environments, err := service.GetEnvironments(task.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	arguments, err := models.GetArguments(task.ID)
+	arguments, err := service.GetArguments(task.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
 	}
-	crashNum, err := models.GetCountByTaskID(&models.TaskCrash{}, task.ID)
+	crashNum, err := service.GetCountByTaskID(&models.TaskCrash{}, task.ID)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -283,24 +284,24 @@ func (tc *TaskController) Create(c *gin.Context) {
 		Status:        models.TaskCreated,
 		UserID:        uint64(c.GetInt64("id")),
 	}
-	if !models.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+	if !service.IsObjectExistsByID(&models.Image{}, req.ImageID) {
 		utils.BadRequestWithMsg(c, "image not exists")
 		return
 	}
-	if req.FuzzerID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
+	if req.FuzzerID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
 		return
 	}
-	if req.CorpusID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
+	if req.CorpusID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
 		utils.BadRequestWithMsg(c, "corpus not exists")
 		return
 	}
-	if req.TargetID != 0 && !models.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
+	if req.TargetID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
 		utils.BadRequestWithMsg(c, "target not exists")
 		return
 	}
 
-	err = models.InsertObject(&task)
+	err = service.InsertObject(&task)
 	if err != nil {
 		utils.DBError(c)
 		return
@@ -308,11 +309,11 @@ func (tc *TaskController) Create(c *gin.Context) {
 	var Err error
 	defer func() {
 		if Err != nil {
-			models.DeleteTask(task.ID)
+			service.DeleteTask(task.ID)
 		}
 	}()
 	if req.Environments != nil {
-		err = models.InsertEnvironments(task.ID, req.Environments)
+		err = service.InsertEnvironments(task.ID, req.Environments)
 		if err != nil {
 			Err = err
 			utils.DBError(c)
@@ -320,7 +321,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		}
 	}
 	if req.Arguments != nil {
-		err = models.InsertArguments(task.ID, req.Arguments)
+		err = service.InsertArguments(task.ID, req.Arguments)
 		if err != nil {
 			Err = err
 			utils.DBError(c)
@@ -371,15 +372,15 @@ func (tc *TaskController) Start(c *gin.Context) {
 		return
 	}
 	var Err error
-	if !models.IsObjectExistsByID(&models.StorageItem{}, task.FuzzerID) {
+	if !service.IsObjectExistsByID(&models.StorageItem{}, task.FuzzerID) {
 		utils.BadRequestWithMsg(c, "you should upload fuzzer first")
 		return
 	}
-	if !models.IsObjectExistsByID(&models.StorageItem{}, task.TargetID) {
+	if !service.IsObjectExistsByID(&models.StorageItem{}, task.TargetID) {
 		utils.BadRequestWithMsg(c, "you should upload target first")
 		return
 	}
-	if !models.IsObjectExistsByID(&models.StorageItem{}, task.CorpusID) {
+	if !service.IsObjectExistsByID(&models.StorageItem{}, task.CorpusID) {
 		utils.BadRequestWithMsg(c, "you should upload corpus first")
 		return
 	}
@@ -396,7 +397,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		}
 	}()
 	var tempImage models.Image
-	if err = models.GetObjectByID(&tempImage, task.ImageID); err != nil {
+	if err = service.GetObjectByID(&tempImage, task.ImageID); err != nil {
 		Err = err
 		utils.BadRequestWithMsg(c, "image not exists")
 		return
@@ -545,7 +546,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 
 	if req.ImageID != 0 {
-		if models.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+		if service.IsObjectExistsByID(&models.Image{}, req.ImageID) {
 			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ImageID", req.ImageID).Error; err != nil {
 				utils.DBError(c)
 				return
@@ -561,7 +562,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	for i, _ := range ids {
 		if ids[i] != 0 {
 			var storageItem models.StorageItem
-			err = models.GetObjectByID(&storageItem, ids[i])
+			err = service.GetObjectByID(&storageItem, ids[i])
 			if err != nil {
 				utils.BadRequestWithMsg(c, types[i]+" not exist")
 				return
@@ -589,21 +590,21 @@ func (tc *TaskController) Update(c *gin.Context) {
 		}
 	}
 	if req.Arguments != nil {
-		if err = models.DeleteObjectsByTaskID(&models.TaskArgument{}, task.ID); err != nil {
+		if err = service.DeleteObjectsByTaskID(&models.TaskArgument{}, task.ID); err != nil {
 			utils.DBError(c)
 			return
 		}
-		if err = models.InsertArguments(task.ID, req.Arguments); err != nil {
+		if err = service.InsertArguments(task.ID, req.Arguments); err != nil {
 			utils.DBError(c)
 			return
 		}
 	}
 	if req.Environments != nil {
-		if err = models.DeleteObjectsByTaskID(&models.TaskEnvironment{}, task.ID); err != nil {
+		if err = service.DeleteObjectsByTaskID(&models.TaskEnvironment{}, task.ID); err != nil {
 			utils.DBError(c)
 			return
 		}
-		if err = models.InsertEnvironments(task.ID, req.Environments); err != nil {
+		if err = service.InsertEnvironments(task.ID, req.Environments); err != nil {
 			utils.DBError(c)
 			return
 		}
@@ -653,7 +654,7 @@ func (tc *TaskController) Destroy(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "task is still running")
 		return
 	}
-	if err := models.DeleteTask(task.ID); err != nil {
+	if err := service.DeleteTask(task.ID); err != nil {
 		utils.DBError(c)
 		return
 	}
