@@ -112,3 +112,7 @@ func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
 func CreateTask(task *models.Task) error {
 	return insertObject(task)
 }
+
+func UpdateTask(task *models.Task, data map[string]interface{}) error {
+	return UpdateObject(task, data)
+}

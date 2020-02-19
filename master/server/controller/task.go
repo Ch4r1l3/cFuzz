@@ -548,13 +548,11 @@ func (tc *TaskController) Update(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "you can change task after it started")
 		return
 	}
+	updateData := map[string]interface{}{}
 
 	if req.ImageID != 0 {
 		if service.IsObjectExistsByID(&models.Image{}, req.ImageID) {
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("ImageID", req.ImageID).Error; err != nil {
-				utils.DBError(c)
-				return
-			}
+			updateData["ImageID"] = req.ImageID
 		} else {
 			utils.BadRequestWithMsg(c, "image id not exist")
 			return
@@ -578,23 +576,14 @@ func (tc *TaskController) Update(c *gin.Context) {
 				utils.BadRequestWithMsg(c, "wrong type")
 				return
 			}
-			if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update(modelsField[i], ids[i]).Error; err != nil {
-				utils.DBError(c)
-				return
-			}
+			updateData[modelsField[i]] = ids[i]
 		}
 	}
 	if req.Time != 0 {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Time", req.Time).Error; err != nil {
-			utils.DBError(c)
-			return
-		}
+		updateData["Time"] = req.Time
 	}
 	if req.FuzzCycleTime != 0 {
-		if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("FuzzCycleTime", req.Time).Error; err != nil {
-			utils.DBError(c)
-			return
-		}
+		updateData["FuzzCycleTime"] = req.FuzzCycleTime
 	}
 	if req.Arguments != nil {
 		if err = service.DeleteObjectsByTaskID(&models.TaskArgument{}, task.ID); err != nil {
@@ -615,6 +604,10 @@ func (tc *TaskController) Update(c *gin.Context) {
 			utils.DBError(c)
 			return
 		}
+	}
+	if err = service.UpdateTask(task, updateData); err != nil {
+		utils.DBError(c)
+		return
 	}
 
 	c.String(http.StatusCreated, "")

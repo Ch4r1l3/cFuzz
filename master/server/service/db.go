@@ -68,3 +68,11 @@ func IsObjectExistsCustom(objs interface{}, queries []string, values []interface
 func IsObjectExistsByID(obj interface{}, id uint64) bool {
 	return IsObjectExistsCustom(obj, []string{"id = ?"}, []interface{}{id})
 }
+
+func SaveObject(obj interface{}) error {
+	return models.DB.Save(obj).Error
+}
+
+func UpdateObject(obj interface{}, data map[string]interface{}) error {
+	return models.DB.Model(obj).Updates(data).Error
+}

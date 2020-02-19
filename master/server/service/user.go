@@ -143,3 +143,11 @@ func DeleteUserByID(id uint64) error {
 	}
 	return DeleteObjectByID(&models.User{}, id)
 }
+
+func UpdatePassword(user *models.User, newPassword string) error {
+	user.Password = utils.GetEncryptPassword(newPassword, user.Salt)
+	if err := models.DB.Save(user).Error; err != nil {
+		return err
+	}
+	return nil
+}

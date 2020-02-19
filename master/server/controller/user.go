@@ -291,8 +291,7 @@ func (us *UserController) Update(c *gin.Context) {
 		utils.BadRequestWithMsg(c, errs.Error())
 		return
 	}
-	user.Password = utils.GetEncryptPassword(req.NewPassword, user.Salt)
-	if err = models.DB.Save(user).Error; err != nil {
+	if err = service.UpdatePassword(&user, req.NewPassword); err != nil {
 		utils.DBError(c)
 		return
 	}

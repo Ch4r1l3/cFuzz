@@ -232,7 +232,7 @@ func (dc *ImageController) Update(c *gin.Context) {
 	image.Name = req.Name
 	image.Content = req.Content
 	image.IsDeployment = req.IsDeployment
-	if err = models.DB.Save(image).Error; err != nil {
+	if err = service.UpdateImage(image); err != nil {
 		utils.DBError(c)
 		return
 	}

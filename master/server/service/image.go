@@ -23,3 +23,7 @@ func GetImageByID(id uint64) (*models.Image, error) {
 	}
 	return &image, nil
 }
+
+func UpdateImage(image *models.Image) error {
+	return SaveObject(image)
+}
