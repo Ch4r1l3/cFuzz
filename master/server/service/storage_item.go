@@ -62,3 +62,7 @@ func GetStorageItemByID(id uint64) (*models.StorageItem, error) {
 	}
 	return &storageItem, nil
 }
+
+func IsStorageItemExistsByID(id uint64) bool {
+	return IsObjectExistsByID(&models.StorageItem{}, id)
+}

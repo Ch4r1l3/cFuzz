@@ -287,15 +287,15 @@ func (tc *TaskController) Create(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "image not exists")
 		return
 	}
-	if req.FuzzerID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.FuzzerID) {
+	if req.FuzzerID != 0 && !service.IsStorageItemExistsByID(req.FuzzerID) {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
 		return
 	}
-	if req.CorpusID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.CorpusID) {
+	if req.CorpusID != 0 && !service.IsStorageItemExistsByID(req.CorpusID) {
 		utils.BadRequestWithMsg(c, "corpus not exists")
 		return
 	}
-	if req.TargetID != 0 && !service.IsObjectExistsByID(&models.StorageItem{}, req.TargetID) {
+	if req.TargetID != 0 && !service.IsStorageItemExistsByID(req.TargetID) {
 		utils.BadRequestWithMsg(c, "target not exists")
 		return
 	}
@@ -371,15 +371,15 @@ func (tc *TaskController) Start(c *gin.Context) {
 		return
 	}
 	var Err error
-	if !service.IsObjectExistsByID(&models.StorageItem{}, task.FuzzerID) {
+	if !service.IsStorageItemExistsByID(task.FuzzerID) {
 		utils.BadRequestWithMsg(c, "you should upload fuzzer first")
 		return
 	}
-	if !service.IsObjectExistsByID(&models.StorageItem{}, task.TargetID) {
+	if !service.IsStorageItemExistsByID(task.TargetID) {
 		utils.BadRequestWithMsg(c, "you should upload target first")
 		return
 	}
-	if !service.IsObjectExistsByID(&models.StorageItem{}, task.CorpusID) {
+	if !service.IsStorageItemExistsByID(task.CorpusID) {
 		utils.BadRequestWithMsg(c, "you should upload corpus first")
 		return
 	}
