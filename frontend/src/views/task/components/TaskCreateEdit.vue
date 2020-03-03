@@ -31,6 +31,9 @@
             <el-button slot="suffix" style="margin-right: 5px" type="text" @click="storageDialogVisible.target = true"> Choose </el-button>
           </el-input>
         </el-form-item>
+        <el-form-item label="Callback Url" prop="callbackUrl">
+          <el-input v-model="task.callbackUrl" placeholder="can be empty" />
+        </el-form-item>
         <el-form-item label="Arguments">
           <div v-for="(argument,index) in task.arguments" :key="'argument'+index" class="input-kv">
             <el-input v-model="argument.key" placeholder="Key" />
@@ -108,6 +111,7 @@ export default {
         name: '',
         time: 3600,
         imageID: 0,
+        callbackUrl: '',
         fuzzCycleTime: 60,
         environments: [],
         arguments: [],

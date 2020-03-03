@@ -21,14 +21,14 @@
         />
       </el-form-item>
 
-      <el-form-item prop="password">
+      <el-form-item prop="showPassword">
         <span class="svg-container">
           <svg-icon icon-class="password" />
         </span>
         <el-input
           :key="passwordType"
-          ref="password"
-          v-model="loginForm.password"
+          ref="showPassword"
+          v-model="loginForm.showPassword"
           :type="passwordType"
           placeholder="Password"
           name="password"
@@ -48,7 +48,7 @@
 </template>
 
 <script>
-
+const sha256 = require('js-sha256').sha256
 export default {
   name: 'Login',
   data() {
@@ -62,11 +62,12 @@ export default {
     return {
       loginForm: {
         username: '',
-        password: ''
+        password: '',
+        showPassword: ''
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur' }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        showPassword: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       loading: false,
       passwordType: 'password',
@@ -96,6 +97,7 @@ export default {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
+          this.loginForm.password = sha256(this.loginForm.showPassword)
           this.$store.dispatch('user/login', this.loginForm).then(() => {
             this.$router.push({ path: this.redirect || '/' })
             this.loading = false

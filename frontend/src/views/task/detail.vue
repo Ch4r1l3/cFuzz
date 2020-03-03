@@ -32,6 +32,9 @@
         <el-form-item label="Target ID:">
           {{ task.targetID }}
         </el-form-item>
+        <el-form-item v-if="task.callbackUrl" label="Callback Url:">
+          {{ task.callbackUrl }}
+        </el-form-item>
         <el-form-item v-if="task.errorMsg !== ''" label="Error Message:">
           {{ task.errorMsg }}
         </el-form-item>

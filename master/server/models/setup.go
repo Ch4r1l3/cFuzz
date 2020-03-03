@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"github.com/Ch4r1l3/cFuzz/utils"
 	"github.com/jinzhu/gorm"
@@ -45,7 +46,7 @@ func Setup() {
 		}
 		err = DB.Create(&User{
 			Username: username,
-			Password: utils.GetEncryptPassword(string(password), salt),
+			Password: utils.GetEncryptPassword(fmt.Sprintf("%x", sha256.Sum256(password)), salt),
 			Salt:     salt,
 			IsAdmin:  true,
 		}).Error
