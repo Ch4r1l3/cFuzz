@@ -283,19 +283,19 @@ func (tc *TaskController) Create(c *gin.Context) {
 		Status:        models.TaskCreated,
 		UserID:        uint64(c.GetInt64("id")),
 	}
-	if !service.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+	if !service.IsImageExistsByID(req.ImageID) {
 		utils.BadRequestWithMsg(c, "image not exists")
 		return
 	}
-	if req.FuzzerID != 0 && !service.IsStorageItemExistsByID(req.FuzzerID) {
+	if !service.IsStorageItemExistsByID(req.FuzzerID) {
 		utils.BadRequestWithMsg(c, "fuzzer not exists")
 		return
 	}
-	if req.CorpusID != 0 && !service.IsStorageItemExistsByID(req.CorpusID) {
+	if !service.IsStorageItemExistsByID(req.CorpusID) {
 		utils.BadRequestWithMsg(c, "corpus not exists")
 		return
 	}
-	if req.TargetID != 0 && !service.IsStorageItemExistsByID(req.TargetID) {
+	if !service.IsStorageItemExistsByID(req.TargetID) {
 		utils.BadRequestWithMsg(c, "target not exists")
 		return
 	}
@@ -551,7 +551,7 @@ func (tc *TaskController) Update(c *gin.Context) {
 	updateData := map[string]interface{}{}
 
 	if req.ImageID != 0 {
-		if service.IsObjectExistsByID(&models.Image{}, req.ImageID) {
+		if service.IsImageExistsByID(req.ImageID) {
 			updateData["ImageID"] = req.ImageID
 		} else {
 			utils.BadRequestWithMsg(c, "image id not exist")

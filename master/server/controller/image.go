@@ -279,7 +279,7 @@ func (dc *ImageController) Destroy(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "this image is being used by task")
 		return
 	}
-	err = service.DeleteObjectByID(models.Image{}, image.ID)
+	err = service.DeleteImageByID(image.ID)
 	if err != nil {
 		utils.DBError(c)
 		return

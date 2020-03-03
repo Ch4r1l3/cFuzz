@@ -9,6 +9,10 @@ func IsImageReferred(id uint64) bool {
 	return IsObjectExistsCustom(&models.Task{}, []string{"image_id = ?"}, []interface{}{id})
 }
 
+func IsImageExistsByID(id uint64) bool {
+	return IsObjectExistsCustom(&models.Image{}, []string{"id = ?"}, []interface{}{id})
+}
+
 func CreateImage(image *models.Image) error {
 	return insertObject(image)
 }
@@ -26,4 +30,8 @@ func GetImageByID(id uint64) (*models.Image, error) {
 
 func UpdateImage(image *models.Image) error {
 	return SaveObject(image)
+}
+
+func DeleteImageByID(id uint64) error {
+	return DeleteObjectByID(models.Image{}, id)
 }
