@@ -6,7 +6,6 @@ import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
 	"log"
-	"time"
 )
 
 var crashesMap map[uint64]map[uint64]bool
@@ -68,11 +67,4 @@ func initKubernetesCleanup() {
 			kubernetes.DeleteServiceByTaskID(taskID)
 		}
 	}
-}
-
-func SetTaskError(taskID uint64, errorMsg string) {
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-	models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", errorMsg)
-	kubernetes.DeleteContainerByTaskID(taskID)
 }

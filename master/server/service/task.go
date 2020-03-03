@@ -2,7 +2,10 @@ package service
 
 import (
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
+	"github.com/Ch4r1l3/cFuzz/master/server/service/kubernetes"
+	"github.com/imroc/req"
 	"github.com/jinzhu/gorm"
+	"time"
 )
 
 func DeleteTask(taskid uint64) error {
@@ -105,6 +108,12 @@ func GetTasks() ([]models.Task, error) {
 	return tasks, nil
 }
 
+func GetTasksByUserID(userID uint64) ([]models.Task, error) {
+	var tasks []models.Task
+	_, err := getObjectCombinCustom(&tasks, -1, -1, "", []string{"user_id = ?"}, []interface{}{userID})
+	return tasks, err
+}
+
 func DeleteObjectsByTaskID(obj interface{}, taskid uint64) error {
 	return models.DB.Where("task_id = ?", taskid).Delete(obj).Error
 }
@@ -115,4 +124,46 @@ func CreateTask(task *models.Task) error {
 
 func UpdateTask(task *models.Task, data map[string]interface{}) error {
 	return UpdateObject(task, data)
+}
+
+func UpdateTaskField(id uint64, name string, value interface{}) error {
+	return UpdateObjectField(&models.Task{}, id, name, value)
+}
+
+func UpdateTaskStatus(id uint64, Status string) error {
+	if err := UpdateTaskField(id, "StatusUpdateAt", time.Now().Unix()); err != nil {
+		return err
+	}
+	return UpdateTaskField(id, "Status", Status)
+}
+
+func SetTaskError(id uint64, errorMsg string) error {
+	UpdateTaskStatus(id, models.TaskError)
+	UpdateTaskField(id, "ErrorMsg", errorMsg)
+	ReqCallbackUrl(id)
+	return kubernetes.DeleteContainerByTaskID(id)
+}
+
+func SetTaskStopped(id uint64) error {
+	UpdateTaskStatus(id, models.TaskStopped)
+	ReqCallbackUrl(id)
+	return kubernetes.DeleteContainerByTaskID(id)
+}
+
+func ReqCallbackUrl(id uint64) {
+	task, err := GetTaskByID(id)
+	if err != nil || task == nil {
+		return
+	}
+	r := req.New()
+	req.SetTimeout(10 * time.Second)
+	param := req.Param{
+		"taskID": id,
+	}
+	for i := 0; i < 3; i++ {
+		resp, err := r.Post(task.CallbackUrl, param)
+		if err == nil && resp.Response().StatusCode < 300 {
+			break
+		}
+	}
 }

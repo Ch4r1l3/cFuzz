@@ -31,11 +31,7 @@ func checkTasks() {
 					}()
 				} else if task.Status == models.TaskRunning && time.Now().Unix()-task.StartedAt > int64(task.Time) {
 					go func() {
-						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped)
-						models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix())
-						kubernetes.StopTask(task.ID)
-						<-time.After(time.Duration(task.FuzzCycleTime) * time.Second)
-						kubernetes.DeleteContainerByTaskID(task.ID)
+						SetTaskStopped(task.ID)
 					}()
 				} else if task.Status == models.TaskRunning {
 					if activeRoutineNum[task.ID] == nil {
@@ -128,13 +124,10 @@ func checkSingleTask(taskID uint64) {
 	if clientStatus != botmodels.TaskRunning {
 		logger.Logger.Debug("client status is not running", "status", clientStatus)
 		if clientStatus == botmodels.TaskError {
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskError)
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("ErrorMsg", "client error exit: "+clientErrorMsg)
+			SetTaskError(taskID, "client error exit: "+clientErrorMsg)
 		} else {
-			models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("Status", models.TaskStopped)
+			SetTaskStopped(taskID)
 		}
-		models.DB.Model(&models.Task{}).Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix())
-		kubernetes.DeleteContainerByTaskID(taskID)
 		return
 	} else {
 		//get bot task crashes

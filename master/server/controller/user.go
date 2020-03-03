@@ -325,7 +325,7 @@ func (us *UserController) Delete(c *gin.Context) {
 		return
 	}
 	var tasks []models.Task
-	if err = service.GetObjectsByUserID(&tasks, user.ID); err != nil {
+	if tasks, err = service.GetTasksByUserID(user.ID); err != nil {
 		utils.InternalErrorWithMsg(c, err.Error())
 	}
 	for _, t := range tasks {

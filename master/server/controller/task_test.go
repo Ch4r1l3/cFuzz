@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/Ch4r1l3/cFuzz/master/server/config"
 	"github.com/Ch4r1l3/cFuzz/master/server/models"
 	"io/ioutil"
@@ -10,6 +11,39 @@ import (
 	"testing"
 	"time"
 )
+
+func listenCallback() int {
+	taskIDChan := make(chan int)
+	srv := &http.Server{Addr: ":38232"}
+	defer func() {
+		srv.Shutdown(nil)
+	}()
+	go func() {
+		http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+			err := r.ParseForm()
+			if err != nil {
+				fmt.Fprintf(w, "error")
+				return
+			}
+			taskID := r.Form.Get("taskID")
+			id, err := strconv.Atoi(taskID)
+			if err != nil {
+				fmt.Fprintf(w, "error")
+				return
+			}
+			taskIDChan <- id
+			fmt.Fprintf(w, "ok")
+		})
+		srv.ListenAndServe()
+	}()
+	select {
+	case <-time.After(60 * time.Second):
+		return 0
+	case id := <-taskIDChan:
+		return id
+	}
+	return 0
+}
 
 func TestTaskList(t *testing.T) {
 	e := getExpect(t)
@@ -44,6 +78,7 @@ func TestTask1(t *testing.T) {
 		"fuzzerID":      fuzzerID,
 		"targetID":      targetID,
 		"corpusID":      corpusID,
+		"callbackUrl":   "http://127.0.0.1/callback",
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -54,7 +89,7 @@ func TestTask1(t *testing.T) {
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
 	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object()
-	obj.Keys().ContainsOnly("id", "imageID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "name", "fuzzCycleTime", "startedAt", "crashNum", "userID")
+	obj.Keys().ContainsOnly("id", "imageID", "time", "fuzzerID", "corpusID", "targetID", "status", "errorMsg", "environments", "arguments", "name", "fuzzCycleTime", "startedAt", "crashNum", "userID", "callbackUrl")
 	obj.Value("id").NotEqual(0)
 	obj.Value("imageID").NotEqual(0)
 	obj.Value("time").NotEqual(0)
@@ -65,6 +100,7 @@ func TestTask1(t *testing.T) {
 	obj.Value("arguments").Object().Value("a2").Equal("a3")
 	obj.Value("status").NotEqual("")
 	obj.Value("startedAt").Equal(0)
+	obj.Value("callbackUrl").Equal("http://127.0.0.1/callback")
 	ae := getAdminExpect(t)
 	ae.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().NotEqual(0)
 	e.GET("/api/task").WithQuery("name", "t").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().Length().Equal(1)
@@ -108,6 +144,7 @@ func TestTask2(t *testing.T) {
 		"fuzzerID":      fuzzerID,
 		"targetID":      targetID,
 		"corpusID":      corpusID,
+		"callbackUrl":   "http://127.0.0.1/callback",
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -132,6 +169,9 @@ func TestTask2(t *testing.T) {
 			"a4": "a5",
 		},
 	}
+	taskPostData7 := map[string]interface{}{
+		"callbackUrl": "abc",
+	}
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 
@@ -140,8 +180,10 @@ func TestTask2(t *testing.T) {
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData4).Expect().Status(http.StatusBadRequest)
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData5).Expect().Status(http.StatusCreated)
 	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData6).Expect().Status(http.StatusCreated)
+	e.PUT("/api/task/" + strconv.Itoa(taskID)).WithJSON(taskPostData7).Expect().Status(http.StatusCreated)
 
 	e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object().Value("environments").Array().Elements("2", "3")
+	e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object().Value("callbackUrl").Equal("abc")
 
 	obj := e.GET("/api/task").Expect().Status(http.StatusOK).JSON().Object().Value("data").Array().First().Object().Value("arguments").Object()
 	obj.Value("a3").Equal("a4")
@@ -223,6 +265,7 @@ func TestTask4(t *testing.T) {
 		"fuzzerID":      fuzzerID,
 		"targetID":      targetID,
 		"corpusID":      corpusID,
+		"callbackUrl":   "http://127.0.0.1:38232/callback",
 		"environments":  []string{"123", "2333"},
 		"arguments": map[string]string{
 			"a1": "a2",
@@ -232,7 +275,11 @@ func TestTask4(t *testing.T) {
 
 	taskID := int(e.POST("/api/task").WithJSON(taskPostData1).Expect().Status(http.StatusCreated).JSON().Object().Value("id").Number().Raw())
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/start").Expect().Status(http.StatusAccepted)
-	<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
+	//<-time.After(time.Duration(config.KubernetesConf.CheckTaskTime*4) * time.Second)
+	callbacbID := listenCallback()
+	if callbacbID != taskID {
+		t.Errorf("callback id wrong")
+	}
 	e.GET("/api/task/" + strconv.Itoa(taskID)).Expect().Status(http.StatusOK).JSON().Object().Value("status").Equal(models.TaskStopped)
 	e.POST("/api/task/" + strconv.Itoa(taskID) + "/stop").Expect().Status(http.StatusBadRequest)
 	<-time.After(time.Duration(2) * time.Second)

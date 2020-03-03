@@ -76,3 +76,7 @@ func SaveObject(obj interface{}) error {
 func UpdateObject(obj interface{}, data map[string]interface{}) error {
 	return models.DB.Model(obj).Updates(data).Error
 }
+
+func UpdateObjectField(obj interface{}, id uint64, name string, value interface{}) error {
+	return models.DB.Model(obj).Where("id = ?", id).Update(name, value).Error
+}

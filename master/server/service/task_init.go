@@ -30,13 +30,7 @@ func initDeployTask(taskID uint64) {
 		return
 	}
 	if task.Status == models.TaskStarted || task.Status == models.TaskRunning {
-		if err := models.DB.Model(&models.Task{}).
-			Where("id = ?", taskID).Update("Status", models.TaskInitializing).Error; err != nil {
-			Err = errors.Wrap(err, "DB Error")
-			return
-		}
-		if err := models.DB.Model(&models.Task{}).
-			Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
+		if err := UpdateTaskStatus(taskID, models.TaskInitializing); err != nil {
 			Err = errors.Wrap(err, "DB Error")
 			return
 		}
@@ -112,22 +106,14 @@ func initDeployTask(taskID uint64) {
 		Err = errors.Wrap(err, "start bot fuzz error")
 		return
 	}
-
-	if err := models.DB.Model(&models.Task{}).
-		Where("id = ?", taskID).Update("Status", models.TaskRunning).Error; err != nil {
+	//update task status
+	if err := UpdateTaskStatus(taskID, models.TaskRunning); err != nil {
+		Err = errors.Wrap(err, "DB Error")
 		logger.Logger.Error("DB error", "reason", err.Error())
-		Err = errors.Wrap(err, "DB error")
-		return
-	}
-	if err := models.DB.Model(&models.Task{}).
-		Where("id = ?", taskID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
-		logger.Logger.Error("DB error", "reason", err.Error())
-		Err = errors.Wrap(err, "DB error")
 		return
 	}
 	if task.StartedAt == 0 {
-		if err := models.DB.Model(&models.Task{}).
-			Where("id = ?", taskID).Update("StartedAt", time.Now().Unix()).Error; err != nil {
+		if err := UpdateTaskField(taskID, "StartedAt", time.Now().Unix()); err != nil {
 			logger.Logger.Error("DB error", "reason", err.Error())
 			Err = errors.Wrap(err, "DB error")
 			return

@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	appsv1 "k8s.io/api/apps/v1"
 	"net/http"
-	"time"
 )
 
 func getTask(c *gin.Context) (*models.Task, error) {
@@ -51,6 +50,9 @@ type TaskCreateReq struct {
 	// example: 3
 	TargetID uint64 `json:"targetID" binding:"required"`
 
+	// example: http://127.0.0.1/callback
+	CallbackUrl string `json:"callbackUrl"`
+
 	// example: ["AFL_FUZZ=1", "ASAN=1"]
 	Environments []string `json:"environments"`
 
@@ -80,6 +82,9 @@ type TaskUpdateReq struct {
 
 	// example: 3
 	TargetID uint64 `json:"targetID"`
+
+	// example: http://127.0.0.1/callback
+	CallbackUrl string `json:"callbackUrl"`
 
 	// example: ["AFL_FUZZ=1", "ASAN=1"]
 	Environments []string `json:"environments"`
@@ -280,6 +285,7 @@ func (tc *TaskController) Create(c *gin.Context) {
 		FuzzCycleTime: req.FuzzCycleTime,
 		Time:          req.Time,
 		Name:          req.Name,
+		CallbackUrl:   req.CallbackUrl,
 		Status:        models.TaskCreated,
 		UserID:        uint64(c.GetInt64("id")),
 	}
@@ -428,13 +434,7 @@ func (tc *TaskController) Start(c *gin.Context) {
 		utils.InternalErrorWithMsg(c, "create image failed: "+err.Error())
 		return
 	}
-	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStarted).Error; err != nil {
-		kubernetes.DeleteDeployByTaskID(task.ID)
-		utils.DBError(c)
-		Err = err
-		return
-	}
-	if err = models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("StatusUpdateAt", time.Now().Unix()).Error; err != nil {
+	if err = service.UpdateTaskStatus(task.ID, models.TaskStarted); err != nil {
 		kubernetes.DeleteDeployByTaskID(task.ID)
 		utils.DBError(c)
 		Err = err
@@ -483,11 +483,7 @@ func (tc *TaskController) Stop(c *gin.Context) {
 		utils.BadRequestWithMsg(c, "wrong status")
 		return
 	}
-	if err := models.DB.Model(&models.Task{}).Where("id = ?", task.ID).Update("Status", models.TaskStopped).Error; err != nil {
-		utils.DBError(c)
-		return
-	}
-	err = kubernetes.DeleteContainerByTaskID(task.ID)
+	err = service.SetTaskStopped(task.ID)
 	if err != nil {
 		utils.InternalErrorWithMsg(c, "kubernetes delete error")
 		return
@@ -584,6 +580,9 @@ func (tc *TaskController) Update(c *gin.Context) {
 	}
 	if req.FuzzCycleTime != 0 {
 		updateData["FuzzCycleTime"] = req.FuzzCycleTime
+	}
+	if req.CallbackUrl != "" {
+		updateData["CallbackUrl"] = req.CallbackUrl
 	}
 	if req.Arguments != nil {
 		if err = service.DeleteObjectsByTaskID(&models.TaskArgument{}, task.ID); err != nil {

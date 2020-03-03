@@ -16,6 +16,7 @@ require (
 	github.com/hashicorp/go-hclog v0.10.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/imkira/go-interpol v1.1.0 // indirect
+	github.com/imroc/req v0.3.0
 	github.com/jinzhu/gorm v1.9.11
 	github.com/mattn/go-sqlite3 v2.0.2+incompatible // indirect
 	github.com/moul/http2curl v1.0.0 // indirect

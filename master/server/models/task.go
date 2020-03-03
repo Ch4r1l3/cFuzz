@@ -38,6 +38,9 @@ type Task struct {
 	// example: 1579996805
 	StartedAt int64 `json:"startedAt"`
 
+	// example: http://127.0.0.1/callback
+	CallbackUrl string `json:"callbackUrl"`
+
 	// example: 1
 	UserID uint64 `json:"userID" sql:"type:integer REFERENCES user(id) ON DELETE CASCADE"`
 }
